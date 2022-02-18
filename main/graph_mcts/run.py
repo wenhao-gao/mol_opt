@@ -13,17 +13,61 @@ import numpy as np
 from joblib import delayed
 from rdkit import Chem, rdBase
 from rdkit.Chem import AllChem
-
-from guacamol.assess_goal_directed_generation import assess_goal_directed_generation
-from guacamol.goal_directed_generator import GoalDirectedGenerator
-from guacamol.scoring_function import ScoringFunction
-from guacamol.utils.chemistry import canonicalize
-from guacamol.utils.helpers import setup_default_logger
+from tqdm import tqdm 
 
 # from graph_mcts.stats import Stats, get_stats_from_pickle, get_stats_from_smiles
 from stats import Stats, get_stats_from_pickle, get_stats_from_smiles
 
 rdBase.DisableLog('rdApp.error')
+
+from tdc import Oracle
+from tdc import Evaluator
+jnk = Oracle(name = 'JNK3')
+gsk = Oracle(name = 'GSK3B')
+qed = Oracle(name = 'qed')
+from sa import sa
+def oracle(smiles):
+    try:
+        scores = [qed(smiles), sa(smiles), jnk(smiles), gsk(smiles)]
+    except:
+        # return -np.inf
+        return -100.0 
+    return np.mean(scores)
+
+global f_cache 
+f_cache = dict()
+# global f_cache 
+
+
+def score_mol(smiles, score_fn):
+    # smiles = Chem.MolToSmiles(mol)
+    global f_cache
+    if smiles not in f_cache:
+        f_cache[smiles] = score_fn(smiles)
+    print("f_cache", len(f_cache))
+    return f_cache[smiles]
+
+from rdkit import Chem 
+def canonicalize(smiles: str, include_stereocenters=True) -> Optional[str]:
+    """
+    Canonicalize the SMILES strings with RDKit.
+    The algorithm is detailed under https://pubs.acs.org/doi/full/10.1021/acs.jcim.5b00543
+    Args:
+        smiles: SMILES string to canonicalize
+        include_stereocenters: whether to keep the stereochemical information in the canonical SMILES string
+    Returns:
+        Canonicalized SMILES string, None if the molecule is invalid.
+    """
+
+    mol = Chem.MolFromSmiles(smiles)
+
+    if mol is not None:
+        return Chem.MolToSmiles(mol, isomericSmiles=include_stereocenters)
+    else:
+        return None
+
+
+
 
 best_state = {}
 
@@ -113,7 +157,8 @@ class State:
         self.turn = max_atoms
         self.smiles = smiles
         self.scoring_function = scoring_function
-        self.score = self.scoring_function.score(self.smiles)
+        # self.score = self.scoring_function.score(self.smiles)
+        self.score = score_mol(self.smiles, scoring_function)
         self.max_children = max_children
         self.stats = stats
         self.seed = seed
@@ -156,7 +201,7 @@ class State:
 
         if self.seed not in best_state or self.score > best_state[self.seed].score:
             best_state[self.seed] = self
-            print(self.seed, 'new best state', best_state[self.seed].score)
+            # print(self.seed, 'new best state', best_state[self.seed].score)
 
             return 1.0
         else:
@@ -273,8 +318,7 @@ def backup(node, reward):
         node = node.parent
     return
 
-
-def find_molecule(scoring_function, mol, smiles, max_atoms, max_children, num_sims, stats):
+def find_molecule(scoring_function,  mol, smiles, max_atoms, max_children, num_sims, stats):
     seed = int(time())
     np.random.seed(seed)
     root_node = Node(State(scoring_function=scoring_function,
@@ -282,70 +326,60 @@ def find_molecule(scoring_function, mol, smiles, max_atoms, max_children, num_si
                            smiles=smiles,
                            max_atoms=max_atoms,
                            max_children=max_children,
-                           stats=stats,
+                           stats=stats, 
                            seed=seed))
     uct_search(num_sims, root_node)
 
     return best_state[seed].score, best_state[seed].smiles
 
 
-class GB_MCTS_Generator(GoalDirectedGenerator):
+def sanitize(population):
+    new_population = []
+    smile_set = set()
+    for mol in population:
+        score, smile = mol
+        if smile is not None and smile not in smile_set:
+            smile_set.add(smile)
+            new_population.append(mol)
+    return new_population
 
-    def __init__(self, pickle_directory: str, population_size,
-                 generations, num_sims, max_children, init_smiles, max_atoms,
-                 n_jobs=-1, patience=5):
-        self.logger = logging.getLogger(__name__)
-        self.pool = joblib.Parallel(n_jobs=n_jobs)
-        self.pickle_directory = pickle_directory
-        self.population_size = population_size
-        self.generations = generations
-        self.patience = patience
-        self.num_sims = num_sims
-        self.max_children = max_children
-        self.init_smiles = init_smiles
-        self.init_mol = Chem.MolFromSmiles(init_smiles)
-        self.max_atoms = max_atoms
 
-        self.stats = get_stats_from_pickle(self.pickle_directory)
+def generate_optimized_molecules(scoring_function,
+                                n_jobs, 
+                                pickle_directory, 
+                                num_sims,
+                                max_children,
+                                init_smiles,
+                                max_atoms,
+                                patience_max,
+                                generations,
+                                population_size,         
+                                start_known_smiles, 
+                                max_total_func_calls,) -> List[str]:
 
-    def load_smiles_from_file(self, smi_file):
-        with open(smi_file) as f:
-            return self.pool(delayed(canonicalize)(s.strip()) for s in f)
-
-    @staticmethod
-    def sanitize(population):
-        new_population = []
-        smile_set = set()
-        for mol in population:
-            score, smile = mol
-            if smile is not None and smile not in smile_set:
-                smile_set.add(smile)
-                new_population.append(mol)
-        return new_population
-
-    def generate_optimized_molecules(self, scoring_function: ScoringFunction, number_molecules: int,
-                                     starting_population: Optional[List[str]] = None) -> List[str]:
+        pool = joblib.Parallel(n_jobs=n_jobs)
+        init_mol = Chem.MolFromSmiles(init_smiles)
+        # f_cache = dict(start_known_smiles)
+        global f_cache 
+        stats = get_stats_from_pickle(pickle_directory)
 
         # evolution: go go go!!
         t0 = time()
-
         patience = 0
-
         population = []
-
         old_score = 0
 
-        for generation in range(self.generations):
+        for generation in tqdm(range(generations)):
 
             job = delayed(find_molecule)(scoring_function,
-                                         self.init_mol,
-                                         self.init_smiles,
-                                         self.max_atoms,
-                                         self.max_children,
-                                         self.num_sims,
-                                         self.stats)
+                                         init_mol,
+                                         init_smiles,
+                                         max_atoms,
+                                         max_children,
+                                         num_sims,
+                                         stats)
 
-            new_mols = self.pool(job for _ in range(self.population_size))
+            new_mols = pool(job for _ in range(population_size))
 
             # stats
             gen_time = time() - t0
@@ -353,9 +387,9 @@ class GB_MCTS_Generator(GoalDirectedGenerator):
             t0 = time()
 
             population += new_mols
-            population = self.sanitize(population)
+            population = sanitize(population)
 
-            population = sorted(population, key=lambda x: x[0], reverse=True)[:number_molecules]
+            population = sorted(population, key=lambda x: x[0], reverse=True)[:population_size]
 
             population_scores = [p[0] for p in population]
             new_score = sum(population_scores)
@@ -367,7 +401,7 @@ class GB_MCTS_Generator(GoalDirectedGenerator):
             if new_score == old_score:
                 patience += 1
                 print(f'Failed to progress: {patience}')
-                if patience >= self.patience:
+                if patience >= patience_max:
                     print(f'No more patience, bailing...')
                     break
             else:
@@ -382,27 +416,34 @@ class GB_MCTS_Generator(GoalDirectedGenerator):
                   f'std: {np.std(population_scores):.3f} | '
                   f'sum: {np.sum(population_scores):.3f} | '
                   f'{gen_time:.2f} sec/gen | '
-                  f'{mol_sec:.2f} mol/sec')
+                  f'{mol_sec:.2f} mol/sec | '
+                  f'{len(f_cache):d} oracle calls')
+
+            if len(f_cache) > max_total_func_calls:
+                print("Max oracle calls hit, aborting")
+                break
+
+        # return f_cache
 
         # finally
-        return [p[1] for p in population]
-
+        # return [p[1] for p in population]
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics',
                         default=None)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--n_jobs', type=int, default=-1)
+    parser.add_argument('--n_jobs', type=int, default=1)  ## default -1 
     parser.add_argument('--generations', type=int, default=1000)
-    parser.add_argument('--population_size', type=int, default=100)
-    parser.add_argument('--num_sims', type=int, default=40)
-    parser.add_argument('--max_children', type=int, default=25)
-    parser.add_argument('--max_atoms', type=int, default=60)
+    parser.add_argument('--population_size', type=int, default=10)
+    parser.add_argument('--num_sims', type=int, default=2) #### default 40
+    parser.add_argument('--max_children', type=int, default=2) ### default 25
+    parser.add_argument('--max_atoms', type=int, default=4) ### default 60  
     parser.add_argument('--init_smiles', type=str, default='CC')
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--suite', default='v2')
+    parser.add_argument('--max_func_calls', type=int, default=200)
+    # parser.add_argument('--suite', default='v2') 
     args = parser.parse_args()
 
     if args.output_dir is None:
@@ -413,25 +454,53 @@ def main():
 
     np.random.seed(args.seed)
 
-    setup_default_logger()
 
     # save command line args
     with open(os.path.join(args.output_dir, 'goal_directed_params.json'), 'w') as jf:
         json.dump(vars(args), jf, sort_keys=True, indent=4)
 
-    optimiser = GB_MCTS_Generator(pickle_directory=args.pickle_directory,
-                                  n_jobs=args.n_jobs,
-                                  num_sims=args.num_sims,
-                                  max_children=args.max_children,
-                                  init_smiles=args.init_smiles,
-                                  max_atoms=args.max_atoms,
-                                  patience=args.patience,
-                                  generations=args.generations,
-                                  population_size=args.population_size)
 
-    json_file_path = os.path.join(args.output_dir, 'goal_directed_results.json')
-    assess_goal_directed_generation(optimiser, json_output_file=json_file_path, benchmark_version=args.suite)
+    generate_optimized_molecules(
+        scoring_function = oracle,
+        pickle_directory = args.pickle_directory, 
+        n_jobs = args.n_jobs, 
+        num_sims=args.num_sims,
+        max_children=args.max_children,
+        init_smiles=args.init_smiles,
+        max_atoms=args.max_atoms,
+        patience_max=args.patience,
+        generations=args.generations,
+        population_size=args.population_size,         
+        start_known_smiles = dict(),
+        max_total_func_calls=args.max_func_calls, 
+    )
+
+    all_func_evals = f_cache
+
+    # Evaluate 
+    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k is not None and k!='']  # scores of new molecules
+    new_score_tuples.sort(reverse=True,key=lambda x:x[0])
+    top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
+    diversity = Evaluator(name = 'Diversity')
+    div = diversity([t[0] for t in top100_mols])
+    output = dict(
+        top_mols=top100_mols,
+        AST=np.average([t[1] for t in top100_mols]),
+        diversity=div,
+        all_func_evals=dict(all_func_evals),
+    )
+    print(output)
+
+
+
+
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
