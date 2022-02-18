@@ -14,11 +14,9 @@ import numpy as np
 from joblib import delayed
 from rdkit import rdBase
 
-from guacamol.assess_goal_directed_generation import assess_goal_directed_generation
-from guacamol.goal_directed_generator import GoalDirectedGenerator
-from guacamol.scoring_function import ScoringFunction
-from guacamol.utils.chemistry import canonicalize
-from guacamol.utils.helpers import setup_default_logger
+from guacamol.assess_goal_directed_generation import assess_goal_directed_generation 
+from guacamol.goal_directed_generator import GoalDirectedGenerator 
+from guacamol.scoring_function import ScoringFunction 
 # from . import cfg_util, smiles_grammar
 import cfg_util, smiles_grammar 
 
@@ -26,6 +24,41 @@ rdBase.DisableLog('rdApp.error')
 GCFG = smiles_grammar.GCFG
 
 Molecule = namedtuple('Molecule', ['score', 'smiles', 'genes'])
+
+
+from tdc import Oracle
+from tdc import Evaluator
+jnk = Oracle(name = 'JNK3')
+gsk = Oracle(name = 'GSK3B')
+qed = Oracle(name = 'qed')
+from sa import sa
+def oracle(smiles):
+    scores = [qed(smiles), sa(smiles), jnk(smiles), gsk(smiles)]
+    return np.mean(scores)
+
+
+
+from rdkit import Chem 
+def canonicalize(smiles: str, include_stereocenters=True) -> Optional[str]:
+    """
+    Canonicalize the SMILES strings with RDKit.
+    The algorithm is detailed under https://pubs.acs.org/doi/full/10.1021/acs.jcim.5b00543
+    Args:
+        smiles: SMILES string to canonicalize
+        include_stereocenters: whether to keep the stereochemical information in the canonical SMILES string
+    Returns:
+        Canonicalized SMILES string, None if the molecule is invalid.
+    """
+
+    mol = Chem.MolFromSmiles(smiles)
+
+    if mol is not None:
+        return Chem.MolToSmiles(mol, isomericSmiles=include_stereocenters)
+    else:
+        return None
+
+
+
 
 
 def cfg_to_gene(prod_rules, max_len=-1):
@@ -89,109 +122,115 @@ def deduplicate(population):
     return unique_population
 
 
-def mutate(p_gene, scoring_function):
+# My modification: pass in a dictionary of known values to track function calls
+def score_mol(smiles, score_fn, known_value_dict):
+    # smiles = Chem.MolToSmiles(mol)
+    if smiles not in known_value_dict:
+        known_value_dict[smiles] = score_fn(smiles)
+    return known_value_dict[smiles]
+
+def mutate(p_gene, scoring_function, known_value_dict):
     c_gene = mutation(p_gene)
     c_smiles = canonicalize(cfg_util.decode(gene_to_cfg(c_gene)))
-    c_score = scoring_function.score(c_smiles)
+    # c_score = scoring_function.score(c_smiles)
+    c_score = score_mol(c_smiles, scoring_function, known_value_dict)
     return Molecule(c_score, c_smiles, c_gene)
 
 
-class ChemGEGenerator(GoalDirectedGenerator):
 
-    def __init__(self, smi_file, population_size, n_mutations, gene_size, generations, n_jobs=-1, random_start=False, patience=5):
-        self.pool = joblib.Parallel(n_jobs=n_jobs)
-        self.smi_file = smi_file
-        self.all_smiles = self.load_smiles_from_file(self.smi_file)
-        self.population_size = population_size
-        self.n_mutations = n_mutations
-        self.gene_size = gene_size
-        self.generations = generations
-        self.random_start = random_start
-        self.patience = patience
+# My modification: simplified version of the Goal Directed generator
+def generate_optimized_molecules(
+    scoring_function,
+    n_jobs: int=-1,
+    start_known_smiles: dict,
+    starting_population: List[str],
+    population_size: int = 1000,
+    n_mutations: int=200,
+    gene_size: int=300,
+    generations: int=1000, 
+    random_start:bool=True, 
+    patience_max:int=5,
+    max_total_func_calls: int = 1000,
+) -> List[str]:
 
-    def load_smiles_from_file(self, smi_file):
-        with open(smi_file) as f:
-            return self.pool(delayed(canonicalize)(s.strip()) for s in f)
 
-    def top_k(self, smiles, scoring_function, k):
-        joblist = (delayed(scoring_function.score)(s) for s in smiles)
-        scores = self.pool(joblist)
-        scored_smiles = list(zip(scores, smiles))
-        scored_smiles = sorted(scored_smiles, key=lambda x: x[0], reverse=True)
-        return [smile for score, smile in scored_smiles][:k]
+    pool = joblib.Parallel(n_jobs=n_jobs)
+    # Accurately track function evaluations by storing all known scores so far
+    f_cache = dict(start_known_smiles)
 
-    def generate_optimized_molecules(self, scoring_function: ScoringFunction, number_molecules: int,
-                                     starting_population: Optional[List[str]] = None) -> List[str]:
+    # # fetch initial population
+    if starting_population is None:
+        print('selecting initial population...')
+        init_size = population_size + n_mutations
+        # all_smiles = copy.deepcopy(self.all_smiles)
+        if random_start:
+            starting_population = np.random.choice(all_smiles, init_size)
+        else:
+            starting_population = self.top_k(all_smiles, scoring_function, init_size)
 
-        if number_molecules > self.population_size:
-            self.population_size = number_molecules
-            print(f'Benchmark requested more molecules than expected: new population is {number_molecules}')
+    # select initial population
+    # print("Scoring initial population...")
+    # population_smiles = list(starting_population)
+    # # population_mol = [Chem.MolFromSmiles(s) for s in population_smiles]
+    # population_scores = [score_mol(m, scoring_function, f_cache) for m in population_smiles]
+    # print("Initial population scoring complete!")
+    # print(f"Max starting score: {max(population_scores)}")
 
-        # fetch initial population?
-        if starting_population is None:
-            print('selecting initial population...')
-            init_size = self.population_size + self.n_mutations
-            all_smiles = copy.deepcopy(self.all_smiles)
-            if self.random_start:
-                starting_population = np.random.choice(all_smiles, init_size)
-            else:
-                starting_population = self.top_k(all_smiles, scoring_function, init_size)
 
-        # The smiles GA cannot deal with '%' in SMILES strings (used for two-digit ring numbers).
-        starting_population = [smiles for smiles in starting_population if '%' not in smiles]
+    # The smiles GA cannot deal with '%' in SMILES strings (used for two-digit ring numbers).
+    starting_population = [smiles for smiles in starting_population if '%' not in smiles]
 
-        # calculate initial genes
-        initial_genes = [cfg_to_gene(cfg_util.encode(s), max_len=self.gene_size)
+    # calculate initial genes
+    initial_genes = [cfg_to_gene(cfg_util.encode(s), max_len=gene_size)
                          for s in starting_population]
 
-        # score initial population
-        initial_scores = scoring_function.score_list(starting_population)
-        population = [Molecule(*m) for m in zip(initial_scores, starting_population, initial_genes)]
-        population = sorted(population, key=lambda x: x.score, reverse=True)[:self.population_size]
-        population_scores = [p.score for p in population]
+    # score initial population
+    # initial_scores = scoring_function.score_list(starting_population)
+    initial_scores = [score_mol(m, scoring_function, f_cache) for m in starting_population]
+    population = [Molecule(*m) for m in zip(initial_scores, starting_population, initial_genes)]
+    population = sorted(population, key=lambda x: x.score, reverse=True)[:population_size]
+    population_scores = [p.score for p in population]
 
-        # evolution: go go go!!
+    # evolution: go go go!!
+    t0 = time()
+    patience = 0
+    for generation in range(generations):
+
+        old_scores = population_scores
+        # select random genes
+        all_genes = [molecule.genes for molecule in population]
+        choice_indices = np.random.choice(len(all_genes), n_mutations, replace=True)
+        genes_to_mutate = [all_genes[i] for i in choice_indices]
+
+        # evolve genes
+        joblist = (delayed(mutate)(g, scoring_function, f_cache) for g in genes_to_mutate)
+        new_population = pool(joblist)
+
+        # join and dedup
+        population += new_population
+        population = deduplicate(population)
+
+        # survival of the fittest
+        population = sorted(population, key=lambda x: x.score, reverse=True)[:population_size]
+
+        # stats
+        gen_time = time() - t0
+        mol_sec = (population_size + n_mutations) / gen_time
         t0 = time()
 
-        patience = 0
+        population_scores = [p.score for p in population]
 
-        for generation in range(self.generations):
+        # early stopping
+        if population_scores == old_scores:
+            patience += 1 
+            print(f'Failed to progress: {patience}')
+            if patience >= patience_max:
+                print(f'No more patience, bailing...')
+                break
+        else:
+            patience = 0
 
-            old_scores = population_scores
-            # select random genes
-            all_genes = [molecule.genes for molecule in population]
-            choice_indices = np.random.choice(len(all_genes), self.n_mutations, replace=True)
-            genes_to_mutate = [all_genes[i] for i in choice_indices]
-
-            # evolve genes
-            joblist = (delayed(mutate)(g, scoring_function) for g in genes_to_mutate)
-            new_population = self.pool(joblist)
-
-            # join and dedup
-            population += new_population
-            population = deduplicate(population)
-
-            # survival of the fittest
-            population = sorted(population, key=lambda x: x.score, reverse=True)[:self.population_size]
-
-            # stats
-            gen_time = time() - t0
-            mol_sec = (self.population_size + self.n_mutations) / gen_time
-            t0 = time()
-
-            population_scores = [p.score for p in population]
-
-            # early stopping
-            if population_scores == old_scores:
-                patience += 1
-                print(f'Failed to progress: {patience}')
-                if patience >= self.patience:
-                    print(f'No more patience, bailing...')
-                    break
-            else:
-                patience = 0
-
-            print(f'{generation} | '
+        print(f'{generation} | '
                   f'max: {np.max(population_scores):.3f} | '
                   f'avg: {np.mean(population_scores):.3f} | '
                   f'min: {np.min(population_scores):.3f} | '
@@ -199,8 +238,18 @@ class ChemGEGenerator(GoalDirectedGenerator):
                   f'{gen_time:.2f} sec/gen | '
                   f'{mol_sec:.2f} mol/sec')
 
-        # finally
-        return [molecule.smiles for molecule in population[:number_molecules]]
+
+        if len(f_cache) > max_total_func_calls:
+            print("Max function calls hit, aborting")
+            break
+
+    return f_cache
+    # return [molecule.smiles for molecule in population[:number_molecules]]
+
+
+
+
+
 
 
 def main():
@@ -218,30 +267,63 @@ def main():
     parser.add_argument('--suite', default='v2')
 
     args = parser.parse_args()
-
     np.random.seed(args.seed)
-
-    setup_default_logger()
+    # setup_default_logger()
 
     if args.output_dir is None:
         args.output_dir = os.path.dirname(os.path.realpath(__file__))
 
-    # save command line args
-    with open(os.path.join(args.output_dir, 'goal_directed_params.json'), 'w') as jf:
-        json.dump(vars(args), jf, sort_keys=True, indent=4)
+    # # save command line args
+    # with open(os.path.join(args.output_dir, 'goal_directed_params.json'), 'w') as jf:
+    #     json.dump(vars(args), jf, sort_keys=True, indent=4)
 
-    optimiser = ChemGEGenerator(smi_file=args.smiles_file,
-                                population_size=args.population_size,
-                                n_mutations=args.n_mutations,
-                                gene_size=args.gene_size,
-                                generations=args.generations,
-                                n_jobs=args.n_jobs,
-                                random_start=args.random_start,
-                                patience=args.patience)
+    # optimiser = ChemGEGenerator(smi_file=args.smiles_file,
+    #                             population_size=args.population_size,
+    #                             n_mutations=args.n_mutations,
+    #                             gene_size=args.gene_size,
+    #                             generations=args.generations,
+    #                             n_jobs=args.n_jobs,
+    #                             random_start=args.random_start,
+    #                             patience=args.patience)
 
-    json_file_path = os.path.join(args.output_dir, 'goal_directed_results.json')
-    assess_goal_directed_generation(optimiser, json_output_file=json_file_path, benchmark_version=args.suite)
+    # json_file_path = os.path.join(args.output_dir, 'goal_directed_results.json')
+    # assess_goal_directed_generation(optimiser, json_output_file=json_file_path, benchmark_version=args.suite)
+
+
+    print("begin running smiles-GA")
+    all_func_evals = generate_optimized_molecules(
+        scoring_function = oracle,
+        n_jobs = arg.n_jobs, 
+        start_known_smiles = dict(),
+        starting_population=list(start_smiles),
+        population_size=args.population_size,
+        n_mutations=n_mutations,
+        gene_size=args.gene_size,
+        generations = args.generations, 
+        random_start=args.random_start, 
+        patience_max=args.patience,
+        max_total_func_calls=args.max_func_calls, 
+    )
+
+
+    # Evaluate 
+    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k not in start_smiles]  # scores of new molecules
+    new_score_tuples.sort(reverse=True)
+    top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
+    diversity = Evaluator(name = 'Diversity')
+    div = diversity([t[0] for t in top100_mols])
+    output = dict(
+        top_mols=top100_mols,
+        AST=np.average([t[1] for t in top100_mols]),
+        diversity=div,
+        all_func_evals=dict(all_func_evals),
+    )
+    with open(args.output_file, "w") as f:
+        json.dump(output, f, indent=4)
 
 
 if __name__ == "__main__":
     main()
+
+
+
