@@ -160,14 +160,14 @@ def generate_optimized_molecules(
 
 
         print(f'{generation} | '
-              f'N f eval: {len(f_cache)} | '
+              f'oracle call: {len(f_cache)} | '
               f'max: {np.max(population_scores):.3f} | '
               f'avg: {np.mean(population_scores):.3f} | '
               f'min: {np.min(population_scores):.3f} | '
               f'std: {np.std(population_scores):.3f} | '
               f'sum: {np.sum(population_scores):.3f} | '
               f'{gen_time:.2f} sec/gen | '
-              f'{mol_sec:.2f} mol/sec'
+              f'{mol_sec:.2f} mol/sec | '
         )
 
         # Potential early stopping

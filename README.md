@@ -10,6 +10,8 @@ conda activate molopt
 conda install -c rdkit rdkit 
 pip install torch 
 pip install guacamol 
+pip install PyTDC 
+pip install networkx 
 pip install joblib 
 pip install nltk 
 ```
@@ -18,13 +20,21 @@ pip install nltk
 conda activate molopt 
 ```
 
+## step by step  
+
+- runable 
+- tdc oracle  
+- evaluate 
+- save 
+- oracle calls 
+- code unify 
 
 ## run 
 
 ### graph-GA 
 
 ```bash
-python main/graph_ga/run.py 
+python main/graph_ga/run.py --smiles_file data/guacamol_v1_all.smiles --output_file main/graph_ga/result.json --max_func_calls=1490
 ```
 
 
@@ -61,8 +71,6 @@ python main/selfies_GA/run.py
 ```bash
 python main/DST/run.py 
 ```
-
-
 
 
 ### MolDQN 

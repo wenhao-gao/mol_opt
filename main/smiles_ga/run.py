@@ -7,7 +7,7 @@ import os
 from collections import namedtuple
 from time import time
 from typing import List, Optional
-
+from random import shuffle 
 import joblib
 import nltk
 import numpy as np
@@ -33,7 +33,11 @@ gsk = Oracle(name = 'GSK3B')
 qed = Oracle(name = 'qed')
 from sa import sa
 def oracle(smiles):
-    scores = [qed(smiles), sa(smiles), jnk(smiles), gsk(smiles)]
+    try:
+        scores = [qed(smiles), sa(smiles), jnk(smiles), gsk(smiles)]
+    except:
+        # return -np.inf
+        return -100.0 
     return np.mean(scores)
 
 
@@ -141,9 +145,9 @@ def mutate(p_gene, scoring_function, known_value_dict):
 # My modification: simplified version of the Goal Directed generator
 def generate_optimized_molecules(
     scoring_function,
-    n_jobs: int=-1,
     start_known_smiles: dict,
     starting_population: List[str],
+    n_jobs: int=-1,
     population_size: int = 1000,
     n_mutations: int=200,
     gene_size: int=300,
@@ -153,20 +157,20 @@ def generate_optimized_molecules(
     max_total_func_calls: int = 1000,
 ) -> List[str]:
 
-
     pool = joblib.Parallel(n_jobs=n_jobs)
+
     # Accurately track function evaluations by storing all known scores so far
     f_cache = dict(start_known_smiles)
 
     # # fetch initial population
-    if starting_population is None:
-        print('selecting initial population...')
-        init_size = population_size + n_mutations
-        # all_smiles = copy.deepcopy(self.all_smiles)
-        if random_start:
-            starting_population = np.random.choice(all_smiles, init_size)
-        else:
-            starting_population = self.top_k(all_smiles, scoring_function, init_size)
+    # if starting_population is None:
+    #     print('selecting initial population...')
+    #     init_size = population_size + n_mutations
+    #     # all_smiles = copy.deepcopy(self.all_smiles)
+    #     if random_start:
+    #         starting_population = np.random.choice(all_smiles, init_size)
+    #     else:
+    #         starting_population = self.top_k(all_smiles, scoring_function, init_size)
 
     # select initial population
     # print("Scoring initial population...")
@@ -178,8 +182,10 @@ def generate_optimized_molecules(
 
 
     # The smiles GA cannot deal with '%' in SMILES strings (used for two-digit ring numbers).
-    starting_population = [smiles for smiles in starting_population if '%' not in smiles]
 
+    starting_population = [smiles for smiles in starting_population if '%' not in smiles]
+    shuffle(starting_population)
+    starting_population = starting_population[:population_size]
     # calculate initial genes
     initial_genes = [cfg_to_gene(cfg_util.encode(s), max_len=gene_size)
                          for s in starting_population]
@@ -203,8 +209,9 @@ def generate_optimized_molecules(
         genes_to_mutate = [all_genes[i] for i in choice_indices]
 
         # evolve genes
-        joblist = (delayed(mutate)(g, scoring_function, f_cache) for g in genes_to_mutate)
-        new_population = pool(joblist)
+        # joblist = (delayed(mutate)(g, scoring_function, f_cache) for g in genes_to_mutate)
+        # new_population = pool(joblist)
+        new_population = [mutate(g, scoring_function, f_cache) for g in genes_to_mutate]
 
         # join and dedup
         population += new_population
@@ -236,8 +243,8 @@ def generate_optimized_molecules(
                   f'min: {np.min(population_scores):.3f} | '
                   f'std: {np.std(population_scores):.3f} | '
                   f'{gen_time:.2f} sec/gen | '
-                  f'{mol_sec:.2f} mol/sec')
-
+                  f'{mol_sec:.2f} mol/sec | '
+                  f'{len(f_cache):d} oracle calls')
 
         if len(f_cache) > max_total_func_calls:
             print("Max function calls hit, aborting")
@@ -245,8 +252,6 @@ def generate_optimized_molecules(
 
     return f_cache
     # return [molecule.smiles for molecule in population[:number_molecules]]
-
-
 
 
 
@@ -264,7 +269,7 @@ def main():
     parser.add_argument('--random_start', action='store_true')
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--suite', default='v2')
+    parser.add_argument('--max_func_calls', type=int, default=200)
 
     args = parser.parse_args()
     np.random.seed(args.seed)
@@ -289,15 +294,19 @@ def main():
     # json_file_path = os.path.join(args.output_dir, 'goal_directed_results.json')
     # assess_goal_directed_generation(optimiser, json_output_file=json_file_path, benchmark_version=args.suite)
 
+    smiles_file = args.smiles_file
+    with open(smiles_file, 'r') as fin:
+        start_smiles = fin.readlines()
+        start_smiles = [smiles.strip() for smiles in start_smiles]
 
     print("begin running smiles-GA")
     all_func_evals = generate_optimized_molecules(
         scoring_function = oracle,
-        n_jobs = arg.n_jobs, 
+        n_jobs = args.n_jobs, 
         start_known_smiles = dict(),
         starting_population=list(start_smiles),
         population_size=args.population_size,
-        n_mutations=n_mutations,
+        n_mutations=args.n_mutations,
         gene_size=args.gene_size,
         generations = args.generations, 
         random_start=args.random_start, 
@@ -307,7 +316,7 @@ def main():
 
 
     # Evaluate 
-    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k not in start_smiles]  # scores of new molecules
+    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k not in start_smiles and v is not None]  # scores of new molecules
     new_score_tuples.sort(reverse=True)
     top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
     diversity = Evaluator(name = 'Diversity')
