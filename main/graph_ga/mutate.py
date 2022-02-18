@@ -4,7 +4,8 @@ import numpy as np
 from rdkit import Chem, rdBase
 from rdkit.Chem import AllChem
 
-from . import crossover as co
+# from . import crossover as co
+import crossover as co 
 
 rdBase.DisableLog('rdApp.error')
 

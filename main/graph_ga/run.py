@@ -19,12 +19,13 @@ from guacamol.utils.chemistry import canonicalize
 from guacamol.utils.helpers import setup_default_logger
 
 
+
 from joblib import delayed
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
 
-from . import crossover as co, mutate as mu
-
+# from . import crossover as co, mutate as mu
+import crossover as co, mutate as mu
 
 def make_mating_pool(population_mol: List[Mol], population_scores, offspring_size: int):
     """
@@ -36,7 +37,7 @@ def make_mating_pool(population_mol: List[Mol], population_scores, offspring_siz
         offspring_size: number of molecules to return
     Returns: a list of RDKit Mol (probably not unique)
     """
-    # scores -> probs
+    # scores -> probs 
     sum_scores = sum(population_scores)
     population_probs = [p / sum_scores for p in population_scores]
     mating_pool = np.random.choice(population_mol, p=population_probs, size=offspring_size, replace=True)
@@ -193,11 +194,11 @@ def main():
 
     if args.output_dir is None:
         args.output_dir = os.path.dirname(os.path.realpath(__file__))
-
     # save command line args
+
     with open(os.path.join(args.output_dir, 'goal_directed_params.json'), 'w') as jf:
         json.dump(vars(args), jf, sort_keys=True, indent=4)
-
+    print(4)
     optimiser = GB_GA_Generator(smi_file=args.smiles_file,
                                 population_size=args.population_size,
                                 offspring_size=args.offspring_size,
@@ -206,10 +207,18 @@ def main():
                                 n_jobs=args.n_jobs,
                                 random_start=args.random_start,
                                 patience=args.patience)
-
+    print(5)
     json_file_path = os.path.join(args.output_dir, 'goal_directed_results.json')
     assess_goal_directed_generation(optimiser, json_output_file=json_file_path, benchmark_version=args.suite)
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
