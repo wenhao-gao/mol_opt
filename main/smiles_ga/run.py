@@ -316,8 +316,9 @@ def main():
 
 
     # Evaluate 
-    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k not in start_smiles and v is not None]  # scores of new molecules
-    new_score_tuples.sort(reverse=True)
+    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k not in start_smiles and k is not None and k!='']  # scores of new molecules
+    print(new_score_tuples)
+    new_score_tuples.sort(reverse=True,key=lambda x:x[0])
     top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
     diversity = Evaluator(name = 'Diversity')
     div = diversity([t[0] for t in top100_mols])
