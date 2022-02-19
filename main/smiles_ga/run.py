@@ -14,9 +14,6 @@ import numpy as np
 from joblib import delayed
 from rdkit import rdBase
 
-from guacamol.assess_goal_directed_generation import assess_goal_directed_generation 
-from guacamol.goal_directed_generator import GoalDirectedGenerator 
-from guacamol.scoring_function import ScoringFunction 
 # from . import cfg_util, smiles_grammar
 import cfg_util, smiles_grammar 
 
@@ -247,7 +244,7 @@ def generate_optimized_molecules(
                   f'{len(f_cache):d} oracle calls')
 
         if len(f_cache) > max_total_func_calls:
-            print("Max function calls hit, aborting")
+            print("Max oracle calls hit, aborting")
             break
 
     return f_cache

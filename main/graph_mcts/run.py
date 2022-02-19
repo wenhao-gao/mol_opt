@@ -44,7 +44,6 @@ def score_mol(smiles, score_fn):
     global f_cache
     if smiles not in f_cache:
         f_cache[smiles] = score_fn(smiles)
-    print("f_cache", len(f_cache))
     return f_cache[smiles]
 
 from rdkit import Chem 

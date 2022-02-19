@@ -1,25 +1,43 @@
-import os
-from selfies import decoder 
-import time
+import os, time
+from selfies import decoder, encoder 
 import multiprocessing
 import torch
 from tensorboardX import SummaryWriter
-from selfies import encoder
 import discriminator as D
 import evolution_functions as evo
 import generation_props as gen_func
+import numpy as np 
+
+
+from tdc import Oracle
+from tdc import Evaluator
+jnk = Oracle(name = 'JNK3')
+gsk = Oracle(name = 'GSK3B')
+qed = Oracle(name = 'qed')
+from sa import sa
+def oracle(smiles):
+    try:
+        scores = [qed(smiles), sa(smiles), jnk(smiles), gsk(smiles)]
+    except:
+        # return -np.inf
+        return -100.0 
+    return np.mean(scores)
+
+global f_cache 
+f_cache = dict()
+
 
 
 
 def initiate_ga(num_generations,            generation_size,    starting_selfies,max_molecules_len,
                 disc_epochs_per_generation, disc_enc_type,      disc_layers,     training_start_gen,           
-                device,                     properties_calc_ls, num_processors,  beta, max_fitness_collector, impose_time_adapted_pen):
-    
-       
+                device,                     properties_calc_ls, 
+                oracle,  
+                num_processors,  beta, max_fitness_collector, impose_time_adapted_pen):
     
     # Obtain starting molecule
     starting_smiles = evo.sanitize_multiple_smiles([decoder(selfie) for selfie in starting_selfies])
-
+    global f_cache 
     
     # Recording Collective results
     smiles_all         = []    # all SMILES seen in all generations
@@ -48,7 +66,8 @@ def initiate_ga(num_generations,            generation_size,    starting_selfies
 
         # Calculate fitness of previous generation (shape: (generation_size, ))
         fitness_here, order, fitness_ordered, smiles_ordered, selfies_ordered = gen_func.obtain_fitness(disc_enc_type,      smiles_here,   selfies_here, 
-                                                                                                        properties_calc_ls, discriminator, generation_index,
+                                                                                                        properties_calc_ls, oracle,        f_cache, 
+                                                                                                        discriminator, generation_index,
                                                                                                         max_molecules_len,  device,        generation_size,  
                                                                                                         num_processors,     writer,        beta,            
                                                                                                         image_dir,          data_dir,      max_fitness_collector, impose_time_adapted_pen)
@@ -94,8 +113,8 @@ if __name__ == '__main__':
             
             # Initialize new TensorBoard writers
             torch.cuda.empty_cache()
-            writer = SummaryWriter()   
-    
+            writer = SummaryWriter()  
+
             # Initiate the Genetic Algorithm
             smiles_all_counter = initiate_ga(    num_generations            = 1000,
                                                  generation_size            = 500,
@@ -107,6 +126,7 @@ if __name__ == '__main__':
                                                  training_start_gen         = 0,                          # generation index to start training discriminator
                                                  device                     = 'cpu',
                                                  properties_calc_ls         = ['logP', 'SAS', 'RingP'],   # None: No properties ; 'logP', 'SAS', 'RingP', 'QED'
+                                                 oracle = oracle, 
                                                  num_processors             = multiprocessing.cpu_count(),
                                                  beta                       = beta,
                                                  max_fitness_collector      = max_fitness_collector,
