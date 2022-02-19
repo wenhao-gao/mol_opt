@@ -104,7 +104,7 @@ def score_mol(smiles, score_fn, f_cache):
     print("f_cache", len(f_cache), smiles, 'exists' if is_exists else 'new')
     return f_cache[smiles]
 
-def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache, 
+def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache,  max_oracle_call, 
             discriminator,     disc_enc_type,         generation_index,
             max_molecules_len, device,                num_processors,    writer, beta, 
             data_dir,          max_fitness_collector, impose_time_adapted_pen):
@@ -176,10 +176,11 @@ def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache,
         fitness = []
         # global f_cache 
         for smiles in molecules_here:
-            fitness.append(score_mol(smiles, oracle, f_cache))
+            value = score_mol(smiles, oracle, f_cache)
+            # assert smiles in f_cache 
+            fitness.append(value)
         fitness = np.array(fitness).reshape(-1,1)
 
-    
         # Plot fitness without discriminator 
         # writer.add_scalar('max fitness without discr',  max(fitness),     generation_index)
         # writer.add_scalar('avg fitness without discr',  fitness.mean(),   generation_index)
@@ -302,7 +303,7 @@ def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache,
         
 
 def obtain_fitness(disc_enc_type, smiles_here, selfies_here, properties_calc_ls, 
-                   oracle,  f_cache, 
+                   oracle,  f_cache, max_oracle_call, 
                    discriminator, generation_index, max_molecules_len, device, 
                    generation_size, num_processors, writer, beta, image_dir,
                    data_dir, max_fitness_collector, impose_time_adapted_pen):
@@ -312,11 +313,15 @@ def obtain_fitness(disc_enc_type, smiles_here, selfies_here, properties_calc_ls,
     # ANALYSE THE GENERATION  
     # global f_cache   
     if disc_enc_type == 'smiles' or disc_enc_type == 'properties_rdkit':
-        fitness_here,  discriminator_predictions = fitness(smiles_here,   properties_calc_ls , oracle, f_cache,   discriminator, 
+        fitness_here,  discriminator_predictions = fitness(smiles_here,   properties_calc_ls , 
+                                                                          oracle, f_cache, max_oracle_call,   
+                                                                          discriminator, 
                                                                            disc_enc_type, generation_index,   max_molecules_len, device, num_processors, writer, beta, data_dir, 
                                                                            max_fitness_collector, impose_time_adapted_pen) 
     elif disc_enc_type == 'selfies':
-        fitness_here,  discriminator_predictions = fitness(selfies_here,  properties_calc_ls , oracle, f_cache,  discriminator, 
+        fitness_here,  discriminator_predictions = fitness(selfies_here,  properties_calc_ls , 
+                                                                          oracle, f_cache,  max_oracle_call, 
+                                                                          discriminator, 
                                                                            disc_enc_type, generation_index,   max_molecules_len, device, num_processors, writer, beta, data_dir, 
                                                                            max_fitness_collector, impose_time_adapted_pen) 
         

@@ -32,7 +32,7 @@ f_cache = dict()
 def initiate_ga(num_generations,            generation_size,    starting_selfies,max_molecules_len,
                 disc_epochs_per_generation, disc_enc_type,      disc_layers,     training_start_gen,           
                 device,                     properties_calc_ls, 
-                oracle,  
+                oracle,     max_oracle_call, 
                 num_processors,  beta, max_fitness_collector, impose_time_adapted_pen):
     
     # Obtain starting molecule
@@ -66,11 +66,14 @@ def initiate_ga(num_generations,            generation_size,    starting_selfies
 
         # Calculate fitness of previous generation (shape: (generation_size, ))
         fitness_here, order, fitness_ordered, smiles_ordered, selfies_ordered = gen_func.obtain_fitness(disc_enc_type,      smiles_here,   selfies_here, 
-                                                                                                        properties_calc_ls, oracle,        f_cache, 
+                                                                                                        properties_calc_ls, 
+                                                                                                        oracle,        f_cache,     max_oracle_call,  
                                                                                                         discriminator, generation_index,
                                                                                                         max_molecules_len,  device,        generation_size,  
                                                                                                         num_processors,     writer,        beta,            
                                                                                                         image_dir,          data_dir,      max_fitness_collector, impose_time_adapted_pen)
+        if len(f_cache) > max_oracle_call:
+            return f_cache 
 
         # Obtain molecules that need to be replaced & kept
         to_replace, to_keep = gen_func.apply_generation_cutoff(order, generation_size)
@@ -93,7 +96,8 @@ def initiate_ga(num_generations,            generation_size,    starting_selfies
 
     print('Total time: ', round((time.time()-total_time)/60, 2), ' mins')
     print('Total number of unique molecules: ', len(smiles_all_counter))
-    return smiles_all_counter
+    return f_cache 
+    # return smiles_all_counter
 
 
 
@@ -101,22 +105,24 @@ if __name__ == '__main__':
         
     beta_preference = [0] 
     num_iterations  = 1
+    max_oracle_call = 200
 
     results_dir = evo.make_clean_results_dir()
     
     exper_time = time.time()
-    for i in range(num_iterations):
-        for beta in beta_preference:
+    # for i in range(num_iterations):
+    #     for beta in beta_preference:
             
-            max_fitness_collector = []
-            image_dir, saved_models_dir, data_dir = evo.make_clean_directories(beta, results_dir, i) # clear directories 
+    beta = beta_preference[0]
+    i = 0 
+    max_fitness_collector = []
+    image_dir, saved_models_dir, data_dir = evo.make_clean_directories(beta, results_dir, i) # clear directories 
             
-            # Initialize new TensorBoard writers
-            torch.cuda.empty_cache()
-            writer = SummaryWriter()  
+    # Initialize new TensorBoard writers
+    torch.cuda.empty_cache()
+    writer = SummaryWriter()  
 
-            # Initiate the Genetic Algorithm
-            smiles_all_counter = initiate_ga(    num_generations            = 1000,
+    f_cache = initiate_ga(    num_generations            = 1000,
                                                  generation_size            = 500,
                                                  starting_selfies           = [encoder('C')],
                                                  max_molecules_len          = 81,
@@ -127,11 +133,26 @@ if __name__ == '__main__':
                                                  device                     = 'cpu',
                                                  properties_calc_ls         = ['logP', 'SAS', 'RingP'],   # None: No properties ; 'logP', 'SAS', 'RingP', 'QED'
                                                  oracle = oracle, 
+                                                 max_oracle_call = max_oracle_call, 
                                                  num_processors             = multiprocessing.cpu_count(),
                                                  beta                       = beta,
                                                  max_fitness_collector      = max_fitness_collector,
                                                  impose_time_adapted_pen    = True
                                             )
+
+    # Evaluate 
+    new_score_tuples = [(v, k) for k, v in f_cache.items() if k is not None and k!='']  # scores of new molecules
+    print(new_score_tuples)
+    new_score_tuples.sort(reverse=True,key=lambda x:x[0])
+    top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
+    diversity = Evaluator(name = 'Diversity')
+    div = diversity([t[0] for t in top100_mols])
+    output = dict(
+        top_mols=top100_mols,
+        AST=np.average([t[1] for t in top100_mols]),
+        diversity=div,
+        all_func_evals=dict(f_cache),
+    )
             
     print('Total Experiment time: ', (time.time()-exper_time)/60, ' mins')
 
