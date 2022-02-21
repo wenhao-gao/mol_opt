@@ -43,5 +43,5 @@ model.load_state_dict(load_dict)
 model = model.cuda()
 
 torch.manual_seed(0)
-for i in xrange(nsample):
-    print model.sample_prior(prob_decode=False)
+for i in range(nsample):
+    print(model.sample_prior(prob_decode=False))

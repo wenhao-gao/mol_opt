@@ -85,7 +85,6 @@ def reproduce(mating_pool, mutation_rate):
     return new_child
 
 
-# My modification: pass in a dictionary of known values to track function calls
 def score_mol(mol, score_fn, known_value_dict):
     smiles = Chem.MolToSmiles(mol)
     if smiles not in known_value_dict:

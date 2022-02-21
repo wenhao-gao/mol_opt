@@ -202,7 +202,7 @@ class SparseGP:
         self.original_training_targets.set_value(training_targets[ selected_points, : ])
 
         print('Initializing network')
-	sys.stdout.flush()
+        sys.stdout.flush()
         self.setForTraining()
         self.initialize()
 
@@ -215,7 +215,7 @@ class SparseGP:
         all_params = self.get_params()
 
         print('Compiling adam updates')
-	sys.stdout.flush()
+        sys.stdout.flush()
 
         process_minibatch_adam = theano.function([ X, Z, y ], -e, updates = adam_theano(-e, all_params, learning_rate), \
             givens = { self.input_means: X, self.input_vars: Z, self.original_training_targets: y })

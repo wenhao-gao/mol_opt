@@ -4,24 +4,27 @@ from multiprocessing import Pool
 
 import math, random, sys
 from optparse import OptionParser
-import cPickle as pickle
+import pickle 
 
 from fast_jtnn import *
 import rdkit
 
 def tensorize(smiles, assm=True):
-    mol_tree = MolTree(smiles)
-    mol_tree.recover()
-    if assm:
-        mol_tree.assemble()
+    try:
+        mol_tree = MolTree(smiles)
+        mol_tree.recover()
+        if assm:
+            mol_tree.assemble()
+            for node in mol_tree.nodes:
+                if node.label not in node.cands:
+                    node.cands.append(node.label)
+
+        del mol_tree.mol
         for node in mol_tree.nodes:
-            if node.label not in node.cands:
-                node.cands.append(node.label)
-
-    del mol_tree.mol
-    for node in mol_tree.nodes:
-        del node.mol
-
+            del node.mol
+    except:
+        return None 
+    print("tensorize")
     return mol_tree
 
 if __name__ == "__main__":
@@ -40,15 +43,22 @@ if __name__ == "__main__":
 
     with open(opts.train_path) as f:
         data = [line.strip("\r\n ").split()[0] for line in f]
+    data = data[:170000]
 
     all_data = pool.map(tensorize, data)
+    all_data = list(filter(lambda x:x!=None, all_data))
 
-    le = (len(all_data) + num_splits - 1) / num_splits
+    le = int((len(all_data) + num_splits - 1) / num_splits)
 
-    for split_id in xrange(num_splits):
+    for split_id in range(num_splits):
         st = split_id * le
         sub_data = all_data[st : st + le]
 
         with open('tensors-%d.pkl' % split_id, 'wb') as f:
-            pickle.dump(sub_data, f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(sub_data, f)
+            # pickle.dump(sub_data, f, pickle.HIGHEST_PROTOCOL)
+
+
+
+
 

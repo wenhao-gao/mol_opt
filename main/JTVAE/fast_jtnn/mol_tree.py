@@ -1,7 +1,10 @@
 import rdkit
 import rdkit.Chem as Chem
-from chemutils import get_clique_mol, tree_decomp, get_mol, get_smiles, set_atommap, enum_assemble, decode_stereo
-from vocab import *
+from .chemutils import get_clique_mol, tree_decomp, get_mol, get_smiles, set_atommap, enum_assemble, decode_stereo
+from .vocab import *
+from tqdm import tqdm 
+import pickle 
+
 
 class MolTreeNode(object):
 
@@ -116,11 +119,19 @@ if __name__ == "__main__":
     lg.setLevel(rdkit.RDLogger.CRITICAL)
 
     cset = set()
-    for line in sys.stdin:
-        smiles = line.split()[0]
-        mol = MolTree(smiles)
-        for c in mol.nodes:
-            cset.add(c.smiles)
+    for ii, line in tqdm(enumerate(sys.stdin)):
+        smiles = line.split()[0] 
+        try:
+            mol = MolTree(smiles)
+            for c in mol.nodes:
+                cset.add(c.smiles)
+            print('moltree done')
+        except:
+            pass 
+        if ii > 170000:
+            break 
+
+    pickle.dump(cset, open("vocab.pkl", 'wb'))
     for x in cset:
-        print x
+        print(x)
 

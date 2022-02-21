@@ -7,7 +7,7 @@ import numpy as np
 from gauss import * 
 
 from theano.tensor.slinalg import Cholesky as MatrixChol
-
+from psd_theano import * 
 import math
 
 def n_pdf(x):
@@ -74,15 +74,15 @@ class Sparse_GP:
         # We compute the output mean
 
         self.Kzz = compute_kernel(self.lls, self.lsf, self.z, self.z) + T.eye(self.z.shape[ 0 ]) * self.jitter * T.exp(self.lsf)
-        self.KzzInv = T.nlinalg.MatrixInversePSD()(self.Kzz)
+        self.KzzInv = MatrixInversePSD()(self.Kzz)
         LLt = T.dot(self.LParamPost, T.transpose(self.LParamPost))
         self.covCavityInv = self.KzzInv + LLt * casting(self.n_points - self.set_for_training) / casting(self.n_points)
-        self.covCavity = T.nlinalg.MatrixInversePSD()(self.covCavityInv)
+        self.covCavity = MatrixInversePSD()(self.covCavityInv)
         self.meanCavity = T.dot(self.covCavity, casting(self.n_points - self.set_for_training) / casting(self.n_points) * self.mParamPost)
         self.KzzInvcovCavity = T.dot(self.KzzInv, self.covCavity)
         self.KzzInvmeanCavity = T.dot(self.KzzInv, self.meanCavity)
         self.covPosteriorInv = self.KzzInv + LLt
-        self.covPosterior = T.nlinalg.MatrixInversePSD()(self.covPosteriorInv)
+        self.covPosterior = MatrixInversePSD()(self.covPosteriorInv)
         self.meanPosterior = T.dot(self.covPosterior, self.mParamPost)
         self.Kxz = compute_kernel(self.lls, self.lsf, self.input_means, self.z)
         self.B = T.dot(self.KzzInvcovCavity, self.KzzInv) - self.KzzInv 
@@ -164,20 +164,20 @@ class Sparse_GP:
 
         assert self.covCavity is not None  and self.meanCavity is not None and self.covCavityInv is not None 
 
-        return casting(0.5 * self.n_inducing_points * np.log(2 * np.pi)) + casting(0.5) * T.nlinalg.LogDetPSD()(self.covCavity) + \
+        return casting(0.5 * self.n_inducing_points * np.log(2 * np.pi)) + casting(0.5) * LogDetPSD()(self.covCavity) + \
             casting(0.5) * T.dot(T.dot(T.transpose(self.meanCavity), self.covCavityInv), self.meanCavity)
 
     def getLogNormalizerPrior(self):
 
         assert self.KzzInv is not None 
 
-        return casting(0.5 * self.n_inducing_points * np.log(2 * np.pi)) - casting(0.5) * T.nlinalg.LogDetPSD()(self.KzzInv)
+        return casting(0.5 * self.n_inducing_points * np.log(2 * np.pi)) - casting(0.5) * LogDetPSD()(self.KzzInv)
 
     def getLogNormalizerPosterior(self):
 
         assert self.covPosterior is not None and self.meanPosterior is not None and self.covPosteriorInv is not None
 
-        return casting(0.5 * self.n_inducing_points * np.log(2 * np.pi)) + casting(0.5) * T.nlinalg.LogDetPSD()(self.covPosterior) + \
+        return casting(0.5 * self.n_inducing_points * np.log(2 * np.pi)) + casting(0.5) * LogDetPSD()(self.covPosterior) + \
             casting(0.5) * T.dot(T.dot(T.transpose(self.meanPosterior), self.covPosteriorInv), self.meanPosterior)
 
     ##
@@ -269,10 +269,10 @@ class Sparse_GP:
     def compute_log_ei(self, x, incumbent):
 
         Kzz = compute_kernel(self.lls, self.lsf, self.z, self.z) + T.eye(self.z.shape[ 0 ]) * self.jitter * T.exp(self.lsf)
-        KzzInv = T.nlinalg.MatrixInversePSD()(Kzz)
+        KzzInv = MatrixInversePSD()(Kzz) ## MatrixInversePSD MatrixInverse 
         LLt = T.dot(self.LParamPost, T.transpose(self.LParamPost))
         covCavityInv = KzzInv + LLt * casting(self.n_points - self.set_for_training) / casting(self.n_points)
-        covCavity = T.nlinalg.MatrixInversePSD()(covCavityInv)
+        covCavity = MatrixInversePSD()(covCavityInv)
         meanCavity = T.dot(covCavity, casting(self.n_points - self.set_for_training) / casting(self.n_points) * self.mParamPost)
         KzzInvcovCavity = T.dot(KzzInv, covCavity)
         KzzInvmeanCavity = T.dot(KzzInv, meanCavity)
@@ -291,10 +291,10 @@ class Sparse_GP:
         # We compute the old predictive mean at x
         
         Kzz = compute_kernel(self.lls, self.lsf, self.z, self.z) + T.eye(self.z.shape[ 0 ]) * self.jitter * T.exp(self.lsf)
-        KzzInv = T.nlinalg.MatrixInversePSD()(Kzz)
+        KzzInv = MatrixInversePSD()(Kzz)
         LLt = T.dot(self.LParamPost, T.transpose(self.LParamPost))
         covCavityInv = KzzInv + LLt * casting(self.n_points - self.set_for_training) / casting(self.n_points)
-        covCavity = T.nlinalg.MatrixInversePSD()(covCavityInv)
+        covCavity = MatrixInversePSD()(covCavityInv)
         meanCavity = T.dot(covCavity, casting(self.n_points - self.set_for_training) / casting(self.n_points) * self.mParamPost)
         KzzInvmeanCavity = T.dot(KzzInv, meanCavity)
         Kxz = compute_kernel(self.lls, self.lsf, x, self.z)
@@ -308,7 +308,7 @@ class Sparse_GP:
         # We compute the required cross covariance matrices
 
         KXX = compute_kernel(self.lls, self.lsf, X, X) - T.dot(T.dot(KXz, KzzInv), KXz.T) + T.eye(X.shape[ 0 ]) * self.jitter * T.exp(self.lsf)
-        KXXInv = T.nlinalg.MatrixInversePSD()(KXX)
+        KXXInv = MatrixInversePSD()(KXX)
 
         KxX = compute_kernel(self.lls, self.lsf, x, X)
         xX = T.concatenate([ x, X ], 0)
@@ -326,7 +326,7 @@ class Sparse_GP:
         z_expanded = T.concatenate([ self.z, X ], 0)
         Kxz_expanded = compute_kernel(self.lls, self.lsf, x, z_expanded)
         Kzz_expanded = compute_kernel(self.lls, self.lsf, z_expanded, z_expanded) + T.eye(z_expanded.shape[ 0 ]) * self.jitter * T.exp(self.lsf)
-        Kzz_expandedInv = T.nlinalg.MatrixInversePSD()(Kzz_expanded)
+        Kzz_expandedInv = MatrixInversePSD()(Kzz_expanded)
         v_out = T.exp(self.lsf) - T.dot(Kxz_expanded * T.dot(Kxz_expanded, Kzz_expandedInv), T.ones_like(z_expanded[ : , 0 : 1 ]))
         new_predictive_var = T.tile(v_out, [ 1, randomness.shape[ 1 ] ])
 

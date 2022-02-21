@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
-from mol_tree import MolTree
+from .mol_tree import MolTree
 import numpy as np
-from jtnn_enc import JTNNEncoder
-from mpn import MPN
-from jtmpn import JTMPN
-import cPickle as pickle
+from .jtnn_enc import JTNNEncoder
+from .mpn import MPN
+from .jtmpn import JTMPN
+import pickle
 import os, random
 
 class PairTreeFolder(object):
@@ -31,7 +31,7 @@ class PairTreeFolder(object):
             if self.shuffle: 
                 random.shuffle(data) #shuffle data before batch
 
-            batches = [data[i : i + self.batch_size] for i in xrange(0, len(data), self.batch_size)]
+            batches = [data[i : i + self.batch_size] for i in range(0, len(data), self.batch_size)]
             if len(batches[-1]) < self.batch_size:
                 batches.pop()
 
@@ -60,13 +60,13 @@ class MolTreeFolder(object):
     def __iter__(self):
         for fn in self.data_files:
             fn = os.path.join(self.data_folder, fn)
-            with open(fn) as f:
+            with open(fn, 'rb') as f:
                 data = pickle.load(f)
 
             if self.shuffle: 
                 random.shuffle(data) #shuffle data before batch
 
-            batches = [data[i : i + self.batch_size] for i in xrange(0, len(data), self.batch_size)]
+            batches = [data[i : i + self.batch_size] for i in range(0, len(data), self.batch_size)]
             if len(batches[-1]) < self.batch_size:
                 batches.pop()
 

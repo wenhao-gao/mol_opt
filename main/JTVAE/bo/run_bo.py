@@ -11,7 +11,7 @@ from rdkit.Chem import Descriptors
 
 import torch
 import torch.nn as nn
-from jtnn import create_var, JTNNVAE, Vocab
+from fast_jtnn import create_var, JTNNVAE, Vocab
 
 from optparse import OptionParser
 
@@ -29,15 +29,16 @@ def load_object(filename):
     ret = pickle.loads(result)
     source.close()
     return ret
-
 parser = OptionParser()
 parser.add_option("-v", "--vocab", dest="vocab_path")
 parser.add_option("-m", "--model", dest="model_path")
 parser.add_option("-o", "--save_dir", dest="save_dir")
 parser.add_option("-w", "--hidden", dest="hidden_size", default=200)
 parser.add_option("-l", "--latent", dest="latent_size", default=56)
-parser.add_option("-d", "--depth", dest="depth", default=3)
-parser.add_option("-r", "--seed", dest="random_seed", default=None)
+# parser.add_option("-d", "--depth", dest="depth", default=3)
+parser.add_option("-r", "--seed", dest="random_seed", default=1)
+parser.add_option("-t", "--deptht", dest="depthT", default=20)
+parser.add_option("-g", "--depthg", dest="depthG", default=3)
 opts,args = parser.parse_args()
 
 vocab = [x.strip("\r\n ") for x in open(opts.vocab_path)] 
@@ -45,11 +46,15 @@ vocab = Vocab(vocab)
 
 hidden_size = int(opts.hidden_size)
 latent_size = int(opts.latent_size)
-depth = int(opts.depth)
+# depth = int(opts.depth)
 random_seed = int(opts.random_seed)
+depthT = int(opts.depthT)
+depthG = int(opts.depthG)
+# model = JTNNVAE(vocab, hidden_size, latent_size, depth)
+model = JTNNVAE(vocab, hidden_size, latent_size, depthT, depthG)
 
-model = JTNNVAE(vocab, hidden_size, latent_size, depth)
-model.load_state_dict(torch.load(opts.model_path))
+load_model = torch.load(opts.model_path)
+model.load_state_dict(load_model)
 model = model.cuda()
 
 # We load the random seed
@@ -69,7 +74,6 @@ X_test = X[ permutation, : ][ np.int(np.round(0.9 * n)) :, : ]
 y_train = y[ permutation ][ 0 : np.int(np.round(0.9 * n)) ]
 y_test = y[ permutation ][ np.int(np.round(0.9 * n)) : ]
 
-np.random.seed(random_seed)
 
 logP_values = np.loadtxt('logP_values.txt')
 SA_scores = np.loadtxt('SA_scores.txt')
@@ -89,20 +93,20 @@ while iteration < 5:
     pred, uncert = sgp.predict(X_test, 0 * X_test)
     error = np.sqrt(np.mean((pred - y_test)**2))
     testll = np.mean(sps.norm.logpdf(pred - y_test, scale = np.sqrt(uncert)))
-    print 'Test RMSE: ', error
-    print 'Test ll: ', testll
+    print('Test RMSE: ', error)
+    print('Test ll: ', testll)
 
     pred, uncert = sgp.predict(X_train, 0 * X_train)
     error = np.sqrt(np.mean((pred - y_train)**2))
     trainll = np.mean(sps.norm.logpdf(pred - y_train, scale = np.sqrt(uncert)))
-    print 'Train RMSE: ', error
-    print 'Train ll: ', trainll
+    print('Train RMSE: ', error)
+    print('Train ll: ', trainll)
 
     # We pick the next 60 inputs
     next_inputs = sgp.batched_greedy_ei(60, np.min(X_train, 0), np.max(X_train, 0))
     valid_smiles = []
     new_features = []
-    for i in xrange(60):
+    for i in range(60):
         all_vec = next_inputs[i].reshape((1,-1))
         tree_vec,mol_vec = np.hsplit(all_vec, 2)
         tree_vec = create_var(torch.from_numpy(tree_vec).float())
@@ -112,7 +116,7 @@ while iteration < 5:
             valid_smiles.append(s)
             new_features.append(all_vec)
     
-    print len(valid_smiles), "molecules are found"
+    print(len(valid_smiles), "molecules are found")
     valid_smiles = valid_smiles[:50]
     new_features = next_inputs[:50]
     new_features = np.vstack(new_features)
@@ -137,7 +141,7 @@ while iteration < 5:
             cycle_length = cycle_length - 6
 
         current_cycle_score = -cycle_length
-     
+
         current_SA_score_normalized = (current_SA_score - np.mean(SA_scores)) / np.std(SA_scores)
         current_log_P_value_normalized = (current_log_P_value - np.mean(logP_values)) / np.std(logP_values)
         current_cycle_score_normalized = (current_cycle_score - np.mean(cycle_scores)) / np.std(cycle_scores)
@@ -145,8 +149,8 @@ while iteration < 5:
         score = current_SA_score_normalized + current_log_P_value_normalized + current_cycle_score_normalized
         scores.append(-score) #target is always minused
 
-    print valid_smiles
-    print scores 
+    print(valid_smiles)
+    print(scores)
 
     save_object(scores, opts.save_dir + "/scores{}.dat".format(iteration))
 
@@ -155,3 +159,12 @@ while iteration < 5:
         y_train = np.concatenate([ y_train, np.array(scores)[ :, None ] ], 0)
 
     iteration += 1
+
+
+
+
+
+
+
+
+
