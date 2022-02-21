@@ -33,7 +33,7 @@ def score_mol(smiles, score_fn, known_value_dict):
         known_value_dict[smiles] = score_fn(smiles)
     return known_value_dict[smiles]
 
-max_func_calls = 1000 
+max_func_calls = 250 
 f_cache = dict() 
 train_size = int(max_func_calls*0.5)
 
@@ -92,9 +92,9 @@ y_train = y[ permutation ][ 0 : np.int(np.round(0.9 * n)) ]
 y_test = y[ permutation ][ np.int(np.round(0.9 * n)) : ]
 
 
-M,K = 200, 30
+M,K = 100, 30
 print('fit GP')
-for iteration in tqdm(range(5)):
+for iteration in tqdm(range(10)):
     np.random.seed(iteration * random_seed) 
     sgp = SparseGP(X_train, 0 * X_train, y_train, M)
     print('begin train sparse GP')
@@ -139,20 +139,24 @@ for iteration in tqdm(range(5)):
     if len(new_features) > 0:
         X_train = np.concatenate([ X_train, new_features ], 0)
         y_train = np.concatenate([ y_train, np.array(scores)[ :, None ] ], 0)
+    if len(f_cache) > max_func_calls: 
+        print("max oracle hits, exit")
+        break 
 
 
 
 # Evaluate 
-new_score_tuples = [(-v, k) for k, v in f_cache.items() if k not in start_smiles]  # scores of new molecules
+new_score_tuples = [(v, k) for k, v in f_cache.items()]  # scores of new molecules
 new_score_tuples.sort(reverse=True)
 top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
+print(top100_mols)
 diversity = Evaluator(name = 'Diversity')
 div = diversity([t[0] for t in top100_mols])
 output = dict(
         top_mols=top100_mols,
         AST=np.average([t[1] for t in top100_mols]),
         diversity=div,
-        all_func_evals=dict(all_func_evals),
+        all_func_evals=dict(f_cache),
 )
 # with open(args.output_file, "w") as f:
 #     json.dump(output, f, indent=4)
