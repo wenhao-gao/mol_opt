@@ -9,10 +9,6 @@ def oracle(smiles):
 	return np.mean(scores)
 
 
-def canonicalize(smiles):
-	xxxxx 
-	
-
 parser.add_argument('--max_func_calls', type=int, default=14_950) # match DST eval setting, with small error margin
 
 
@@ -24,17 +20,6 @@ def score_mol(mol, score_fn, known_value_dict):
 
 
 f_cache = dict(start_known_smiles)
-
-
-
-
-
-
-
-
-
-
-
 
 
 

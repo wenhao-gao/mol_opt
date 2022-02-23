@@ -1,0 +1,20 @@
+name: graph_ga
+method: bayes
+metric:
+  goal: maximize
+  name: avg_top100
+parameters:
+  population_size:
+    values: [50, 100, 150, 200]
+  offspring_size:
+    values: [100, 200, 300, 400, 500]
+  mutation_rate:
+    distribution: uniform
+    min: 0
+    max: 0.1
+  patience:
+    value: 5
+  max_generations:
+    value: 1000
+  max_n_oracles:
+    value: 10000
