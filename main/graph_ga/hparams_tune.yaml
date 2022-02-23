@@ -11,7 +11,7 @@ parameters:
   mutation_rate:
     distribution: uniform
     min: 0
-    max: 0.2
+    max: 0.1
   patience:
     value: 5
   max_generations:

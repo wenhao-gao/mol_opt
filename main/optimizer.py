@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 from joblib import delayed
 from rdkit import Chem
+from rdkit.Chem import Draw
 import tdc
 from tdc.generation import MolGen
 import wandb
@@ -12,10 +13,10 @@ import wandb
 class BaseOptimizer:
 
     def __init__(self, 
-                 config=None,
                  args=None,
                  smi_file=None,
                  n_jobs=-1):
+        self.model_name = "Default"
         self.n_jobs = n_jobs
         self.pool = joblib.Parallel(n_jobs=n_jobs)
         self.smi_file = smi_file
@@ -65,10 +66,6 @@ class BaseOptimizer:
     def log_intermediate(self, mols, scores):
         smis = [Chem.MolToSmiles(m) for m in mols]
         temp_top10 = list(self.mol_buffer.items())[:10]
-#             img = Chem.Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp], 
-#                           molsPerRow=5, subImgSize=(200,200), 
-#                           legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp])
-#             img.save("temp.png")
 
         wandb.log({
             "avg_top1": np.max(scores), 
@@ -77,8 +74,8 @@ class BaseOptimizer:
             "avg_sa": np.mean(self.sa_scorer(smis)),
             "diversity_top100": self.diversity_evaluator(smis),
             "n_oracle": len(self.mol_buffer),
-            # "best_mol": wandb.Image(Chem.Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
-            #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp]))
+            # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
+            #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
         })
     
     def log_result(self):
@@ -94,8 +91,9 @@ class BaseOptimizer:
             results_all_level.append(sorted(results[:n_o], key=lambda kv: kv[1][0], reverse=True))
         
         # Currently logging the top-100 moelcules, will update to PDD selection later
-        data = [[i+1, results_all_level[-1][i][1][0], results_all_level[-1][i][1][1], results_all_level[-1][i][0]] for i in range(100)]
-        columns = ["Rank", "Score", "#Oracle", "SMILES"]
+        data = [[i+1, results_all_level[-1][i][1][0], results_all_level[-1][i][1][1], \
+                wandb.Image(Draw.MolToImage(Chem.MolFromSmiles(results_all_level[-1][i][0]))), results_all_level[-1][i][0]] for i in range(100)]
+        columns = ["Rank", "Score", "#Oracle", "Image", "SMILES"]
         wandb.log({"Top 100 Molecules": wandb.Table(data=data, columns=columns)})
         
         # Log batch metrics at various oracle calls
@@ -123,21 +121,31 @@ class BaseOptimizer:
     def _optimize(self, oracle, config):
         raise NotImplementedError
             
-    def hparam_tune(self, oracle, hparam_space, count, seed=0):
-        wandb.init()
-        sweep_id = wandb.sweep(hparam_space)
+    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, seed=0):
+        hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
         np.random.seed(seed)
         
         def _func():
-            with wandb.init() as run:
-                self._optimize(oracle, wandb.config)
+            with wandb.init(config=hparam_default) as run:
+                config = wandb.config
+                self._optimize(oracle, config)
             self.mol_buffer = {}
 
+        sweep_id = wandb.sweep(hparam_space)
+        # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)
         wandb.agent(sweep_id, function=_func, count=count)
         
     def optimize(self, oracle, config, seed=0):
-        wandb.init(config=config)
+        run = wandb.init(project=self.model_name + "_" + oracle.name, config=config, reinit=True)
         np.random.seed(seed)
         self._optimize(oracle, config)
         self.log_result()
+        run.finish()
+
+    def production(self, oracle, config, num_runs=5):
+        seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        seeds = seeds[:num_runs]
+        for seed in seeds:
+            self.optimize(oracle, config, seed)
+            self.mol_buffer = {}
 

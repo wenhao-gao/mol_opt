@@ -53,8 +53,9 @@ def reproduce(mating_pool, mutation_rate):
 
 class GB_GA_Optimizer(BaseOptimizer):
 
-    def __init__(self, config=None, args=None, smi_file=None, n_jobs=-1):
-        super().__init__(config, args, smi_file, n_jobs)
+    def __init__(self, args=None, smi_file=None, n_jobs=-1):
+        super().__init__(args, smi_file, n_jobs)
+        self.model_name = "graph_ga"
 
     def _optimize(self, oracle, config):
         
@@ -102,16 +103,13 @@ class GB_GA_Optimizer(BaseOptimizer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--smiles_file', default=None)
-    parser.add_argument('--config', default='hparams_default.yaml')
+    parser.add_argument('--config_default', default='hparams_default.yaml')
+    parser.add_argument('--config_tune', default='hparams_tune.yaml')
     parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--population_size', type=int, default=100)
-    parser.add_argument('--offspring_size', type=int, default=200)
-    parser.add_argument('--mutation_rate', type=float, default=0.01)
-    parser.add_argument('--generations', type=int, default=1000)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--count', type=int, default=30)
-    parser.add_argument('--task', type=str, default="single", choices=["tune", "single", "production"])
+    parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
 
@@ -123,20 +121,26 @@ def main():
         os.mkdir(args.output_dir)
 
     try:
-        config = yaml.safe_load(open(args.config))
+        config_default = yaml.safe_load(open(args.config_default))
     except:
-        config = yaml.safe_load(open(os.path.join(args.output_dir, args.config)))
+        config_default = yaml.safe_load(open(os.path.join(args.output_dir, args.config_default)))
+
+    if args.task == "tune":
+        try:
+            config_tune = yaml.safe_load(open(args.config_tune))
+        except:
+            config_tune = yaml.safe_load(open(os.path.join(args.output_dir, args.config_tune)))
         
-    oracle = Oracle(name = "QED")
+    oracle = Oracle(name = args.oracles[0])
 
-    optimizer = GB_GA_Optimizer(None, smi_file=None, n_jobs=args.n_jobs)
+    optimizer = GB_GA_Optimizer(args=args, smi_file=args.smiles_file, n_jobs=args.n_jobs)
 
-    if args.task == "single":
-        optimizer.optimize(oracle=oracle, config=config)
+    if args.task == "simple":
+        optimizer.optimize(oracle=oracle, config=config_default)
     elif args.task == "tune":
-        optimizer.hparam_tune(oracle=oracle, hparam_space=config, count=args.count)
+        optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
     elif args.task == "production":
-        optimizer.optimize(oracle=oracle, config=config)
+        optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
 
     # json_file_path = os.path.join(args.output_dir, 'optimization_results.yaml')
     # optimizer.
