@@ -138,3 +138,6 @@ wandb
 data/*
 oracle
 *.slurm
+slurm*
+result*.yaml
+
