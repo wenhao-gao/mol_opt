@@ -19,8 +19,8 @@ from main.optimizer import BaseOptimizer
 
 class Exahsutive_Optimizer(BaseOptimizer):
 
-    def __init__(self, args=None, smi_file=None, n_jobs=-1):
-        super().__init__(args, smi_file, n_jobs)
+    def __init__(self, args=None):
+        super().__init__(args)
         self.model_name = "screening"
 
     def _optimize(self, oracle, config):
@@ -38,7 +38,7 @@ class Exahsutive_Optimizer(BaseOptimizer):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--smiles_file', default=None)
+    parser.add_argument('--smi_file', default=None)
     parser.add_argument('--config_default', default='hparams_default.yaml')
     parser.add_argument('--config_tune', default='hparams_tune.yaml')
     parser.add_argument('--n_jobs', type=int, default=-1)
@@ -66,17 +66,17 @@ def main():
             config_tune = yaml.safe_load(open(args.config_tune))
         except:
             config_tune = yaml.safe_load(open(os.path.join(args.output_dir, args.config_tune)))
-        
-    oracle = Oracle(name = args.oracles[0])
 
-    optimizer = Exahsutive_Optimizer(args=args, smi_file=args.smiles_file, n_jobs=args.n_jobs)
+    for oracle_name in args.oracles:
+        oracle = Oracle(name = oracle_name)
+        optimizer = Exahsutive_Optimizer(args=args)
 
-    if args.task == "simple":
-        optimizer.optimize(oracle=oracle, config=config_default)
-    elif args.task == "tune":
-        optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-    elif args.task == "production":
-        optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
+        if args.task == "simple":
+            optimizer.optimize(oracle=oracle, config=config_default)
+        elif args.task == "tune":
+            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
+        elif args.task == "production":
+            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
 
 
 if __name__ == "__main__":

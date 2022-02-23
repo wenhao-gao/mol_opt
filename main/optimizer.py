@@ -14,17 +14,14 @@ from main.utils.chem import *
 
 class BaseOptimizer:
 
-    def __init__(self, 
-                 args=None,
-                 smi_file=None,
-                 n_jobs=-1):
+    def __init__(self, args=None):
         self.model_name = "Default"
         self.args = args
-        self.n_jobs = n_jobs
-        self.pool = joblib.Parallel(n_jobs=n_jobs)
-        self.smi_file = smi_file
+        self.n_jobs = args.n_jobs
+        self.pool = joblib.Parallel(n_jobs=self.n_jobs)
+        self.smi_file = args.smi_file
         self.mol_buffer = {}
-        if smi_file is not None:
+        if self.smi_file is not None:
             self.all_smiles = self.load_smiles_from_file(self.smi_file)
         else:
             data = MolGen(name = 'ZINC')
@@ -166,6 +163,7 @@ class BaseOptimizer:
         self._optimize(oracle, config)
         self.log_result()
         self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
+        self.mol_buffer = {}
         run.finish()
 
     def production(self, oracle, config, num_runs=5):
