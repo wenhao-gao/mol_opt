@@ -69,7 +69,7 @@ def ring_OK(mol):
 
 # TODO: set from main? calculate for dataset?
 average_size = 39.15
-size_stdev = 3.50
+size_stdev = 100  # My modification: reduce suppression of large molecules!
 
 
 def mol_ok(mol):
