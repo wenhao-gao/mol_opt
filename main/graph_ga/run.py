@@ -59,10 +59,16 @@ class GB_GA_Optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         
-        starting_population = np.random.choice(self.all_smiles, config["population_size"])
+        if self.smi_file is not None:
+            # Exploitation run
+            starting_population = self.all_smiles[:config["population_size"]]
+        else:
+            # Exploration run
+            starting_population = np.random.choice(self.all_smiles, config["population_size"])
 
         # select initial population
-        population_smiles = heapq.nlargest(config["population_size"], starting_population, key=oracle)
+        # population_smiles = heapq.nlargest(config["population_size"], starting_population, key=oracle)
+        population_smiles = starting_population
         population_mol = [Chem.MolFromSmiles(s) for s in population_smiles]
         population_scores = self.score_mol(oracle, population_mol)
 
@@ -141,9 +147,6 @@ def main():
         optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
     elif args.task == "production":
         optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-    # json_file_path = os.path.join(args.output_dir, 'optimization_results.yaml')
-    # optimizer.
 
 
 if __name__ == "__main__":

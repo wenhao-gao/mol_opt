@@ -1,6 +1,7 @@
 import json
 import os
 import joblib
+import yaml
 import numpy as np
 from joblib import delayed
 from rdkit import Chem
@@ -8,6 +9,7 @@ from rdkit.Chem import Draw
 import tdc
 from tdc.generation import MolGen
 import wandb
+from main.utils.chem import *
 
 
 class BaseOptimizer:
@@ -17,6 +19,7 @@ class BaseOptimizer:
                  smi_file=None,
                  n_jobs=-1):
         self.model_name = "Default"
+        self.args = args
         self.n_jobs = n_jobs
         self.pool = joblib.Parallel(n_jobs=n_jobs)
         self.smi_file = smi_file
@@ -30,6 +33,10 @@ class BaseOptimizer:
         self.sa_scorer = tdc.Oracle(name = 'SA')
         self.diversity_evaluator = tdc.Evaluator(name = 'Diversity')
         self.filter = tdc.chem_utils.oracle.filter.MolFilter(filters = ['PAINS', 'SureChEMBL', 'Glaxo'], property_filters_flag = False)
+
+    def load_smiles_from_file(self, file_name):
+        with open(smi_file) as f:
+            return self.pool(delayed(canonicalize)(s.strip()) for s in f)
             
     def sanitize(self, mol_list):
         new_mol_list = []
@@ -57,15 +64,25 @@ class BaseOptimizer:
                 score_list.append(_[0])
             except:
                 score = oracle_func(smi)
-                self.mol_buffer[smi] = (score, len(self.mol_buffer)+1)
+                self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
                 score_list.append(score)
                 
         self.sort_buffer()
         return score_list
     
-    def log_intermediate(self, mols, scores):
-        smis = [Chem.MolToSmiles(m) for m in mols]
-        temp_top10 = list(self.mol_buffer.items())[:10]
+    def log_intermediate(self, mols=None, scores=None):
+
+        if mols is None and scores is None:
+            # If not spefcified, log current top-100 mols in buffer
+            temp_top100 = list(self.mol_buffer.items())[:100]
+            smis = [item[0] for item in temp_top100]
+            scores = [item[1][0] for item in temp_top100]
+        else:
+            # Otherwise, log the input moleucles
+            smis = [Chem.MolToSmiles(m) for m in mols]
+        
+        # Uncomment this line if want to log top-10 moelucles figures, so as the best_mol key values.
+        # temp_top10 = list(self.mol_buffer.items())[:10]
 
         wandb.log({
             "avg_top1": np.max(scores), 
@@ -101,8 +118,16 @@ class BaseOptimizer:
         columns = ["#Oracle", "avg_top100", "avg_top10", "avg_top1", "Diversity", "avg_SA", "%Pass", "Top-1 Pass"]
         wandb.log({"Batch metrics at various level": wandb.Table(data=data, columns=columns)})
         
-    def save_result(self):
-        pass
+    def save_result(self, suffix=None):
+
+        if suffix is None:
+            output_file_path = os.path.join(self.args.output_dir, 'results.yaml')
+        else:
+            output_file_path = os.path.join(self.args.output_dir, 'results_' + suffix + '.yaml')
+
+        self.sort_buffer()
+        with open(output_file_path, 'w') as f:
+            yaml.dump(self.mol_buffer, f, sort_keys=False)
     
     def _analyze_results(self, results):
         results = results[:100]
@@ -140,6 +165,7 @@ class BaseOptimizer:
         np.random.seed(seed)
         self._optimize(oracle, config)
         self.log_result()
+        self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
         run.finish()
 
     def production(self, oracle, config, num_runs=5):
