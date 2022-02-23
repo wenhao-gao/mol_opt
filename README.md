@@ -31,7 +31,18 @@ conda activate molopt
 
 ## run 
 
-### graph-GA 
+First run the following to add current path to python path:
+```bash
+export PYTHONPATH=`pwd`:$PYTHONPATH
+```
+
+### graph-GA
+
+```bash
+python main/graph_ga/run.py
+```
+
+### graph-GA iclr
 
 ```bash
 python main/graph_ga/run.py --smiles_file data/guacamol_v1_all.smiles --output_file main/graph_ga/result.json --max_func_calls=1490
