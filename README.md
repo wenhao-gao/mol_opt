@@ -30,11 +30,34 @@ conda activate molopt
 
 ## Models
 
-|               | `runable` | `compatible` | `hparam` | `test` | `unity` |
-|---------------|-----------|--------------|----------|--------|---------|
-| **Screening** | ✅         | ✅           | ✅       |        |         |
-| **Graph Ga**  | ✅         | ✅           | ✅       |        |         |
-| **SMILES GA** | ✅         |              |          |        |         |
+|                    | `runable` | `compatible` | `hparam` | `test` | `unity` |
+|------------------ --|-----------|--------------|----------|--------|---------|
+| **Screening**      | ✅         | ✅           | ✅       |        |         |
+| **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
+| **SMILES GA**      |           |              |          |        |         |
+| **Graph MCTS**     |           |              |          |        |         |
+| **SMILES HC**      |           |              |          |        |         |
+| **SELFIES HC**     |           |              |          |        |         |
+| **SMILES VAE BO**  |           |              |          |        |         |
+| **SELFIES VAE BO** |           |              |          |        |         |
+| **JTVAE BO**       |           |              |          |        |         |
+| **BOSS (SMILES)**  |           |              |          |        |         |
+| **BOSS (SELFIES)** |           |              |          |        |         |
+| **ORGAN**          |           |              |          |        |         |
+| **MolGAN**         |           |              |          |        |         |
+| **ChemBO**         |           |              |          |        |         |
+| **REINVENT**       |           |              |          |        |         |
+| **RationaleRL**    |           |              |          |        |         |
+| **MolDQN**         |           |              |          |        |         |
+| **MIMOSA**         |           |              |          |        |         |
+| **MARS**           |           |              |          |        |         |
+| **DoG-Gen**        |           |              |          |        |         |
+| **DoG-AE BO**      |           |              |          |        |         |
+| **GA-D**           |           |              |          |        |         |
+| **SynNet**         |           |              |          |        |         |
+| **Pasithea**       |           |              |          |        |         |
+| **DST**            |           |              |          |        |         |
+| **GFlowNet**       |           |              |          |        |         |
 
 ## Run 
 
