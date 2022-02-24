@@ -43,6 +43,7 @@ conda activate molopt
 | **JTVAE BO**       |           |              |          |        |         |
 | **BOSS (SMILES)**  |           |              |          |        |         |
 | **BOSS (SELFIES)** |           |              |          |        |         |
+| **Graph-GA+GP-BO** |           |              |          |        |         |
 | **ORGAN**          |           |              |          |        |         |
 | **MolGAN**         |           |              |          |        |         |
 | **ChemBO**         |           |              |          |        |         |
@@ -58,6 +59,7 @@ conda activate molopt
 | **Pasithea**       |           |              |          |        |         |
 | **DST**            |           |              |          |        |         |
 | **GFlowNet**       |           |              |          |        |         |
+| **GFlowNet (AL)**  |           |              |          |        |         |
 
 ## Run 
 
