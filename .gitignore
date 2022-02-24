@@ -6,6 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+
+# jtvae
+main/JTVAE/molvae
+main/JTVAE/download.sh
+main/JTVAE/jtnn 
+
 # Distribution / packaging
 .Python
 build/
@@ -134,3 +140,4 @@ oracle
 *.slurm
 slurm*
 result*.yaml
+
