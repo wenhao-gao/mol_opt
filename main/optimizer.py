@@ -155,10 +155,10 @@ class BaseOptimizer:
 
         sweep_id = wandb.sweep(hparam_space)
         # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)
-        wandb.agent(sweep_id, function=_func, count=count)
+        wandb.agent(sweep_id, function=_func, count=count, entity="mol_opt")
         
     def optimize(self, oracle, config, seed=0):
-        run = wandb.init(project=self.model_name + "_" + oracle.name, config=config, reinit=True)
+        run = wandb.init(project=self.model_name + "_" + oracle.name, config=config, reinit=True, entity="mol_opt")
         np.random.seed(seed)
         self._optimize(oracle, config)
         self.log_result()
