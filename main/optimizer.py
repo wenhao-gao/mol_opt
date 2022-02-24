@@ -132,13 +132,17 @@ class BaseOptimizer:
         smis = [item[0] for item in results]
         scores = [item[1][0] for item in results]
         smis_pass = self.filter(smis)
+        if len(smis_pass) == 0:
+            top1_pass = -1
+        else:
+            top1_pass = np.max([scores_dict[s] for s in smis_pass])
         return [np.mean(scores), 
-                 np.mean(scores[:10]), 
-                 np.max(scores), 
-                 self.diversity_evaluator(smis), 
-                 np.mean(self.sa_scorer(smis)), 
-                 float(len(smis_pass) / 100), 
-                 np.max([scores_dict[s] for s in smis_pass])]
+                np.mean(scores[:10]), 
+                np.max(scores), 
+                self.diversity_evaluator(smis), 
+                np.mean(self.sa_scorer(smis)), 
+                float(len(smis_pass) / 100), 
+                top1_pass]
         
     def _optimize(self, oracle, config):
         raise NotImplementedError
