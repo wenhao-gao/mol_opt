@@ -1,0 +1,92 @@
+################################################################################
+Most of these commands should be run from the core_wln_global folder
+################################################################################
+
+################################################################################
+### Train model, 757k params
+################################################################################
+
+mkdir model-300-3-direct
+python nntrain_direct.py --train ../data/train.txt.proc --hidden 300 --depth 3 --save_dir model-300-3-direct | tee model-300-3-direct/log.txt
+
+################################################################################
+### Validate
+################################################################################
+
+# General command:
+python nntest_direct.py --test ../data/valid.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000
+
+# validate with ckpt-100000
+After seeing 30000, acc@12: 0.868, acc@16: 0.903, acc@20: 0.918, acc@40: 0.951, acc@80: 0.970
+# validate with ckpt-120000
+After seeing 30000, acc@12: 0.869, acc@16: 0.904, acc@20: 0.919, acc@40: 0.951, acc@80: 0.971
+# validate with ckpt-140000
+After seeing 30000, acc@12: 0.870, acc@16: 0.905, acc@20: 0.920, acc@40: 0.953, acc@80: 0.971
+# validate with ckpt-160000
+After seeing 30000, acc@12: 0.870, acc@16: 0.905, acc@20: 0.919, acc@40: 0.952, acc@80: 0.971
+# validate with ckpt-150000
+After seeing 30000, acc@12: 0.870, acc@16: 0.904, acc@20: 0.919, acc@40: 0.951, acc@80: 0.970
+
+################################################################################
+### Select cpkt-140000 & use
+################################################################################
+
+# Get bond predictions - includes reactivity scores in output
+python nntest_direct.py --test ../data/valid.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000 --verbose 1 --detailed 1 > model-300-3-direct/valid.cbond_detailed
+python nntest_direct.py --test ../data/train.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000 --verbose 1 --detailed 1 > model-300-3-direct/train.cbond_detailed
+python nntest_direct.py --test ../data/test.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000 --verbose 1 --detailed 1 > model-300-3-direct/test.cbond_detailed
+
+# Also get test predictions without reactivity scores
+python nntest_direct.py --test ../data/test.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000 --verbose 1 > model-300-3-direct/test.cbond
+
+################################################################################
+### Examine coverage & do not allow reagents/solvents/molecules to contribute heavy atoms
+################################################################################
+
+#python ../scripts/coverage.py
+cand = open('model-300-3-direct/test.cbond')
+gold = open('../data/test.txt.proc')
+# Output
+[6, 8, 10, 12, 14, 16, 18, 20]
+[0.9003, 0.928425, 0.941875, 0.950225, 0.95605, 0.960125, 0.9633, 0.9651]
+
+################################################################################
+### Examine coverage & *do* allow reagents/solvents/molecules to contribute heavy atoms (for comparison)
+################################################################################
+
+# Try to learn to ignore these distractions, but sometimes it's hard (ambiguous reactivity, data quality issues) (HARD)
+python nntest_direct.py --test ../data/test.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000 --verbose 1 --hard 1 > model-300-3-direct/test_withReagents.cbond
+
+#python ../scripts/coverage.py
+cand = open('model-300-3-direct/test_withReagents.cbond')
+gold = open('../data/test.txt.proc')
+# Output
+[6, 8, 10, 12, 14, 16, 18, 20]
+[0.8768, 0.90625, 0.920875, 0.9305, 0.937775, 0.944325, 0.948625, 0.9523]
+
+# Counting num. cands (including reagents in enumeration) - from inside rank_diff_wln
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 6
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 8
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 10
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 12
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 14
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 16
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 18
+python count_num_candidates.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test_withReagents.cbond --ncand 1500   --ncore 20
+
+# Run summary script
+python ../scripts/average_nums_in_text.py
+# Average num cands using n = 6, 13.349975
+# Average num cands using n = 8, 26.4533                                                                                                      [3/1881]
+# Average num cands using n = 10, 48.110225
+# Average num cands using n = 12, 81.683925
+# Average num cands using n = 14, 130.609825
+# Average num cands using n = 16, 199.375625
+# Average num cands using n = 18, 293.2185
+# Average num cands using n = 20, 416.7096
+
+################################################################################
+### Human prediction - allow reagents/solvents/catalysts to contribute heavy atoms
+################################################################################
+
+python nntest_direct.py --test ../data/test_human.txt.proc --hidden 300 --depth 3 --model model-300-3-direct --checkpoint ckpt-140000 --verbose 1 --hard 1 --detailed 1 > model-300-3-direct/test_human_withReagents.cbond_detailed

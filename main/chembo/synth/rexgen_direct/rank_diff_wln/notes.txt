@@ -1,0 +1,77 @@
+################################################################################
+Most of these commands should be run from the rank_diff_wln folder
+################################################################################
+
+################################################################################
+### Check number of bond changes
+################################################################################
+
+python ../scripts/characterize_number_of_bond_changes.py
+
+Finished processing ../data/train.txt
+{0: 0.17112960993558007, 1: 0.5512951214443752, 2: 0.19556272690601048, 3: 0.06623149608224235, 4: 0.013891231801679563, 5: 0.0018898138301123375}
+Finished processing ../data/valid.txt
+{0: 0.17363333333333333, 1: 0.5489333333333334, 2: 0.19726666666666667, 3: 0.0645, 4: 0.014333333333333333, 5: 0.0013333333333333333}
+Finished processing ../data/test.txt
+{0: 0.173925, 1: 0.549575, 2: 0.198325, 3: 0.063875, 4: 0.012925, 5: 0.001375}
+
+==> Always use n=5 for enumeration, defined by kwargs in mol_graph_direct_useScores.smiles2graph
+
+################################################################################
+### Train model, 1802k params
+################################################################################
+
+mkdir model-core16-500-3-max150-direct-useScores
+python nntrain_direct_useScores.py --train ../data/train.txt.proc --cand \
+    ../core_wln_global/model-300-3-direct/train.cbond_detailed --hidden 500 --depth 3 --ncand 150 --ncore 16 \
+     --save_dir model-core16-500-3-max150-direct-useScores | tee model-core16-500-3-max150-direct-useScores/log.txt
+
+################################################################################
+### Validate
+################################################################################
+
+python nntest_direct_useScores.py --test ../data/valid.txt.proc --cand ../core_wln_global/model-300-3-direct/valid.cbond_detailed \
+    --hidden 500 --depth 3 --ncand 1500   --ncore 16 --model model-core16-500-3-max150-direct-useScores --checkpoint ckpt-2400000 --verbose 1 > model-core16-500-3-max150-direct-useScores/valid.cbond_detailed_2400000
+python ../scripts/eval_by_smiles.py --gold ../data/valid.txt.proc --pred model-core16-500-3-max150-direct-useScores/valid.cbond_detailed_2400000 --bonds_as_doubles true
+
+# Valid on 400k
+[strict]  acc@1: 0.8321, acc@2: 0.8845, acc@3: 0.9034, acc@5: 0.9217 (after seeing 30000) gfound = 0.9864
+[molvs]   acc@1: 0.8370, acc@2: 0.8906, acc@3: 0.9100, acc@5: 0.9289 (after seeing 30000) gfound = 0.9953
+# Valid on 800k
+[strict]  acc@1: 0.8394, acc@2: 0.8899, acc@3: 0.9084, acc@5: 0.9247 (after seeing 30000) gfound = 0.9864
+[molvs]   acc@1: 0.8445, acc@2: 0.8962, acc@3: 0.9155, acc@5: 0.9322 (after seeing 30000) gfound = 0.9953
+# Valid on 1000k
+[strict]  acc@1: 0.8422, acc@2: 0.8928, acc@3: 0.9131, acc@5: 0.9290 (after seeing 30000) gfound = 0.9864
+[molvs]   acc@1: 0.8471, acc@2: 0.8993, acc@3: 0.9203, acc@5: 0.9367 (after seeing 30000) gfound = 0.9953
+# Valid on 1600k
+[strict]  acc@1: 0.8475, acc@2: 0.8990, acc@3: 0.9155, acc@5: 0.9315 (after seeing 30000) gfound = 0.9864
+[molvs]   acc@1: 0.8527, acc@2: 0.9061, acc@3: 0.9229, acc@5: 0.9392 (after seeing 30000) gfound = 0.9953
+# Valid on 2000k
+[strict]  acc@1: 0.8510, acc@2: 0.9007, acc@3: 0.9179, acc@5: 0.9317 (after seeing 30000) gfound = 0.9864
+[molvs]   acc@1: 0.8562, acc@2: 0.9078, acc@3: 0.9257, acc@5: 0.9397 (after seeing 30000) gfound = 0.9953
+# Valid on 2400k
+<paste in>
+
+################################################################################
+### Select cpkt-240000 & use
+################################################################################
+
+# Testing with 2400k
+python nntest_direct_useScores.py --test ../data/test.txt.proc --cand ../core_wln_global/model-300-3-direct/test.cbond_detailed \
+    --hidden 500 --depth 3 --ncand 1500   --ncore 16 --model model-core16-500-3-max150-direct-useScores --checkpoint ckpt-2400000 --verbose 1 > model-core16-500-3-max150-direct-useScores/test.cbond_detailed_2400000
+python ../scripts/eval_by_smiles.py --gold ../data/test.txt.proc --pred model-core16-500-3-max150-direct-useScores/test.cbond_detailed_2400000 --bonds_as_doubles true
+
+[strict]  acc@1: 0.8564, acc@2: 0.9053, acc@3: 0.9209, acc@5: 0.9342 (after seeing 40000) gfound = 0.9859
+[molvs]   acc@1: 0.8616, acc@2: 0.9118, acc@3: 0.9278, acc@5: 0.9415 (after seeing 40000) gfound = 0.9946
+
+################################################################################
+### Human prediction
+################################################################################
+
+# Testing on human dataset
+python nntest_direct_useScores.py --test ../data/test_human.txt.proc --cand ../core_wln_global/model-300-3-direct/test_human_withReagents.cbond_detailed \
+    --hidden 500 --depth 3 --ncand 1500   --ncore 16 --model model-core16-500-3-max150-direct-useScores --checkpoint ckpt-2400000 --verbose 1 > model-core16-500-3-max150-direct-useScores/test_human_withReagents.cbond_detailed_2400000
+python ../scripts/eval_by_smiles.py --gold ../data/test_human.txt.proc --pred model-core16-500-3-max150-direct-useScores/test_human_withReagents.cbond_detailed_2400000 --bonds_as_doubles true
+
+[strict]  acc@1: 0.7250, acc@2: 0.8000, acc@3: 0.8375, acc@5: 0.8625 (after seeing 80) gfound = 0.9875
+[molvs]   acc@1: 0.7375, acc@2: 0.8125, acc@3: 0.8500, acc@5: 0.8750 (after seeing 80) gfound = 1.0000

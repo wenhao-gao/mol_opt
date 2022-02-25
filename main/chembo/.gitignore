@@ -1,0 +1,27 @@
+.DS_Store
+**/*.pyc
+**/*.tar
+**/*.npy
+*.pkl.gz
+datasets/*
+!datasets/loaders.py
+**/__pycache__
+
+# Ignore heavy data files
+**/model-300-3-direct/model.ckpt-140000.data-00000-of-00001
+synth/rexgen_direct/data
+synth/rexgen_direct/rank_diff_wln/model-core16-500-3-max150-direct-useScores/model.ckpt-2400000.data-00000-of-00001
+
+# Ignore experiment directories with logs
+experiment_dir*
+chemist_exp*
+rand_exp*
+**/results/
+lists.txt
+visualizations
+tmp_
+.vs_code
+*.swp
+**/archive/*
+sftp-config.json
+.nosync
