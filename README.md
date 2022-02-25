@@ -23,13 +23,45 @@ conda activate molopt
 ## step by step  
 
 - runable 
-- tdc oracle  
-- evaluate 
-- save 
-- oracle calls 
+- make compatible (run.py with TDC type oracle)
+- hyper-param tuning 
+- test run 
 - code unify 
 
-## run 
+## Models
+
+|                    | `runable` | `compatible` | `hparam` | `test` | `unity` |
+|--------------------|-----------|--------------|----------|--------|---------|
+| **Screening**      | ✅         | ✅           | ✅       |        |         |
+| **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
+| **SMILES GA**      |           |              |          |        |         |
+| **Graph MCTS**     |           |              |          |        |         |
+| **SMILES HC**      |           |              |          |        |         |
+| **SELFIES HC**     |           |              |          |        |         |
+| **SMILES VAE BO**  |           |              |          |        |         |
+| **SELFIES VAE BO** |           |              |          |        |         |
+| **JTVAE BO**       |           |              |          |        |         |
+| **BOSS (SMILES)**  |           |              |          |        |         |
+| **BOSS (SELFIES)** |           |              |          |        |         |
+| **Graph-GA+GP-BO** |           |              |          |        |         |
+| **ORGAN**          |           |              |          |        |         |
+| **MolGAN**         |           |              |          |        |         |
+| **ChemBO**         |           |              |          |        |         |
+| **REINVENT**       |           |              |          |        |         |
+| **RationaleRL**    |           |              |          |        |         |
+| **MolDQN**         |           |              |          |        |         |
+| **MIMOSA**         |           |              |          |        |         |
+| **MARS**           |           |              |          |        |         |
+| **DoG-Gen**        |           |              |          |        |         |
+| **DoG-AE BO**      |           |              |          |        |         |
+| **GA-D**           |           |              |          |        |         |
+| **SynNet**         |           |              |          |        |         |
+| **Pasithea**       |           |              |          |        |         |
+| **DST**            |           |              |          |        |         |
+| **GFlowNet**       |           |              |          |        |         |
+| **GFlowNet (AL)**  |           |              |          |        |         |
+
+## Run 
 
 First run the following to add current path to python path:
 ```bash
@@ -41,13 +73,6 @@ export PYTHONPATH=`pwd`:$PYTHONPATH
 ```bash
 python main/graph_ga/run.py
 ```
-
-### graph-GA iclr
-
-```bash
-python main/graph_ga/run.py --smiles_file data/guacamol_v1_all.smiles --output_file main/graph_ga/result.json --max_func_calls=1490
-```
-
 
 ### smiles-GA 
 

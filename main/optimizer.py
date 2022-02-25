@@ -60,9 +60,14 @@ class BaseOptimizer:
                 _ = self.mol_buffer[smi]
                 score_list.append(_[0])
             except:
-                score = oracle_func(smi)
-                self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
-                score_list.append(score)
+                if mol is not None:
+                    score = oracle_func(smi)
+                    self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
+                    score_list.append(score)
+                else:
+                    score = 0
+                    self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
+                    score_list.append(score)
                 
         self.sort_buffer()
         return score_list
@@ -132,18 +137,22 @@ class BaseOptimizer:
         smis = [item[0] for item in results]
         scores = [item[1][0] for item in results]
         smis_pass = self.filter(smis)
+        if len(smis_pass) == 0:
+            top1_pass = -1
+        else:
+            top1_pass = np.max([scores_dict[s] for s in smis_pass])
         return [np.mean(scores), 
-                 np.mean(scores[:10]), 
-                 np.max(scores), 
-                 self.diversity_evaluator(smis), 
-                 np.mean(self.sa_scorer(smis)), 
-                 float(len(smis_pass) / 100), 
-                 np.max([scores_dict[s] for s in smis_pass])]
+                np.mean(scores[:10]), 
+                np.max(scores), 
+                self.diversity_evaluator(smis), 
+                np.mean(self.sa_scorer(smis)), 
+                float(len(smis_pass) / 100), 
+                top1_pass]
         
     def _optimize(self, oracle, config):
         raise NotImplementedError
             
-    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, seed=0):
+    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, seed=0, project="tune"):
         hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
         np.random.seed(seed)
         
@@ -155,10 +164,11 @@ class BaseOptimizer:
 
         sweep_id = wandb.sweep(hparam_space)
         # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)
-        wandb.agent(sweep_id, function=_func, count=count)
+        wandb.agent(sweep_id, function=_func, count=count, entity="mol_opt")
         
-    def optimize(self, oracle, config, seed=0):
-        run = wandb.init(project=self.model_name + "_" + oracle.name, config=config, reinit=True)
+    def optimize(self, oracle, config, seed=0, project="test"):
+        run = wandb.init(project=project, config=config, reinit=True, entity="mol_opt")
+        wandb.run.name = self.model_name + "_" + oracle.name + "_" + wandb.run.id
         np.random.seed(seed)
         self._optimize(oracle, config)
         self.log_result()
@@ -166,10 +176,12 @@ class BaseOptimizer:
         self.mol_buffer = {}
         run.finish()
 
-    def production(self, oracle, config, num_runs=5):
+    def production(self, oracle, config, num_runs=5, project="production"):
         seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        if num_runs > len(seeds):
+            raise ValueError(f"Current implementation only allows at most {len(seeds)} runs.")
         seeds = seeds[:num_runs]
         for seed in seeds:
-            self.optimize(oracle, config, seed)
+            self.optimize(oracle, config, seed, project)
             self.mol_buffer = {}
 

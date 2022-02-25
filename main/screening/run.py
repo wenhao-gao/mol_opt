@@ -56,18 +56,19 @@ def main():
     elif not os.path.exist(args.output_dir):
         os.mkdir(args.output_dir)
 
-    try:
-        config_default = yaml.safe_load(open(args.config_default))
-    except:
-        config_default = yaml.safe_load(open(os.path.join(args.output_dir, args.config_default)))
-
-    if args.task == "tune":
-        try:
-            config_tune = yaml.safe_load(open(args.config_tune))
-        except:
-            config_tune = yaml.safe_load(open(os.path.join(args.output_dir, args.config_tune)))
-
     for oracle_name in args.oracles:
+
+        try:
+            config_default = yaml.safe_load(open(args.config_default))
+        except:
+            config_default = yaml.safe_load(open(os.path.join(args.output_dir, args.config_default)))
+
+        if args.task == "tune":
+            try:
+                config_tune = yaml.safe_load(open(args.config_tune))
+            except:
+                config_tune = yaml.safe_load(open(os.path.join(args.output_dir, args.config_tune)))
+
         oracle = Oracle(name = oracle_name)
         optimizer = Exahsutive_Optimizer(args=args)
 
