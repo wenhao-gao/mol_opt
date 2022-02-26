@@ -114,19 +114,23 @@ def main():
         'gpb_hp_tune_criterion': 'ml'
     }
 
+    max_oracle_num = 1000
+    import pickle
+    smiles_dict = dict()  
+    pickle.dump(smiles_dict, open("smiles_dict.pkl", 'wb')) 
+
     chemist = Chemist(
         objective_func,
+        max_oracle_num = max_oracle_num, 
         domain_config=domain_config,
         chemist_args=chemist_args,
         is_mf=False,
         worker_manager=worker_manager,
         reporter=reporter
     )
-    print('before chemist run')
 
     opt_val, opt_point, history = chemist.run(args.budget)
 
-    print('after chemist run ')
     # convert to raw format
     raw_opt_point = chemist.get_raw_domain_point_from_processed(opt_point)
     opt_mol = raw_opt_point[0]

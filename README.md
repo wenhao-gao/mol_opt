@@ -34,27 +34,27 @@ conda activate molopt
 |--------------------|-----------|--------------|----------|--------|---------|
 | **Screening**      | ✅         | ✅           | ✅       |        |         |
 | **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
-| **SMILES GA**      |           |              |          |        |         |
-| **Graph MCTS**     |           |              |          |        |         |
+| **SMILES GA**      | ✅         |              |          |        |         |
+| **Graph MCTS**     | ✅         |              |          |        |         |
 | **SMILES HC**      |           |              |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
 | **SMILES VAE BO**  |           |              |          |        |         |
 | **SELFIES VAE BO** |           |              |          |        |         |
-| **JTVAE BO**       |           |              |          |        |         |
+| **JTVAE BO**       | ✅        |              |          |        |         |
 | **BOSS (SMILES)**  |           |              |          |        |         |
 | **BOSS (SELFIES)** |           |              |          |        |         |
 | **Graph-GA+GP-BO** |           |              |          |        |         |
 | **ORGAN**          |           |              |          |        |         |
 | **MolGAN**         |           |              |          |        |         |
-| **ChemBO**         |           |              |          |        |         |
+| **ChemBO**         | -         |              |          |        |         |
 | **REINVENT**       |           |              |          |        |         |
 | **RationaleRL**    |           |              |          |        |         |
-| **MolDQN**         |           |              |          |        |         |
+| **MolDQN**         | ✅        |              |          |        |         |
 | **MIMOSA**         |           |              |          |        |         |
 | **MARS**           |           |              |          |        |         |
 | **DoG-Gen**        |           |              |          |        |         |
 | **DoG-AE BO**      |           |              |          |        |         |
-| **GA-D**           |           |              |          |        |         |
+| **GA-D SELFIES**           | ✅        |              |          |        |         |
 | **SynNet**         |           |              |          |        |         |
 | **Pasithea**       |           |              |          |        |         |
 | **DST**            |           |              |          |        |         |

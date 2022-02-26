@@ -23,21 +23,21 @@ from mols.molecule import Molecule, Reaction
 from datasets.loaders import get_chembl_prop, get_initial_pool
 
 
-class Explorer:
-    def __init__(self):
-        pass
+# class Explorer:
+#     def __init__(self):
+#         pass
 
-    def run(self, capital):
-        """ Main method of Explorers.
+#     def run(self, capital):
+#         """ Main method of Explorers.
 
-        Arguments:
-            capital - for how long to run
-        Returns:
-            opt_value, opt_point, history
-        """
-        pass
+#         Arguments:
+#             capital - for how long to run
+#         Returns:
+#             opt_value, opt_point, history
+#         """
+#         pass
 
-class RandomExplorer(Explorer):
+class RandomExplorer(object):
     """
     Implements a random evolutionary algorithm
     for exploring molecule space.
@@ -108,6 +108,7 @@ class RandomExplorer(Explorer):
             else:
                 if not outcomes:
                     logging.info('Synthesizer returned an empty set of results, restarting with another subset.')
+        # print('outcomes', outcomes)
 
         top_pt, top_val = self.select_product(outcomes, criterion="product")
         print("top_pt", top_pt)

@@ -27,9 +27,12 @@ from mols.mol_gp import get_default_kernel_type
 
 
 class Chemist:
-    def __init__(self, objective_func, domain_config, chemist_args=None, 
+    def __init__(self, objective_func, max_oracle_num, 
+                 domain_config, chemist_args=None, 
                  worker_manager='default', reporter='default', 
                  is_mf=False, mf_strategy=None):
+
+        self.max_oracle_num = max_oracle_num 
         self.reporter = get_reporter(reporter)
         self.worker_manager = get_worker_manager(worker_manager)
         if domain_config is None:
@@ -138,17 +141,18 @@ class Chemist:
         Returns:
             opt_val, opt_point, history
         """
-        optimiser_constructor = CPGPBandit
 
         # create optimiser and return
-        optimiser = optimiser_constructor(
+        optimiser = CPGPBandit(
             self.func_caller,
             self.worker_manager,
+            max_oracle_num = self.max_oracle_num,
             is_mf=self.is_mf,
             options=self.options,
             reporter=self.reporter,
-            domain_dist_computers=self.domain_dist_computers
+            domain_dist_computers=self.domain_dist_computers, 
         )
+        print('create optimizer, before optimization')
 
         return optimiser.optimise(max_capital)
 

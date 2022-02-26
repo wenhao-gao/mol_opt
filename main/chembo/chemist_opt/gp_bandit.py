@@ -140,7 +140,9 @@ class GPBandit(GPBandit_):
 
 class CPGPBandit(GPBandit):
     """ A GP Bandit class on Cartesian product spaces. """
-    def __init__(self, func_caller, worker_manager, is_mf=False,
+    def __init__(self, func_caller, worker_manager, 
+                 max_oracle_num, 
+                 is_mf=False, 
                  domain_dist_computers=None, options=None, reporter=None):
         """ Constructor. """ 
         if options is None:  # never gets called, otherwise imports would fail below:
@@ -154,6 +156,7 @@ class CPGPBandit(GPBandit):
         self.capital_type = options.capital_type  # store capital_type for Explorer
         super(CPGPBandit, self).__init__(func_caller, worker_manager, is_mf=is_mf,
                                          options=options, reporter=reporter)
+        self.max_oracle_num = max_oracle_num 
 
     def _child_opt_method_set_up(self):
         """ Set up for child class. Override this method in child class. """
