@@ -35,6 +35,8 @@ conda activate molopt
 | **Screening**      | ✅         | ✅           | ✅       |        |         |
 | **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
 | **SMILES GA**      | ✅         |              |          |        |         |
+| **SELFIES GA**           | ✅        |              |          |        |         |
+| **SELFIES GA +D **           | ✅        |              |          |        |         |
 | **Graph MCTS**     | ✅         |              |          |        |         |
 | **SMILES HC**      |           |              |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
@@ -44,20 +46,19 @@ conda activate molopt
 | **BOSS (SMILES)**  |           |              |          |        |         |
 | **BOSS (SELFIES)** |           |              |          |        |         |
 | **Graph-GA+GP-BO** |           |              |          |        |         |
-| **ORGAN**          |           |              |          |        |         |
-| **MolGAN**         |           |              |          |        |         |
+| **ORGAN**          | doing     |              |          |        |         |
+| **MolGAN**         | doing     |              |          |        |         |
 | **ChemBO**         | -         |              |          |        |         |
 | **REINVENT**       |           |              |          |        |         |
 | **RationaleRL**    |           |              |          |        |         |
 | **MolDQN**         | ✅        |              |          |        |         |
-| **MIMOSA**         |           |              |          |        |         |
-| **MARS**           |           |              |          |        |         |
-| **DoG-Gen**        |           |              |          |        |         |
-| **DoG-AE BO**      |           |              |          |        |         |
-| **GA-D SELFIES**           | ✅        |              |          |        |         |
+| **MIMOSA**         | doing     |              |          |        |         |
+| **MARS**           | doing     |              |          |        |         |
+| **DoG-Gen**        | -         |              |          |        |         |
+| **DoG-AE BO**      | -         |              |          |        |         |
 | **SynNet**         |           |              |          |        |         |
 | **Pasithea**       |           |              |          |        |         |
-| **DST**            |           |              |          |        |         |
+| **DST**            | doing     |              |          |        |         |
 | **GFlowNet**       |           |              |          |        |         |
 | **GFlowNet (AL)**  |           |              |          |        |         |
 
