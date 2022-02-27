@@ -13,7 +13,6 @@ random.seed(1)
 from chemutils import * 
 from inference_utils import * 
 
-
 oracle_name = sys.argv[1] # 'jnkgsk', 'qedsajnkgsk', 'qed', 'jnk', 'gsk' 
 oracle_num = int(sys.argv[2])
 
@@ -50,11 +49,9 @@ elif oracle_name == 'logp':
 	def oracle(smiles):
 		return logp(smiles)
 
-
-## load model 
 # device = 'cuda' if torch.cuda.is_available() else 'cpu'
 device = 'cpu' ## cpu is better 
-model_ckpt = "save_model/qed_epoch_4_iter_0_validloss_0.57661.ckpt"
+model_ckpt = "save_model/GNN_epoch_0_validloss_1.61160.ckpt"
 gnn = torch.load(model_ckpt)
 gnn.switch_device(device)
 
@@ -78,13 +75,17 @@ def optimization(start_smiles_lst, gnn, oracle, oracle_num, oracle_name, generat
 		next_set = set()
 		for smiles in current_set:
 			# smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### 
-			if substr_num(smiles) < 3: #### short smiles
-				smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### optimize_single_molecule_one_iterate_v2
-			else:
-				smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon)
+			### TODO smiles -> smiles_set using GNN 
+
+			# if substr_num(smiles) < 3: #### short smiles
+			# 	smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### optimize_single_molecule_one_iterate_v2
+			# else:
+			# 	smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon)
+			smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)
+
 			for smi in smiles_set:
 				if smi not in trace_dict:
-					trace_dict[smi] = smiles 
+					trace_dict[smi] = smiles ### ancestor -> offspring 
 			next_set = next_set.union(smiles_set)
 		# next_set = next_set.difference(existing_set)   ### if allow repeat molecule  
 		smiles_score_lst = oracle_screening(next_set, oracle_new)  ###  sorted smiles_score_lst 

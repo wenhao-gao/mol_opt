@@ -1,6 +1,7 @@
-# DST: Differentiable Scaffolding Tree for Molecule Optimization 
+# MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization
 
-This repository hosts [DST (Differentiable Scaffolding Tree for Molecule Optimization)](https://openreview.net/forum?id=w_drCosT76&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2022%2FConference%2FAuthors%23your-submissions)) (Tianfan Fu*, Wenhao Gao*, Cao Xiao, Jacob Yasonik, Connor W. Coley, Jimeng Sun), which enables a gradient-based optimization on a chemical graph. 
+This repository hosts MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization (AAAI) 2021 (Tianfan Fu, Cao Xiao, Xinhao Li, Lucas Glass, Jimeng Sun), which used pretrained graph neural network (GNN) and MCMC for molecule optimization. 
+
 
 
 ## Table Of Contents
@@ -12,9 +13,8 @@ This repository hosts [DST (Differentiable Scaffolding Tree for Molecule Optimiz
   - optimization task 
   - generate vocabulary 
   - data cleaning  
-  - labelling
-- Learning and Inference
-  - train graph neural network (GNN)
+- Pretrain graph neural network (GNN)
+- Inference
   - de novo molecule design 
   - evaluate  
 - Contact 
@@ -25,17 +25,16 @@ This repository hosts [DST (Differentiable Scaffolding Tree for Molecule Optimiz
 
 To install locally, we recommend to install from `pip` and `conda`. Please see `conda.yml` for the package dependency. 
 ```bash
-conda create -n dst python=3.7 
-conda activate dst
+conda create -n mimosa python=3.7 
+conda activate mimosa
 pip install torch 
 pip install PyTDC 
 conda install -c rdkit rdkit 
 ```
 
-
 Activate conda environment. 
 ```bash
-conda activate dst
+conda activate mimosa
 ```
 
 make directory
@@ -46,7 +45,6 @@ mkdir -p save_model result
 
 ## 2. Data and Setup
 In our setup, we restrict the number of oracle calls. In realistic discovery settings, the oracle acquisition cost is usually not negligible. 
-
 
 ### Raw Data 
 We use [`ZINC`](https://tdcommons.ai/generation_tasks/molgen/) database, which contains around 250K drug-like molecules and can be downloaded [`download ZINC`](https://tdcommons.ai/generation_tasks/molgen/). 
@@ -97,52 +95,51 @@ python src/clean.py
 - output
   - `data/zinc_clean.txt`
 
-### Labelling
-We use oracle to evaluate molecule's properties to obtain the labels for training graph neural network. 
-```bash
-python src/labelling.py
-```
-- input
-  - `data/zinc_clean.txt`: all the smiles in ZINC, around 250K. 
-- output
-  - `data/zinc_label.txt`: including 6 columns, `smiles`, `qed`, `sa`, `jnk`, `gsk`, `logp`. We only contains subset of zinc (10K). 
 
 
 
-## 3. Learning and Inference 
 
-In our setup, we restrict the number of oracle calls in both training GNN and de novo design. 
 
-### train graph neural network (GNN)
 
-It corresponds to Section 3.2 in the paper. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Pre-train graph neural network (GNN)
 ```bash 
-python src/train.py $prop $train_oracle
+python src/pretrain.py 
 ```
-- `prop` represent the property to optimize, including `qed`, `logp`, `jnk`, `gsk`, `jnkgsk`, `qedsajnkgsk`.  
-- `train_oracle` is number of oracle calls in training GNN. 
 - input 
-  - `data/zinc_label.txt`: **training data** includes `(SMILES,y)` pairs, where `SMILES` is the molecule, `y` is the label. `y = GNN(SMILES)`
+  - `data/zinc_clean.txt`
 - output 
-  - `save_model/model_epoch_*.ckpt`: saved GNN model. 
+  - `save_model/GNN.ckpt`: trained GNN model. 
 - log
-  - `"loss/{$prop}.pkl"` save the valid loss. 
-For example, 
-```bash 
-python src/train.py jnkgsk 5000 
-```
+  - `gnn_loss.pkl`: the valid loss. 
+
+
+## Inference 
 
 ### de novo molecule design 
 
-It corresponds to Section 3.3 and 3.4 in the paper.  
-
 ```bash
-python src/denovo.py $prop $denovo_oracle
+python src/denovo.py $prop $num_oracle
 ```
 - `prop` represent the property to optimize, including `qed`, `logp`, `jnk`, `gsk`, `jnkgsk`, `qedsajnkgsk`. 
-- `denovo_oracle` is number of oracle calls. 
+- `num_oracle` is budget of oracle calls. 
 - input 
-  - `save_model/{$prop}_*.ckpt`: saved GNN model. * is number of iteration or epochs. 
+  - `save_model/GNN.ckpt`: pretrained GNN model. 
 - output 
   - `result/{$prop}.pkl`: set of generated molecules. 
 
@@ -154,7 +151,7 @@ python src/denovo.py jnkgsk 5000
 ### evaluate 
 
 ```bash
-python src/evaluate.py $prop  
+python src/evaluate.py $prop 
 ```
 - input 
   - `result/{$prop}.pkl`
@@ -166,23 +163,24 @@ For example,
 python src/evaluate.py jnkgsk 
 ```
 
-<!-- ## Example  -->
-
 
 
 
 ## Contact 
-Please contact futianfan@gmail.com or gaowh19@gmail.com for help or submit an issue. 
+Please contact futianfan@gmail.com for help or submit an issue. 
 
 
 ## Cite Us
-If you found this package useful, please cite [our paper](https://openreview.net/forum?id=w_drCosT76&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2022%2FConference%2FAuthors%23your-submissions)):
+If you found this package useful, please cite our paper:
 ```
-@article{fu2020differentiable,
-  title={Differentiable Scaffolding Tree for Molecule Optimization},
-  author={Tianfan Fu*, Wenhao Gao*, Cao Xiao, Jacob Yasonik, Connor W. Coley, Jimeng Sun},
-  journal={International Conference on Learning Representation (ICLR)},
-  year={2022}
+@inproceedings{fu2021mimosa,
+  title={MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization},
+  author={Fu, Tianfan and Xiao, Cao and Li, Xinhao and Glass, Lucas M and Sun, Jimeng},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={35},
+  number={1},
+  pages={125--133},
+  year={2021}
 }
 ```
 

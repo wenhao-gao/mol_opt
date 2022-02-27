@@ -52,13 +52,13 @@ conda activate molopt
 | **REINVENT**       |           |              |          |        |         |
 | **RationaleRL**    |           |              |          |        |         |
 | **MolDQN**         | ✅        |              |          |        |         |
-| **MIMOSA**         | doing     |              |          |        |         |
+| **MIMOSA**         | ✅     |              |          |        |         |
 | **MARS**           | doing     |              |          |        |         |
 | **DoG-Gen**        | -         |              |          |        |         |
 | **DoG-AE BO**      | -         |              |          |        |         |
 | **SynNet**         |           |              |          |        |         |
 | **Pasithea**       |           |              |          |        |         |
-| **DST**            | doing     |              |          |        |         |
+| **DST**            | ✅     |              |          |        |         |
 | **GFlowNet**       |           |              |          |        |         |
 | **GFlowNet (AL)**  |           |              |          |        |         |
 
