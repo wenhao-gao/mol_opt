@@ -7,6 +7,10 @@ __pycache__/
 *.so
 
 
+# mars 
+main/MARS/estimator/scorer/kinase_rf/
+main/MARS/runs/ 
+
 # jtvae
 main/JTVAE/molvae
 main/JTVAE/download.sh
