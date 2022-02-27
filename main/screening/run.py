@@ -16,8 +16,7 @@ from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
 from main.optimizer import BaseOptimizer
 
-
-class Exahsutive_Optimizer(BaseOptimizer):
+class Exhaustive_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
@@ -70,7 +69,7 @@ def main():
                 config_tune = yaml.safe_load(open(os.path.join(args.output_dir, args.config_tune)))
 
         oracle = Oracle(name = oracle_name)
-        optimizer = Exahsutive_Optimizer(args=args)
+        optimizer = Exhaustive_Optimizer(args=args)
 
         if args.task == "simple":
             optimizer.optimize(oracle=oracle, config=config_default)
