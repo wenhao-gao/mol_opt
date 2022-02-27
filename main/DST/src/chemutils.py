@@ -700,8 +700,8 @@ def add_fragment_at_position(editmol, position_idx, fragment, new_bond):
                     if new_smiles is not None:
                         assert '.' not in new_smiles
                         new_smiles_set.add(new_smiles)
-                    print(new_smiles)
-    print(new_smiles_set)
+                    # print(new_smiles)
+    # print(new_smiles_set)
     return new_smiles_set
 
 

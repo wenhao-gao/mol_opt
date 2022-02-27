@@ -1,24 +1,5 @@
 # DST: Differentiable Scaffolding Tree for Molecule Optimization 
 
-This repository hosts [DST (Differentiable Scaffolding Tree for Molecule Optimization)](https://openreview.net/forum?id=w_drCosT76&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2022%2FConference%2FAuthors%23your-submissions)) (Tianfan Fu*, Wenhao Gao*, Cao Xiao, Jacob Yasonik, Connor W. Coley, Jimeng Sun), which enables a gradient-based optimization on a chemical graph. 
-
-
-## Table Of Contents
-
-- Installation 
-- Data and Setup
-  - raw data 
-  - oracle
-  - optimization task 
-  - generate vocabulary 
-  - data cleaning  
-  - labelling
-- Learning and Inference
-  - train graph neural network (GNN)
-  - de novo molecule design 
-  - evaluate  
-- Contact 
-
 
 
 ## 1. Installation 
@@ -134,57 +115,22 @@ python src/train.py jnkgsk 5000
 
 ### de novo molecule design 
 
-It corresponds to Section 3.3 and 3.4 in the paper.  
+
+
 
 ```bash
-python src/denovo.py $prop $denovo_oracle
+python src/run.py 
 ```
-- `prop` represent the property to optimize, including `qed`, `logp`, `jnk`, `gsk`, `jnkgsk`, `qedsajnkgsk`. 
-- `denovo_oracle` is number of oracle calls. 
 - input 
   - `save_model/{$prop}_*.ckpt`: saved GNN model. * is number of iteration or epochs. 
 - output 
   - `result/{$prop}.pkl`: set of generated molecules. 
 
-For example, 
-```bash 
-python src/denovo.py jnkgsk 5000 
-```
-
-### evaluate 
-
-```bash
-python src/evaluate.py $prop  
-```
-- input 
-  - `result/{$prop}.pkl`
-- output 
-  - `diversity`, `novelty`, `average property` of top-100 molecules with highest property. 
-
-For example, 
-```bash 
-python src/evaluate.py jnkgsk 
-```
-
-<!-- ## Example  -->
 
 
 
 
-## Contact 
-Please contact futianfan@gmail.com or gaowh19@gmail.com for help or submit an issue. 
 
-
-## Cite Us
-If you found this package useful, please cite [our paper](https://openreview.net/forum?id=w_drCosT76&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2022%2FConference%2FAuthors%23your-submissions)):
-```
-@article{fu2020differentiable,
-  title={Differentiable Scaffolding Tree for Molecule Optimization},
-  author={Tianfan Fu*, Wenhao Gao*, Cao Xiao, Jacob Yasonik, Connor W. Coley, Jimeng Sun},
-  journal={International Conference on Learning Representation (ICLR)},
-  year={2022}
-}
-```
 
 
 
