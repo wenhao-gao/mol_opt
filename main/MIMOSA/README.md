@@ -1,8 +1,6 @@
 # MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization
 
-This repository hosts MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization (AAAI) 2021 (Tianfan Fu, Cao Xiao, Xinhao Li, Lucas Glass, Jimeng Sun), which used pretrained graph neural network (GNN) and MCMC for molecule optimization. 
-
-
+This repository hosts MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization (AAAI 21), which used pretrained graph neural network (GNN) and MCMC for molecule optimization. 
 
 ## Table Of Contents
 
@@ -14,10 +12,9 @@ This repository hosts MIMOSA: Multi-constraint Molecule Sampling for Molecule Op
   - generate vocabulary 
   - data cleaning  
 - Pretrain graph neural network (GNN)
-- Inference
+- Run
   - de novo molecule design 
   - evaluate  
-- Contact 
 
 
 
@@ -100,26 +97,9 @@ python src/clean.py
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Pre-train graph neural network (GNN)
 ```bash 
-python src/pretrain.py 
+python src/train.py 
 ```
 - input 
   - `data/zinc_clean.txt`
@@ -129,60 +109,17 @@ python src/pretrain.py
   - `gnn_loss.pkl`: the valid loss. 
 
 
-## Inference 
-
-### de novo molecule design 
+## Run 
 
 ```bash
-python src/denovo.py $prop $num_oracle
+python src/run.py
 ```
-- `prop` represent the property to optimize, including `qed`, `logp`, `jnk`, `gsk`, `jnkgsk`, `qedsajnkgsk`. 
-- `num_oracle` is budget of oracle calls. 
 - input 
   - `save_model/GNN.ckpt`: pretrained GNN model. 
 - output 
   - `result/{$prop}.pkl`: set of generated molecules. 
 
-For example, 
-```bash 
-python src/denovo.py jnkgsk 5000 
-```
 
-### evaluate 
-
-```bash
-python src/evaluate.py $prop 
-```
-- input 
-  - `result/{$prop}.pkl`
-- output 
-  - `diversity`, `novelty`, `average property` of top-100 molecules with highest property. 
-
-For example, 
-```bash 
-python src/evaluate.py jnkgsk 
-```
-
-
-
-
-## Contact 
-Please contact futianfan@gmail.com for help or submit an issue. 
-
-
-## Cite Us
-If you found this package useful, please cite our paper:
-```
-@inproceedings{fu2021mimosa,
-  title={MIMOSA: Multi-constraint Molecule Sampling for Molecule Optimization},
-  author={Fu, Tianfan and Xiao, Cao and Li, Xinhao and Glass, Lucas M and Sun, Jimeng},
-  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
-  volume={35},
-  number={1},
-  pages={125--133},
-  year={2021}
-}
-```
 
 
 
