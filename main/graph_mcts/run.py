@@ -1,3 +1,4 @@
+# code modified from https://github.com/haroldsultan/MCTS/blob/master/mcts.py
 import argparse
 import hashlib
 import json
@@ -15,29 +16,14 @@ from rdkit import Chem, rdBase
 from rdkit.Chem import AllChem
 from tqdm import tqdm 
 
-# from graph_mcts.stats import Stats, get_stats_from_pickle, get_stats_from_smiles
 from stats import Stats, get_stats_from_pickle, get_stats_from_smiles
 
 rdBase.DisableLog('rdApp.error')
 
 from tdc import Oracle
 from tdc import Evaluator
-jnk = Oracle(name = 'JNK3')
-gsk = Oracle(name = 'GSK3B')
-qed = Oracle(name = 'qed')
-from sa import sa
-def oracle(smiles):
-    try:
-        scores = [qed(smiles), sa(smiles), jnk(smiles), gsk(smiles)]
-    except:
-        # return -np.inf
-        return -100.0 
-    return np.mean(scores)
 
-global f_cache 
-f_cache = dict()
-# global f_cache 
-
+oracle = Oracle(name = 'qed')
 
 def score_mol(smiles, score_fn):
     # smiles = Chem.MolToSmiles(mol)
@@ -45,31 +31,6 @@ def score_mol(smiles, score_fn):
     if smiles not in f_cache:
         f_cache[smiles] = score_fn(smiles)
     return f_cache[smiles]
-
-from rdkit import Chem 
-def canonicalize(smiles: str, include_stereocenters=True) -> Optional[str]:
-    """
-    Canonicalize the SMILES strings with RDKit.
-    The algorithm is detailed under https://pubs.acs.org/doi/full/10.1021/acs.jcim.5b00543
-    Args:
-        smiles: SMILES string to canonicalize
-        include_stereocenters: whether to keep the stereochemical information in the canonical SMILES string
-    Returns:
-        Canonicalized SMILES string, None if the molecule is invalid.
-    """
-
-    mol = Chem.MolFromSmiles(smiles)
-
-    if mol is not None:
-        return Chem.MolToSmiles(mol, isomericSmiles=include_stereocenters)
-    else:
-        return None
-
-
-
-
-best_state = {}
-
 
 def run_rxn(rxn_smarts, mol):
     new_mol_list = []
@@ -143,21 +104,14 @@ def valences_not_too_large(rdkit_mol):
     return True
 
 
-# code modified from https://github.com/haroldsultan/MCTS/blob/master/mcts.py
-
-
-SCALAR = 1 / math.sqrt(2.0)
-
-
 class State:
 
-    def __init__(self, scoring_function, mol, smiles, max_atoms, max_children, stats: Stats, seed):
+    def __init__(self, oracle, mol, smiles, max_atoms, max_children, stats: Stats, seed):
         self.mol = mol
         self.turn = max_atoms
         self.smiles = smiles
-        self.scoring_function = scoring_function
-        # self.score = self.scoring_function.score(self.smiles)
-        self.score = score_mol(self.smiles, scoring_function)
+        self.oracle = oracle
+        self.score = score_mol(self.smiles, oracle)
         self.max_children = max_children
         self.stats = stats
         self.seed = seed
@@ -171,7 +125,7 @@ class State:
             if smiles != self.smiles:
                 break
 
-        next_state = State(scoring_function=self.scoring_function,
+        next_state = State(oracle=self.oracle,
                            mol=mol,
                            smiles=smiles,
                            max_atoms=self.turn - 1,
@@ -195,13 +149,9 @@ class State:
 
         return False
 
-    def reward(self):
-        global best_state
-
-        if self.seed not in best_state or self.score > best_state[self.seed].score:
-            best_state[self.seed] = self
-            # print(self.seed, 'new best state', best_state[self.seed].score)
-
+    def reward(self, best_state):
+        if best_state is None or self.score > best_state.score:
+            # best_state = self
             return 1.0
         else:
             return 0.0
@@ -244,19 +194,10 @@ class Node:
         return s
 
 
-def uct_search(budget, root):
-    for _ in range(int(budget)):
-        front = tree_policy(root)
-        for child in front.children:
-            reward = default_policy(child.state)
-            backup(child, reward)
-    return best_child(root, 0)
-
-
-def tree_policy(node):
+def tree_policy(node, exploration_coefficient=(1/math.sqrt(2.0))):
     # a hack to force 'exploitation' in a game where there are many options, and you may never/not want to fully expand first
     while node.fully_expanded():
-        node = best_child(node, SCALAR)
+        node = best_child(node, exploration_coefficient)
 
     if node.state.terminal():
         return node
@@ -285,13 +226,13 @@ def expand(node):
 
 
 # current this uses the most vanilla MCTS formula it is worth experimenting with THRESHOLD ASCENT (TAGS)
-def best_child(node, scalar):
+def best_child(node, exploration_coefficient):
     bestscore = 0.0
     bestchildren = []
     for c in node.children:
         exploit = c.reward / c.visits
         explore = math.sqrt(2.0 * math.log(node.visits) / float(c.visits))
-        score = exploit + scalar * explore
+        score = exploit + exploration_coefficient * explore
         # print(score, node.state.terminal(), node.state.smiles, bestscore)
         if score == bestscore:
             bestchildren.append(c)
@@ -304,10 +245,13 @@ def best_child(node, scalar):
     return random.choice(bestchildren)
 
 
-def default_policy(state):
+def default_policy(state, best_state):
     while not state.terminal():
         state = state.next_state()
-    return state.reward()
+    reward = state.reward(best_state)
+    if reward == 1:
+        best_state = state
+    return reward, best_state
 
 
 def backup(node, reward):
@@ -317,19 +261,25 @@ def backup(node, reward):
         node = node.parent
     return
 
-def find_molecule(scoring_function,  mol, smiles, max_atoms, max_children, num_sims, stats):
-    seed = int(time())
-    np.random.seed(seed)
-    root_node = Node(State(scoring_function=scoring_function,
-                           mol=mol,
-                           smiles=smiles,
-                           max_atoms=max_atoms,
-                           max_children=max_children,
-                           stats=stats, 
-                           seed=seed))
-    uct_search(num_sims, root_node)
+# def ucb_search(oracle, buffer, mol, smiles, max_atoms, max_children, num_sims, stats):
+#     seed = int(time())
+#     np.random.seed(seed)
+#     best_state = None
+#     root_node = Node(State(oracle=oracle,
+#                            mol=mol,
+#                            smiles=smiles,
+#                            max_atoms=max_atoms,
+#                            max_children=max_children,
+#                            stats=stats, 
+#                            seed=seed))
 
-    return best_state[seed].score, best_state[seed].smiles
+#     for _ in range(int(num_sims)):
+#         front = tree_policy(root_node)
+#         for child in front.children:
+#             reward, best_state = default_policy(child.state, best_state)
+#             backup(child, reward)
+
+#     return buffer
 
 
 def sanitize(population):
@@ -343,7 +293,7 @@ def sanitize(population):
     return new_population
 
 
-def generate_optimized_molecules(scoring_function,
+def generate_optimized_molecules(oracle,
                                 n_jobs, 
                                 pickle_directory, 
                                 num_sims,
@@ -358,91 +308,82 @@ def generate_optimized_molecules(scoring_function,
 
         pool = joblib.Parallel(n_jobs=n_jobs)
         init_mol = Chem.MolFromSmiles(init_smiles)
-        # f_cache = dict(start_known_smiles)
-        global f_cache 
+        f_cache = dict()
         stats = get_stats_from_pickle(pickle_directory)
 
         # evolution: go go go!!
-        t0 = time()
-        patience = 0
         population = []
-        old_score = 0
 
-        for generation in tqdm(range(generations)):
+        for generation in range(generations):
 
-            job = delayed(find_molecule)(scoring_function,
-                                         init_mol,
-                                         init_smiles,
-                                         max_atoms,
-                                         max_children,
-                                         num_sims,
-                                         stats)
+            # new_mols = ucb_search(oracle, 
+            #                     f_cache,
+            #                     init_mol,
+            #                     init_smiles,
+            #                     max_atoms,
+            #                     max_children,
+            #                     num_sims,
+            #                     stats)
 
-            new_mols = pool(job for _ in range(population_size))
+            # UCB Tree Search
+            seed = int(time())
+            np.random.seed(seed)
+            best_state = None
+            root_node = Node(State(oracle=oracle,
+                                mol=init_mol,
+                                smiles=init_smiles,
+                                max_atoms=max_atoms,
+                                max_children=max_children,
+                                stats=stats, 
+                                seed=seed))
+
+            for _ in range(int(num_sims)):
+                front = tree_policy(root_node)
+                for child in front.children:
+                    reward, best_state = default_policy(child.state, best_state)
+                    backup(child, reward)
+
+            import ipdb; ipdb.set_trace()
 
             # stats
-            gen_time = time() - t0
-            mol_sec = len(new_mols) / gen_time
-            t0 = time()
 
-            population += new_mols
-            population = sanitize(population)
+            # population += new_mols
+            # population = sanitize(population)
 
-            population = sorted(population, key=lambda x: x[0], reverse=True)[:population_size]
+            # population = sorted(population, key=lambda x: x[0], reverse=True)[:population_size]
 
-            population_scores = [p[0] for p in population]
-            new_score = sum(population_scores)
+            # population_scores = [p[0] for p in population]
 
-            #print([p[1] for p in population])
-            print('population size:', len(population))
-
-            # early stopping
-            if new_score == old_score:
-                patience += 1
-                print(f'Failed to progress: {patience}')
-                if patience >= patience_max:
-                    print(f'No more patience, bailing...')
-                    break
-            else:
-                patience = 0
-
-            old_score = new_score
+            # print('population size:', len(population))
 
             print(f'{generation} | '
-                  f'max: {np.max(population_scores):.3f} | '
-                  f'avg: {np.mean(population_scores):.3f} | '
-                  f'min: {np.min(population_scores):.3f} | '
-                  f'std: {np.std(population_scores):.3f} | '
-                  f'sum: {np.sum(population_scores):.3f} | '
-                  f'{gen_time:.2f} sec/gen | '
-                  f'{mol_sec:.2f} mol/sec | '
+                #   f'max: {np.max(population_scores):.3f} | '
+                #   f'avg: {np.mean(population_scores):.3f} | '
+                #   f'min: {np.min(population_scores):.3f} | '
+                #   f'std: {np.std(population_scores):.3f} | '
+                #   f'sum: {np.sum(population_scores):.3f} | '
                   f'{len(f_cache):d} oracle calls')
 
             if len(f_cache) > max_total_func_calls:
                 print("Max oracle calls hit, aborting")
                 break
 
-        # return f_cache
-
-        # finally
-        # return [p[1] for p in population]
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics',
                         default=None)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--n_jobs', type=int, default=1)  ## default -1 
-    parser.add_argument('--generations', type=int, default=1000)
+    parser.add_argument('--n_jobs', type=int, default=-1)  ## default -1 
+    parser.add_argument('--generations', type=int, default=10) ## default 1000
     parser.add_argument('--population_size', type=int, default=10)
-    parser.add_argument('--num_sims', type=int, default=2) #### default 40
-    parser.add_argument('--max_children', type=int, default=2) ### default 25
-    parser.add_argument('--max_atoms', type=int, default=4) ### default 60  
+    parser.add_argument('--num_sims', type=int, default=4) #### default 40
+    parser.add_argument('--max_children', type=int, default=5) ### default 25
+    parser.add_argument('--max_atoms', type=int, default=10) ### default 60  
     parser.add_argument('--init_smiles', type=str, default='CC')
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_func_calls', type=int, default=200)
-    # parser.add_argument('--suite', default='v2') 
+    parser.add_argument('--max_func_calls', type=int, default=100)
     args = parser.parse_args()
 
     if args.output_dir is None:
@@ -453,14 +394,8 @@ def main():
 
     np.random.seed(args.seed)
 
-
-    # save command line args
-    with open(os.path.join(args.output_dir, 'goal_directed_params.json'), 'w') as jf:
-        json.dump(vars(args), jf, sort_keys=True, indent=4)
-
-
     generate_optimized_molecules(
-        scoring_function = oracle,
+        oracle = oracle,
         pickle_directory = args.pickle_directory, 
         n_jobs = args.n_jobs, 
         num_sims=args.num_sims,
@@ -491,15 +426,5 @@ def main():
     print(output)
 
 
-
-
-
-
 if __name__ == "__main__":
     main()
-
-
-
-
-
-

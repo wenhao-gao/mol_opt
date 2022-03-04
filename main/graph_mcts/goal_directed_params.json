@@ -1,0 +1,14 @@
+{
+    "generations": 1000,
+    "init_smiles": "CC",
+    "max_atoms": 4,
+    "max_children": 2,
+    "max_func_calls": 200,
+    "n_jobs": 1,
+    "num_sims": 2,
+    "output_dir": "/home/whgao/mol_opt/main/graph_mcts",
+    "patience": 5,
+    "pickle_directory": "/home/whgao/mol_opt/main/graph_mcts",
+    "population_size": 10,
+    "seed": 0
+}
