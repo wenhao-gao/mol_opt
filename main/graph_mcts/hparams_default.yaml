@@ -1,0 +1,6 @@
+population_size: 50
+offspring_size: 100
+mutation_rate: 0.02
+patience: 5
+max_generations: 1000
+max_n_oracles: 10000
