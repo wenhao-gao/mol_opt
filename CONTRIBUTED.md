@@ -2,13 +2,55 @@
 
 Thanks for your interest in contributing to our benchmark. 
 
-## 1) Create a directory for new method
+## 1) Create a directory for new method XXX 
 
 ```bash
 mkdir main/XXX
 ```
 
-## 2) class inherited from BaseOptimizer 
+`main/XXX/run.py` is the main file. 
+
+```bash
+cd main/XXX/
+python run.py 
+python run.py --population_size 100 
+```
+
+
+
+
+
+## 2) BaseOptimizer (provided)
+
+```python
+class BaseOptimizer:
+
+    def __init__(self, args=None):
+        self.model_name = "Default"
+        self.args = args
+        self.n_jobs = args.n_jobs
+        self.pool = joblib.Parallel(n_jobs=self.n_jobs)
+        self.smi_file = args.smi_file
+        self.mol_buffer = {}
+        if self.smi_file is not None:
+            self.all_smiles = self.load_smiles_from_file(self.smi_file)
+        else:
+            data = MolGen(name = 'ZINC')
+            self.all_smiles = data.get_data()['smiles'].tolist()
+            
+        self.sa_scorer = tdc.Oracle(name = 'SA')
+        self.diversity_evaluator = tdc.Evaluator(name = 'Diversity')
+        self.filter = tdc.chem_utils.oracle.filter.MolFilter(filters = ['PAINS', 'SureChEMBL', 'Glaxo'], property_filters_flag = False)
+
+    def load_smiles_from_file(self, file_name):
+        ...
+            
+    def score_mol(self, oracle_func, mol_list):
+    	... 
+```
+
+
+## 3) New class inherited from BaseOptimizer 
 
 
 ```python
@@ -36,19 +78,18 @@ class XXX_Optimizer(BaseOptimizer):
 
 ```
 
-## 3) main 
+## 4) main 
 
-* set hyperparameter  
-	* **running hyperparameter**: use parser argument with default value. 
-	* **default model hyperparameter**: loading from hparam_default.yaml
-	* tuning model hyperparameter: loading from hparam_tune.yaml 
-* run optimizer  
+* hyperparameter
+	* **running hyperparameter**: parser argument. 
+	* **default model hyperparameter**: `hparam_default.yaml`
+	* **tuning model hyperparameter**: `hparam_tune.yaml` 
+* run optimizer: `simple`, `tune`, `production`.   
 
 
 ```python
 def main():
-
-	#### set hyperparameter 
+    # 1. hyperparameter 
     parser = argparse.ArgumentParser()
     parser.add_argument('--smi_file', default=None)
     parser.add_argument('--config_default', default='hparams_default.yaml')
@@ -67,7 +108,9 @@ def main():
         args.output_dir = path_here
     elif not os.path.exist(args.output_dir):
         os.mkdir(args.output_dir)
-    
+
+
+    # 2. run optimizer 
     for oracle_name in args.oracles:
 
         try:
