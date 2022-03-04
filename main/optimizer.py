@@ -32,7 +32,7 @@ class BaseOptimizer:
         self.filter = tdc.chem_utils.oracle.filter.MolFilter(filters = ['PAINS', 'SureChEMBL', 'Glaxo'], property_filters_flag = False)
 
     def load_smiles_from_file(self, file_name):
-        with open(smi_file) as f:
+        with open(file_name) as f:
             return self.pool(delayed(canonicalize)(s.strip()) for s in f)
             
     def sanitize(self, mol_list):

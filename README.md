@@ -35,8 +35,8 @@ conda activate molopt
 | **Screening**      | ✅         | ✅           | ✅       |        |         |
 | **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
 | **SMILES GA**      | ✅         |              |          |        |         |
-| **SELFIES GA**           | ✅        |              |          |        |         |
-| **SELFIES GA +D **           | ✅        |              |          |        |         |
+| **SELFIES GA**     | ✅         |              |          |        |         |
+| **SELFIES GA +D**  | ✅         |              |          |        |         |
 | **Graph MCTS**     | ✅         |              |          |        |         |
 | **SMILES HC**      |           |              |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
@@ -52,13 +52,13 @@ conda activate molopt
 | **REINVENT**       |           |              |          |        |         |
 | **RationaleRL**    |           |              |          |        |         |
 | **MolDQN**         | ✅        |              |          |        |         |
-| **MIMOSA**         | ✅     |              |          |        |         |
+| **MIMOSA**         | ✅        |              |          |        |         |
 | **MARS**           | doing     |              |          |        |         |
 | **DoG-Gen**        | -         |              |          |        |         |
 | **DoG-AE BO**      | -         |              |          |        |         |
 | **SynNet**         |           |              |          |        |         |
 | **Pasithea**       |           |              |          |        |         |
-| **DST**            | ✅     |              |          |        |         |
+| **DST**            | ✅        |              |          |        |         |
 | **GFlowNet**       |           |              |          |        |         |
 | **GFlowNet (AL)**  |           |              |          |        |         |
 
