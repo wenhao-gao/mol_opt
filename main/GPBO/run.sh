@@ -24,7 +24,7 @@ PYTHONPATH="$(pwd)/src:$PYTHONPATH" python run.py \
     
     # &> "${log_dir}/${method_name}_${target}_${expt_id_str}.log"
 
-exit 
+# exit 
 
 
 
