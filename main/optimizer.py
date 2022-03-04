@@ -55,22 +55,26 @@ class BaseOptimizer:
     def score_mol(self, oracle_func, mol_list):
         score_list = []
         for mol in mol_list:
-            smi = Chem.MolToSmiles(mol)
-            try:
-                _ = self.mol_buffer[smi]
-                score_list.append(_[0])
-            except:
-                if mol is not None:
-                    score = oracle_func(smi)
-                    self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
-                    score_list.append(score)
+            if mol is None:
+                score = 0
+                self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
+                score_list.append(score)
+            else:
+                smi = Chem.MolToSmiles(mol)
+                if smi in self.mol_buffer:
+                    _ = self.mol_buffer[smi]
+                    score_list.append(_[0])
                 else:
-                    score = 0
+                    score = oracle_func(smi)
                     self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
                     score_list.append(score)
                 
         self.sort_buffer()
         return score_list
+
+    def score_smiles(self, oracle_func, smi_list):
+        mol_list = [Chem.MolFromSmiles(smi) for smi in smi_list]
+        return self.score_mol(oracle_func, mol_list)
     
     def log_intermediate(self, mols=None, scores=None):
 

@@ -25,12 +25,15 @@ from tdc import Evaluator
 
 oracle = Oracle(name = 'qed')
 
+global f_cache
+f_cache = {}
+
 def score_mol(smiles, score_fn):
     # smiles = Chem.MolToSmiles(mol)
     global f_cache
     if smiles not in f_cache:
-        f_cache[smiles] = score_fn(smiles)
-    return f_cache[smiles]
+        f_cache[smiles] = [score_fn(smiles), len(f_cache)+1]
+    return f_cache[smiles][0]
 
 def run_rxn(rxn_smarts, mol):
     new_mol_list = []
@@ -261,37 +264,6 @@ def backup(node, reward):
         node = node.parent
     return
 
-# def ucb_search(oracle, buffer, mol, smiles, max_atoms, max_children, num_sims, stats):
-#     seed = int(time())
-#     np.random.seed(seed)
-#     best_state = None
-#     root_node = Node(State(oracle=oracle,
-#                            mol=mol,
-#                            smiles=smiles,
-#                            max_atoms=max_atoms,
-#                            max_children=max_children,
-#                            stats=stats, 
-#                            seed=seed))
-
-#     for _ in range(int(num_sims)):
-#         front = tree_policy(root_node)
-#         for child in front.children:
-#             reward, best_state = default_policy(child.state, best_state)
-#             backup(child, reward)
-
-#     return buffer
-
-
-def sanitize(population):
-    new_population = []
-    smile_set = set()
-    for mol in population:
-        score, smile = mol
-        if smile is not None and smile not in smile_set:
-            smile_set.add(smile)
-            new_population.append(mol)
-    return new_population
-
 
 def generate_optimized_molecules(oracle,
                                 n_jobs, 
@@ -301,33 +273,21 @@ def generate_optimized_molecules(oracle,
                                 init_smiles,
                                 max_atoms,
                                 patience_max,
-                                generations,
+                                n_search,
                                 population_size,         
                                 start_known_smiles, 
                                 max_total_func_calls,) -> List[str]:
 
-        pool = joblib.Parallel(n_jobs=n_jobs)
         init_mol = Chem.MolFromSmiles(init_smiles)
-        f_cache = dict()
+        global f_cache
         stats = get_stats_from_pickle(pickle_directory)
 
         # evolution: go go go!!
-        population = []
-
-        for generation in range(generations):
-
-            # new_mols = ucb_search(oracle, 
-            #                     f_cache,
-            #                     init_mol,
-            #                     init_smiles,
-            #                     max_atoms,
-            #                     max_children,
-            #                     num_sims,
-            #                     stats)
+        for generation in range(n_search):
 
             # UCB Tree Search
-            seed = int(time())
-            np.random.seed(seed)
+            tmp_seed = int(time())
+            np.random.seed(tmp_seed)
             best_state = None
             root_node = Node(State(oracle=oracle,
                                 mol=init_mol,
@@ -335,34 +295,18 @@ def generate_optimized_molecules(oracle,
                                 max_atoms=max_atoms,
                                 max_children=max_children,
                                 stats=stats, 
-                                seed=seed))
+                                seed=tmp_seed))
 
             for _ in range(int(num_sims)):
-                front = tree_policy(root_node)
+                front = tree_policy(root_node, exploration_coefficient=1.2)
                 for child in front.children:
                     reward, best_state = default_policy(child.state, best_state)
                     backup(child, reward)
 
-            import ipdb; ipdb.set_trace()
-
-            # stats
-
-            # population += new_mols
-            # population = sanitize(population)
-
-            # population = sorted(population, key=lambda x: x[0], reverse=True)[:population_size]
-
-            # population_scores = [p[0] for p in population]
-
-            # print('population size:', len(population))
+            # import ipdb; ipdb.set_trace()
 
             print(f'{generation} | '
-                #   f'max: {np.max(population_scores):.3f} | '
-                #   f'avg: {np.mean(population_scores):.3f} | '
-                #   f'min: {np.min(population_scores):.3f} | '
-                #   f'std: {np.std(population_scores):.3f} | '
-                #   f'sum: {np.sum(population_scores):.3f} | '
-                  f'{len(f_cache):d} oracle calls')
+                  f'{len(f_cache)} oracle calls')
 
             if len(f_cache) > max_total_func_calls:
                 print("Max oracle calls hit, aborting")
@@ -375,7 +319,7 @@ def main():
                         default=None)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--n_jobs', type=int, default=-1)  ## default -1 
-    parser.add_argument('--generations', type=int, default=10) ## default 1000
+    parser.add_argument('--n_search', type=int, default=10) ## default 1000
     parser.add_argument('--population_size', type=int, default=10)
     parser.add_argument('--num_sims', type=int, default=4) #### default 40
     parser.add_argument('--max_children', type=int, default=5) ### default 25
@@ -383,7 +327,7 @@ def main():
     parser.add_argument('--init_smiles', type=str, default='CC')
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_func_calls', type=int, default=100)
+    parser.add_argument('--max_func_calls', type=int, default=500)
     args = parser.parse_args()
 
     if args.output_dir is None:
@@ -403,7 +347,7 @@ def main():
         init_smiles=args.init_smiles,
         max_atoms=args.max_atoms,
         patience_max=args.patience,
-        generations=args.generations,
+        n_search=args.n_search,
         population_size=args.population_size,         
         start_known_smiles = dict(),
         max_total_func_calls=args.max_func_calls, 

@@ -8,7 +8,7 @@ from time import time
 from typing import List, Tuple, Dict
 
 import numpy as np
-from guacamol.utils.helpers import setup_default_logger
+# from guacamol.utils.helpers import setup_default_logger
 from rdkit import Chem
 
 logger = logging.getLogger(__name__)
@@ -454,7 +454,7 @@ class StatsCalculator:
 
 
 def main():
-    setup_default_logger()
+    # setup_default_logger()
 
     parser = argparse.ArgumentParser(description='Generate pickle files for the statistics of a training set for MCTS',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
