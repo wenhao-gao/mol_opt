@@ -76,16 +76,25 @@ class BaseOptimizer:
         mol_list = [Chem.MolFromSmiles(smi) for smi in smi_list]
         return self.score_mol(oracle_func, mol_list)
     
-    def log_intermediate(self, mols=None, scores=None):
+    def log_intermediate(self, mols=None, scores=None, max_oracle_calls=10000):
 
         if mols is None and scores is None:
-            # If not spefcified, log current top-100 mols in buffer
-            temp_top100 = list(self.mol_buffer.items())[:100]
-            smis = [item[0] for item in temp_top100]
-            scores = [item[1][0] for item in temp_top100]
+            if len(self.mol_buffer) <= max_oracle_calls:
+                # If not spefcified, log current top-100 mols in buffer
+                temp_top100 = list(self.mol_buffer.items())[:100]
+                smis = [item[0] for item in temp_top100]
+                scores = [item[1][0] for item in temp_top100]
+                n_calls = len(self.mol_buffer)
+            else:
+                results = list(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][1], reverse=False))[:max_oracle_calls]
+                temp_top100 = sorted(results, key=lambda kv: kv[1][0], reverse=True)[:100]
+                smis = [item[0] for item in temp_top100]
+                scores = [item[1][0] for item in temp_top100]
+                n_calls = max_oracle_calls
         else:
             # Otherwise, log the input moleucles
             smis = [Chem.MolToSmiles(m) for m in mols]
+            n_calls = len(self.mol_buffer)
         
         # Uncomment this line if want to log top-10 moelucles figures, so as the best_mol key values.
         # temp_top10 = list(self.mol_buffer.items())[:10]
@@ -96,12 +105,14 @@ class BaseOptimizer:
             "avg_top100": np.mean(scores), 
             "avg_sa": np.mean(self.sa_scorer(smis)),
             "diversity_top100": self.diversity_evaluator(smis),
-            "n_oracle": len(self.mol_buffer),
+            "n_oracle": n_calls,
             # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
             #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
         })
     
     def log_result(self):
+
+        print(f"Logging final results...")
         
         log_num_oracles = [100, 500, 1000, 3000, 5000, 10000]
         
@@ -126,6 +137,8 @@ class BaseOptimizer:
         
     def save_result(self, suffix=None):
 
+        print(f"Saving molecules...")
+        
         if suffix is None:
             output_file_path = os.path.join(self.args.output_dir, 'results.yaml')
         else:

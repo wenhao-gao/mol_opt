@@ -1,35 +1,26 @@
 # code modified from https://github.com/haroldsultan/MCTS/blob/master/mcts.py
 import argparse
 import hashlib
-import json
-import logging
 import math
 import os
 import random
+import yaml
 from time import time
-from typing import List, Optional
 
-import joblib
 import numpy as np
-from joblib import delayed
 from rdkit import Chem, rdBase
 from rdkit.Chem import AllChem
-from tqdm import tqdm 
-
-from stats import Stats, get_stats_from_pickle, get_stats_from_smiles
-
 rdBase.DisableLog('rdApp.error')
-
 from tdc import Oracle
-from tdc import Evaluator
 
-oracle = Oracle(name = 'qed')
+from stats import Stats, get_stats_from_pickle
+from main.optimizer import BaseOptimizer
+
 
 global f_cache
 f_cache = {}
 
 def score_mol(smiles, score_fn):
-    # smiles = Chem.MolToSmiles(mol)
     global f_cache
     if smiles not in f_cache:
         f_cache[smiles] = [score_fn(smiles), len(f_cache)+1]
@@ -265,25 +256,21 @@ def backup(node, reward):
     return
 
 
-def generate_optimized_molecules(oracle,
-                                n_jobs, 
-                                pickle_directory, 
-                                num_sims,
-                                max_children,
-                                init_smiles,
-                                max_atoms,
-                                patience_max,
-                                n_search,
-                                population_size,         
-                                start_known_smiles, 
-                                max_total_func_calls,) -> List[str]:
+class Graph_MCTS_Optimizer(BaseOptimizer):
 
-        init_mol = Chem.MolFromSmiles(init_smiles)
+    def __init__(self, args=None):
+        super().__init__(args)
+        self.model_name = "graph_mcts"
+
+    def _optimize(self, oracle, config):
+        
+        init_mol = Chem.MolFromSmiles(config["init_smiles"])
         global f_cache
-        stats = get_stats_from_pickle(pickle_directory)
+        f_cache = dict()
+        stats = get_stats_from_pickle(self.args.pickle_directory)
 
         # evolution: go go go!!
-        for generation in range(n_search):
+        for generation in range(config["n_search"]):
 
             # UCB Tree Search
             tmp_seed = int(time())
@@ -291,83 +278,77 @@ def generate_optimized_molecules(oracle,
             best_state = None
             root_node = Node(State(oracle=oracle,
                                 mol=init_mol,
-                                smiles=init_smiles,
-                                max_atoms=max_atoms,
-                                max_children=max_children,
+                                smiles=config["init_smiles"],
+                                max_atoms=config["max_atoms"],
+                                max_children=config["max_children"],
                                 stats=stats, 
                                 seed=tmp_seed))
 
-            for _ in range(int(num_sims)):
-                front = tree_policy(root_node, exploration_coefficient=1.2)
+            for _ in range(int(config["num_sims"])):
+                front = tree_policy(root_node, exploration_coefficient=config["exploration_coefficient"])
                 for child in front.children:
                     reward, best_state = default_policy(child.state, best_state)
                     backup(child, reward)
-
-            # import ipdb; ipdb.set_trace()
+    
+            self.mol_buffer = f_cache
+            self.sort_buffer()
 
             print(f'{generation} | '
-                  f'{len(f_cache)} oracle calls')
-
-            if len(f_cache) > max_total_func_calls:
-                print("Max oracle calls hit, aborting")
+                  f'{len(self.mol_buffer)} oracle calls')
+            
+            self.log_intermediate()
+            
+            if len(self.mol_buffer) >= config["max_n_oracles"]:
                 break
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics',
-                        default=None)
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--n_jobs', type=int, default=-1)  ## default -1 
-    parser.add_argument('--n_search', type=int, default=10) ## default 1000
-    parser.add_argument('--population_size', type=int, default=10)
-    parser.add_argument('--num_sims', type=int, default=4) #### default 40
-    parser.add_argument('--max_children', type=int, default=5) ### default 25
-    parser.add_argument('--max_atoms', type=int, default=10) ### default 60  
-    parser.add_argument('--init_smiles', type=str, default='CC')
+    parser.add_argument('--smi_file', default=None)
+    parser.add_argument('--config_default', default='hparams_default.yaml')
+    parser.add_argument('--config_tune', default='hparams_tune.yaml')
+    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics', default=None)
+    parser.add_argument('--n_jobs', type=int, default=16)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_func_calls', type=int, default=500)
+    parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
+    parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
 
-    if args.output_dir is None:
-        args.output_dir = os.path.dirname(os.path.realpath(__file__))
+    path_here = os.path.dirname(os.path.realpath(__file__))
 
     if args.pickle_directory is None:
-        args.pickle_directory = os.path.dirname(os.path.realpath(__file__))
+        args.pickle_directory = path_here
+    
+    if args.output_dir is None:
+        args.output_dir = os.path.join(path_here, "results")
+    
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
+    
+    for oracle_name in args.oracles:
 
-    np.random.seed(args.seed)
+        try:
+            config_default = yaml.safe_load(open(args.config_default))
+        except:
+            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
 
-    generate_optimized_molecules(
-        oracle = oracle,
-        pickle_directory = args.pickle_directory, 
-        n_jobs = args.n_jobs, 
-        num_sims=args.num_sims,
-        max_children=args.max_children,
-        init_smiles=args.init_smiles,
-        max_atoms=args.max_atoms,
-        patience_max=args.patience,
-        n_search=args.n_search,
-        population_size=args.population_size,         
-        start_known_smiles = dict(),
-        max_total_func_calls=args.max_func_calls, 
-    )
+        if args.task == "tune":
+            try:
+                config_tune = yaml.safe_load(open(args.config_tune))
+            except:
+                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
 
-    all_func_evals = f_cache
+        oracle = Oracle(name = oracle_name)
+        optimizer = Graph_MCTS_Optimizer(args=args)
 
-    # Evaluate 
-    new_score_tuples = [(v, k) for k, v in all_func_evals.items() if k is not None and k!='']  # scores of new molecules
-    new_score_tuples.sort(reverse=True,key=lambda x:x[0])
-    top100_mols = [(k, v) for (v, k) in new_score_tuples[:100]]
-    diversity = Evaluator(name = 'Diversity')
-    div = diversity([t[0] for t in top100_mols])
-    output = dict(
-        top_mols=top100_mols,
-        AST=np.average([t[1] for t in top100_mols]),
-        diversity=div,
-        all_func_evals=dict(all_func_evals),
-    )
-    print(output)
+        if args.task == "simple":
+            optimizer.optimize(oracle=oracle, config=config_default)
+        elif args.task == "tune":
+            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
+        elif args.task == "production":
+            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
 
 
 if __name__ == "__main__":

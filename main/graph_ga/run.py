@@ -11,10 +11,10 @@ from typing import List, Optional
 import joblib
 import numpy as np
 from joblib import delayed
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
-
+rdBase.DisableLog('rdApp.error')
 import crossover as co, mutate as mu
 from main.optimizer import BaseOptimizer
 
@@ -72,7 +72,7 @@ class GB_GA_Optimizer(BaseOptimizer):
         population_mol = [Chem.MolFromSmiles(s) for s in population_smiles]
         population_scores = self.score_mol(oracle, population_mol)
 
-        patience = 0
+        # patience = 0
 
         for generation in range(config["max_generations"]):
 
@@ -85,12 +85,12 @@ class GB_GA_Optimizer(BaseOptimizer):
             population_mol = self.sanitize(population_mol)
 
             # stats
-            old_scores = population_scores
+            # old_scores = population_scores
             population_scores = self.score_mol(oracle, population_mol)
-            population_tuples = list(zip(population_scores, population_mol))
-            population_tuples = sorted(population_tuples, key=lambda x: x[0], reverse=True)[:config["population_size"]]
-            population_mol = [t[1] for t in population_tuples]
-            population_scores = [t[0] for t in population_tuples]
+            # population_tuples = list(zip(population_scores, population_mol))
+            # population_tuples = sorted(population_tuples, key=lambda x: x[0], reverse=True)[:config["population_size"]]
+            # population_mol = [t[1] for t in population_tuples]
+            # population_scores = [t[0] for t in population_tuples]
 
             # early stopping
             # if population_scores == old_scores:
@@ -100,7 +100,8 @@ class GB_GA_Optimizer(BaseOptimizer):
             # else:
             #     patience = 0
                 
-            self.log_intermediate(population_mol, population_scores)
+            # self.log_intermediate(population_mol, population_scores)
+            self.log_intermediate()
             
             if len(self.mol_buffer) >= config["max_n_oracles"]:
                 break
