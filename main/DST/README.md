@@ -21,7 +21,7 @@ conda activate dst
 
 make directory
 ```bash
-mkdir -p save_model result 
+mkdir -p pretrained_model result 
 ```
 
 
@@ -105,7 +105,7 @@ python src/train.py $prop $train_oracle
 - input 
   - `data/zinc_label.txt`: **training data** includes `(SMILES,y)` pairs, where `SMILES` is the molecule, `y` is the label. `y = GNN(SMILES)`
 - output 
-  - `save_model/model_epoch_*.ckpt`: saved GNN model. 
+  - `pretrained_model/model_epoch_*.ckpt`: saved GNN model. 
 - log
   - `"loss/{$prop}.pkl"` save the valid loss. 
 For example, 
@@ -122,7 +122,7 @@ python src/train.py jnkgsk 5000
 python src/run.py 
 ```
 - input 
-  - `save_model/{$prop}_*.ckpt`: saved GNN model. * is number of iteration or epochs. 
+  - `pretrained_model/{$prop}_*.ckpt`: saved GNN model. * is number of iteration or epochs. 
 - output 
   - `result/{$prop}.pkl`: set of generated molecules. 
 

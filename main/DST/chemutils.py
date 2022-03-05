@@ -6,7 +6,7 @@ from functools import reduce
 from tqdm import tqdm 
 from copy import deepcopy 
 import numpy as np 
-import torch 
+import torch, os 
 from torch.autograd import Variable
 torch.manual_seed(4) 
 np.random.seed(1)
@@ -83,9 +83,10 @@ def jnk_gsk_fusion(jnk_score, gsk_score):
     modified_score = min(1.0,gmean_score)
     return modified_score
 
+path_here = os.path.dirname(os.path.realpath(__file__))
 
 def load_vocabulary():
-	datafile = "data/vocabulary.txt"
+	datafile = os.path.join(path_here,"data/vocabulary.txt")
 	with open(datafile, 'r') as fin:
 		lines = fin.readlines()
 	vocabulary = [line.split()[0] for line in lines]

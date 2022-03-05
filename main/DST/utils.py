@@ -1,7 +1,5 @@
 import torch 
 
-
-
 class Molecule_Dataset(torch.utils.data.Dataset):
 	def __init__(self, molecule_X_label_y_list):
 		self.smiles_lst = [i[0] for i in molecule_X_label_y_list]
