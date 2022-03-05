@@ -34,10 +34,10 @@ conda activate molopt
 |--------------------|-----------|--------------|----------|--------|---------|
 | **Screening**      | ✅         | ✅           | ✅       |        |         |
 | **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
-| **SMILES GA**      | ✅         |              |          |        |         |
+| **SMILES GA**      | ✅         |  ✅          |          |        |         |
 | **SELFIES GA**     | ✅         |              |          |        |         |
 | **SELFIES GA +D**  | ✅         |              |          |        |         |
-| **Graph MCTS**     | ✅         |              |          |        |         |
+| **Graph MCTS**     | ✅         |  ✅          |          |        |         |
 | **SMILES HC**      |           |              |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
 | **SMILES VAE BO**  |           |              |          |        |         |

@@ -10,6 +10,9 @@ parameters:
     values: [50, 100, 150, 200]
   n_mutations: 
     values: [100, 200, 300]
-  max_generations: 10000
-  max_n_oracles: 10000
-  patience: 5
+  max_generations: 
+    value: 10000
+  max_n_oracles: 
+    value: 10000
+  patience: 
+    value: 5
