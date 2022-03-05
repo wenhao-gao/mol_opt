@@ -1,0 +1,6 @@
+gene_size: 300
+population_size: 100
+n_mutations: 200
+max_generations: 10000
+max_n_oracles: 10000
+patience: 5
