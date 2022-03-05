@@ -150,4 +150,4 @@ oracle
 *.slurm
 slurm*
 result*.yaml
-
+*.out

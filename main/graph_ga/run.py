@@ -11,10 +11,10 @@ from typing import List, Optional
 import joblib
 import numpy as np
 from joblib import delayed
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
-
+rdBase.DisableLog('rdApp.error')
 import crossover as co, mutate as mu
 from main.optimizer import BaseOptimizer
 
@@ -74,7 +74,7 @@ class GB_GA_Optimizer(BaseOptimizer):
 
         patience = 0
 
-        for generation in range(config["max_generations"]):
+        for _ in range(config["max_generations"]):
 
             # new_population
             mating_pool = make_mating_pool(population_mol, population_scores, config["population_size"])
@@ -93,14 +93,16 @@ class GB_GA_Optimizer(BaseOptimizer):
             population_scores = [t[0] for t in population_tuples]
 
             # early stopping
-            # if population_scores == old_scores:
-            #     patience += 1
-            #     if patience >= config["patience"]:
-            #         break
-            # else:
-            #     patience = 0
+            if population_scores == old_scores:
+                patience += 1
+                if patience >= config["patience"]:
+                    self.log_intermediate(finish=True)
+                    break
+            else:
+                patience = 0
                 
-            self.log_intermediate(population_mol, population_scores)
+            # self.log_intermediate(population_mol, population_scores)
+            self.log_intermediate()
             
             if len(self.mol_buffer) >= config["max_n_oracles"]:
                 break
