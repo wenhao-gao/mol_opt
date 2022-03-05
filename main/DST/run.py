@@ -39,19 +39,24 @@ class DSToptimizer(BaseOptimizer):
 
 		current_set = set(start_smiles_lst)
 		for i_gen in tqdm(range(max_generations)):
+			next_set = set() 
 			for smiles in current_set:
-				if substr_num(smiles) < 3: #### short smiles
-					smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### optimize_single_molecule_one_iterate_v2
-				else:
-					smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon)
-			smiles_lst = list(smiles_set)
+				try:
+					if substr_num(smiles) < 3: #### short smiles
+						smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### optimize_single_molecule_one_iterate_v2
+					else:
+						smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon)
+					next_set = next_set.union(smiles_set)
+				except:
+					pass 
+			smiles_lst = list(next_set)
 			score_lst = self.score_smiles(oracle, smiles_lst)
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)
 			print(smiles_score_lst[:5], "Oracle num: ", len(self.mol_buffer))
 
 			# current_set = [i[0] for i in smiles_score_lst[:population_size]]  # Option I: top-k 
-			current_set,_,_ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) 	# Option II: DPP
+			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) # Option II: DPP
 
 			if len(self.mol_buffer) >= max_n_oracles:
 				break
