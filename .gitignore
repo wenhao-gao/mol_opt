@@ -7,20 +7,12 @@ __pycache__/
 *.so
 
 
-# DST
-main/DST/data/
 
-# GPBO
-main/GPBO/data/
 
-# mars 
-main/MARS/estimator/scorer/kinase_rf/
-main/MARS/runs/ 
 
-# jtvae
-main/JTVAE/molvae
-main/JTVAE/download.sh
-main/JTVAE/jtnn 
+
+
+
 
 # Distribution / packaging
 .Python
@@ -151,3 +143,40 @@ oracle
 slurm*
 result*.yaml
 *.out
+
+
+
+
+
+
+
+
+
+
+
+
+
+# DST
+main/DST/data/
+main/DST/wandb/
+main/DST/oracle/
+main/DST/results/
+main/DST/__pycache__/
+
+
+
+# GPBO
+main/GPBO/data/
+
+
+# jtvae
+main/JTVAE/molvae
+main/JTVAE/download.sh
+main/JTVAE/jtnn 
+
+
+# mars 
+main/MARS/estimator/scorer/kinase_rf/
+main/MARS/runs/ 
+
+
