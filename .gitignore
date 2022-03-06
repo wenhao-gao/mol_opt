@@ -180,3 +180,14 @@ main/MARS/estimator/scorer/kinase_rf/
 main/MARS/runs/ 
 
 
+# MIMOSA
+main/MIMOSA/data/
+main/MIMOSA/results/
+main/MIMOSA/__pycache__/
+
+
+
+
+
+
+

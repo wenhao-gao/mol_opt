@@ -55,6 +55,13 @@ class BaseOptimizer:
 
 ```python
 
+
+path_here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(path_here)
+sys.path.append('.')
+
+from xxx import xxx 
+
 class XXX_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
