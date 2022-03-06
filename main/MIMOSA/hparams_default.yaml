@@ -1,0 +1,5 @@
+population_size: 50
+max_generations: 50
+max_n_oracles: 10000
+lamb: 2
+topk: 5

@@ -112,13 +112,10 @@ python src/train.py
 ## Run 
 
 ```bash
-python src/run.py
+python main/MIMOSA/run.py
 ```
 - input 
   - `save_model/GNN.ckpt`: pretrained GNN model. 
-- output 
-  - `result/{$prop}.pkl`: set of generated molecules. 
-
 
 
 
