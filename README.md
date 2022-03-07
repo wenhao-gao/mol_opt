@@ -53,7 +53,7 @@ conda activate molopt
 | **RationaleRL**    |           |              |          |        |         |
 | **MolDQN**         | ✅        |              |          |        |         |
 | **MIMOSA**         | ✅        | ✅           |          |        |         |
-| **MARS**           | doing     |              |          |        |         |
+| **MARS**           | ✅        | ✅           |          |        |         |
 | **DoG-Gen**        | -         |              |          |        |         |
 | **DoG-AE BO**      | -         |              |          |        |         |
 | **SynNet**         |           |              |          |        |         |

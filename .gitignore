@@ -178,6 +178,8 @@ main/JTVAE/jtnn
 # mars 
 main/MARS/estimator/scorer/kinase_rf/
 main/MARS/runs/ 
+main/MARS/data/kinase.tsv
+
 
 
 # MIMOSA
