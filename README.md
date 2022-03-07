@@ -32,12 +32,12 @@ conda activate molopt
 
 |                    | `runable` | `compatible` | `hparam` | `test` | `unity` |
 |--------------------|-----------|--------------|----------|--------|---------|
-| **Screening**      | ✅         | ✅           | ✅       |        |         |
-| **Graph Ga**       | ✅         | ✅           | ✅       |        |         |
-| **SMILES GA**      | ✅         |  ✅          |          |        |         |
-| **SELFIES GA**     | ✅         |              |          |        |         |
-| **SELFIES GA +D**  | ✅         |              |          |        |         |
-| **Graph MCTS**     | ✅         |  ✅          |          |        |         |
+| **Screening**      | ✅        | ✅           | ✅       |        |         |
+| **Graph Ga**       | ✅        | ✅           | ✅       |        |         |
+| **SMILES GA**      | ✅        | ✅           |          |        |         |
+| **SELFIES GA**     | ✅        | ✅           |          |        |         |
+| **SELFIES GA +D**  | ✅        | ✅           |          |        |         |
+| **Graph MCTS**     | ✅        | ✅           |          |        |         |
 | **SMILES HC**      |           |              |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
 | **SMILES VAE BO**  |           |              |          |        |         |
@@ -47,18 +47,18 @@ conda activate molopt
 | **BOSS (SELFIES)** |           |              |          |        |         |
 | **Graph-GA+GP-BO** |           |              |          |        |         |
 | **ORGAN**          | doing     |              |          |        |         |
-| **MolGAN**         | doing     |              |          |        |         |
+| **MolGAN**         | ✅        |              |          |        |         |
 | **ChemBO**         | -         |              |          |        |         |
 | **REINVENT**       |           |              |          |        |         |
 | **RationaleRL**    |           |              |          |        |         |
 | **MolDQN**         | ✅        |              |          |        |         |
-| **MIMOSA**         | ✅        |              |          |        |         |
+| **MIMOSA**         | ✅        | ✅           |          |        |         |
 | **MARS**           | doing     |              |          |        |         |
 | **DoG-Gen**        | -         |              |          |        |         |
 | **DoG-AE BO**      | -         |              |          |        |         |
 | **SynNet**         |           |              |          |        |         |
 | **Pasithea**       |           |              |          |        |         |
-| **DST**            | ✅        |              |          |        |         |
+| **DST**            | ✅        | ✅           |          |        |         |
 | **GFlowNet**       |           |              |          |        |         |
 | **GFlowNet (AL)**  |           |              |          |        |         |
 

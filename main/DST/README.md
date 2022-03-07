@@ -32,7 +32,7 @@ In our setup, we restrict the number of oracle calls. In realistic discovery set
 ### Raw Data 
 We use [`ZINC`](https://tdcommons.ai/generation_tasks/molgen/) database, which contains around 250K drug-like molecules and can be downloaded [`download ZINC`](https://tdcommons.ai/generation_tasks/molgen/). 
 ```bash
-python src/download.py
+python download.py
 ```
 - output
   - `data/zinc.tab`: all the smiles in ZINC, around 250K. 
@@ -57,7 +57,7 @@ Multi-objective optimization contains `jnkgsk` (JNK3 + GSK3B), `qedsajnkgsk` (QE
 In this project, the basic unit is `substructure`, which can be atoms or single rings. 
 The vocabulary is the set of frequent `substructures`. 
 ```bash 
-python src/vocabulary.py
+python vocabulary.py
 ```
 - input
   - `data/zinc.tab`: all the smiles in ZINC, around 250K. 
@@ -69,7 +69,7 @@ python src/vocabulary.py
 We remove the molecules that contains substructure that is not in vocabulary. 
 
 ```bash 
-python src/clean.py 
+python clean.py 
 ```
 
 - input 
@@ -81,7 +81,7 @@ python src/clean.py
 ### Labelling
 We use oracle to evaluate molecule's properties to obtain the labels for training graph neural network. 
 ```bash
-python src/labelling.py
+python labelling.py
 ```
 - input
   - `data/zinc_clean.txt`: all the smiles in ZINC, around 250K. 
@@ -98,7 +98,7 @@ In our setup, we restrict the number of oracle calls in both training GNN and de
 
 It corresponds to Section 3.2 in the paper. 
 ```bash 
-python src/train.py $prop $train_oracle
+python train.py $prop $train_oracle
 ```
 - `prop` represent the property to optimize, including `qed`, `logp`, `jnk`, `gsk`, `jnkgsk`, `qedsajnkgsk`.  
 - `train_oracle` is number of oracle calls in training GNN. 
@@ -110,8 +110,11 @@ python src/train.py $prop $train_oracle
   - `"loss/{$prop}.pkl"` save the valid loss. 
 For example, 
 ```bash 
-python src/train.py jnkgsk 5000 
+python train.py jnkgsk 5000 
 ```
+
+
+
 
 ### de novo molecule design 
 
@@ -119,12 +122,11 @@ python src/train.py jnkgsk 5000
 
 
 ```bash
-python src/run.py 
+python run.py 
 ```
 - input 
   - `pretrained_model/{$prop}_*.ckpt`: saved GNN model. * is number of iteration or epochs. 
-- output 
-  - `result/{$prop}.pkl`: set of generated molecules. 
+
 
 
 
