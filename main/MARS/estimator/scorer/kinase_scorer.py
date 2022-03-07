@@ -18,8 +18,11 @@ def fingerprints_from_mol(mol):
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
+path_here = os.path.dirname(os.path.realpath(__file__))
 
-ROOT_DIR = './estimator/scorer'
+
+# ROOT_DIR = './estimator/scorer'
+ROOT_DIR = path_here 
 TASKS = ['gsk3b', 'jnk3']
 SPLITS = ['val', 'dev']
 

@@ -7,10 +7,13 @@ import argparse
 import numpy as np
 import logging as log
 from tqdm import tqdm
+from tdc import Oracle 
 from rdkit import Chem, RDLogger
-import sys
+import sys, yaml 
+path_here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(path_here)
 sys.path.append('.')
-
+from main.optimizer import BaseOptimizer
 from estimator.estimator import Estimator
 from proposal.models.editor_basic import BasicEditor
 from proposal.proposal import Proposal_Random, Proposal_Editor, Proposal_Mix
@@ -20,79 +23,52 @@ from datasets.utils import load_mols
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
+"""
+objectives: 'gsk3b,jnk3,qed,sa'
+score_wght: '1.0, 1.0, 1.0, 1.0'
+score_succ: '0.5, 0.5, 0.6, .67'
+score_clip: '0.6, 0.6, 0.7, 0.7'
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--device',     type=str,   default='cpu') ###'cuda:0')
-    parser.add_argument('--debug',      action='store_true')
-    parser.add_argument('--train',      action='store_true')
-    parser.add_argument('--run_exist',  action='store_true')
-    parser.add_argument('--root_dir',   type=str,   default='./')
-    parser.add_argument('--data_dir',   type=str,   default='data')
-    parser.add_argument('--run_dir',    type=str,   default='runs/debug')
-    parser.add_argument('--editor_dir', type=str,   default=None)
-    parser.add_argument('--mols_ref',  type=str,    default=None)
-    parser.add_argument('--mols_init',  type=str,   default=None)
-    parser.add_argument('--vocab',      type=str,   default='chembl')
-    parser.add_argument('--vocab_size', type=int,   default=1000)
-    parser.add_argument('--max_size',   type=int,   default=40)
-    parser.add_argument('--num_mols',   type=int,   default=1000)
-    parser.add_argument('--num_step',   type=int,   default=5)
-    parser.add_argument('--num_runs',   type=int,   default=2)
-    parser.add_argument('--log_every',  type=int,   default=1)
+# config['objectives'] = config['objectives'].split(',')
+# config['score_wght'] = [float(_) for _ in config['score_wght'].split(',')]
+# config['score_succ'] = [float(_) for _ in config['score_succ'].split(',')]
+# config['score_clip'] = [float(_) for _ in config['score_clip'].split(',')]
+# assert len(config['score_wght']) == len(config['objectives'])
+# assert len(config['score_succ']) == len(config['objectives'])
+# assert len(config['score_clip']) == len(config['objectives'])
 
-    parser.add_argument('--sampler',    type=str,   default='sa',       help='mcmc sampling algorithm')
-    parser.add_argument('--proposal',   type=str,   default='editor',   help='how to pose proposals')
-    parser.add_argument('--objectives', type=str,   default='gsk3b,jnk3,qed,sa')
-    parser.add_argument('--score_wght', type=str,   default='  1.0, 1.0, 1.0, 1.0')
-    parser.add_argument('--score_succ', type=str,   default='  0.5, 0.5, 0.6, .67')
-    parser.add_argument('--score_clip', type=str,   default='  0.6, 0.6, 0.7, 0.7')
-    
-    parser.add_argument('--lr',             type=float, default=3e-4)
-    parser.add_argument('--dataset_size',   type=int,   default=50000)
-    parser.add_argument('--batch_size',     type=int,   default=128)
-    parser.add_argument('--n_atom_feat',    type=int,   default=17)
-    parser.add_argument('--n_bond_feat',    type=int,   default=5)
-    parser.add_argument('--n_node_hidden',  type=int,   default=64)
-    parser.add_argument('--n_edge_hidden',  type=int,   default=128)
-    parser.add_argument('--n_layers',       type=int,   default=6)
-    args = parser.parse_args()
-    if args.debug: args.num_runs, args.num_mols, args.num_step = 1, 100, 10
-    if args.run_dir == 'runs/debug': args.run_exist = True
+estimator is used for scoring, will be replaced by tdc.oracle 
 
-    config = vars(args)
-    config['device'] = torch.device(config['device'])
-    config['objectives'] = config['objectives'].split(',')
-    config['score_wght'] = [float(_) for _ in config['score_wght'].split(',')]
-    config['score_succ'] = [float(_) for _ in config['score_succ'].split(',')]
-    config['score_clip'] = [float(_) for _ in config['score_clip'].split(',')]
-    assert len(config['score_wght']) == len(config['objectives'])
-    assert len(config['score_succ']) == len(config['objectives'])
-    assert len(config['score_clip']) == len(config['objectives'])
-    config['run_dir'] = os.path.join(config['root_dir'], config['run_dir'])
-    config['data_dir'] = os.path.join(config['root_dir'], config['data_dir'])
-    os.makedirs(config['run_dir'], exist_ok=config['run_exist'])
-    log.basicConfig(format='%(asctime)s: %(message)s', datefmt='%m/%d %I:%M:%S %p', level=log.INFO)
-    log.getLogger().addHandler(log.FileHandler(os.path.join(config['run_dir'], 'log.txt'), mode='w'))
-    log.info(str(config))
+"""
 
-    random.seed(0)
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
-    np.random.seed(0)
 
-    ### estimator
-    if config['mols_ref']: config['mols_ref'] = \
-        load_mols(config['data_dir'], config['mols_ref'])
-    estimator = Estimator(config)
-    
-    for run in range(config['num_runs']):
-        run_dir = os.path.join(config['run_dir'], 'run_%02d' % run)
-        log.info('Run %02d: ======================' % run)
-        
+class MARS_Optimizer(BaseOptimizer):
+    def __init__(self, args=None):
+        super().__init__(args)
+        self.model_name = "MARS"
+
+
+    def _optimize(self, oracle, config):
+
+        config['device'] = torch.device(config['device'])
+        config['run_dir'] = os.path.join(config['root_dir'], config['run_dir'])
+        config['data_dir'] = os.path.join(config['root_dir'], config['data_dir'])
+        os.makedirs(config['run_dir'], exist_ok=True)
+
+        random.seed(0)
+        torch.manual_seed(0)
+        torch.cuda.manual_seed(0)
+        np.random.seed(0)
+
+        ### estimator
+        if config['mols_ref']: 
+            config['mols_ref'] = load_mols(config['data_dir'], config['mols_ref'])
+        # estimator = Estimator(config)
+
+        run_dir = config['run_dir']
+
         ### proposal
-        editor = BasicEditor(config).to(config['device']) \
-            if not config['proposal'] == 'random' else None
+        editor = BasicEditor(config).to(config['device']) if not config['proposal'] == 'random' else None
         if config['editor_dir'] is not None: # load pre-trained editor
             path = os.path.join(config['root_dir'], config['editor_dir'], 'model_best.pt')
             editor.load_state_dict(torch.load(path, map_location=torch.device(config['device'])))
@@ -100,19 +76,66 @@ if __name__ == '__main__':
         if config['proposal'] == 'random': proposal = Proposal_Random(config)
         elif config['proposal'] == 'editor': proposal = Proposal_Editor(config, editor)
         elif config['proposal'] == 'mix': proposal = Proposal_Mix(config, editor)
-        else: raise NotImplementedError
 
         ### sampler
-        if config['sampler'] == 're': sampler = Sampler_Recursive(config, proposal, estimator)
-        elif config['sampler'] == 'sa': sampler = Sampler_SA(config, proposal, estimator)
-        elif config['sampler'] == 'mh': sampler = Sampler_MH(config, proposal, estimator)
-        else: raise NotImplementedError
+        if config['sampler'] == 're': sampler = Sampler_Recursive(config, proposal, oracle, config['max_n_oracles']) 
+        elif config['sampler'] == 'sa': sampler = Sampler_SA(config, proposal, oracle, config['max_n_oracles'])
+        elif config['sampler'] == 'mh': sampler = Sampler_MH(config, proposal, oracle, config['max_n_oracles'])
 
         ### sampling
         if config['mols_init']:
             mols = load_mols(config['data_dir'], config['mols_init'])
             mols = random.choices(mols, k=config['num_mols'])
             mols_init = mols[:config['num_mols']]
-        else: mols_init = [
-            Chem.MolFromSmiles('CC') for _ in range(config['num_mols'])]
-        sampler.sample(run_dir, mols_init)
+        else: 
+            mols_init = [Chem.MolFromSmiles('CC') for _ in range(config['num_mols'])]
+        self.mol_buffer = sampler.sample(run_dir, mols_init, self.mol_buffer)
+
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--smi_file', default=None)
+    parser.add_argument('--config_default', default='hparams_default.yaml')
+    parser.add_argument('--config_tune', default='hparams_tune.yaml')
+    parser.add_argument('--n_jobs', type=int, default=-1)
+    parser.add_argument('--output_dir', type=str, default=None)
+    parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
+    parser.add_argument('--oracles', nargs="+", default=["QED"])
+    args = parser.parse_args()
+
+    if args.output_dir is None:
+        args.output_dir = os.path.join(path_here, "results")
+
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
+
+    for oracle_name in args.oracles:
+
+        try:
+            config_default = yaml.safe_load(open(args.config_default))
+        except:
+            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
+
+        if args.task == "tune":
+            try:
+                config_tune = yaml.safe_load(open(args.config_tune))
+            except:
+                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
+
+        oracle = Oracle(name = oracle_name)
+        optimizer = MARS_Optimizer(args=args)
+
+        if args.task == "simple":
+            optimizer.optimize(oracle=oracle, config=config_default)
+        elif args.task == "tune":
+            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
+        elif args.task == "production":
+            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
+
+
+if __name__ == '__main__':
+    main() 
+

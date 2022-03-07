@@ -17,9 +17,11 @@ from datasets.datasets import ImitationDataset, \
                                GraphClassificationDataset
 
 class Sampler():
-    def __init__(self, config, proposal, estimator):
+    def __init__(self, config, proposal, oracle, max_n_oracles):
         self.proposal = proposal
-        self.estimator = estimator
+        # self.estimator = estimator
+        self.oracle = oracle 
+        self.max_n_oracles = max_n_oracles 
         
         self.writer = None
         self.run_dir = None
@@ -27,18 +29,18 @@ class Sampler():
         ### for sampling
         self.step = None
         self.PATIENCE = 100
-        self.patience = None
+        self.patience = 100
         self.best_eval_res = 0.
         self.best_avg_score = 0.
-        self.last_avg_size = None
+        self.last_avg_size = 20
         self.train = config['train']
         self.num_mols = config['num_mols']
         self.num_step = config['num_step']
         self.log_every = config['log_every']
         self.batch_size = config['batch_size']
-        self.score_wght = {k: v for k, v in zip(config['objectives'], config['score_wght'])}
-        self.score_succ = {k: v for k, v in zip(config['objectives'], config['score_succ'])}
-        self.score_clip = {k: v for k, v in zip(config['objectives'], config['score_clip'])}
+        # self.score_wght = {k: v for k, v in zip(config['objectives'], config['score_wght'])}
+        # self.score_succ = {k: v for k, v in zip(config['objectives'], config['score_succ'])}
+        # self.score_clip = {k: v for k, v in zip(config['objectives'], config['score_clip'])}
         self.fps_ref = [AllChem.GetMorganFingerprintAsBitVect(x, 3, 2048) 
                         for x in config['mols_ref']] if config['mols_ref'] else None
 
@@ -48,6 +50,7 @@ class Sampler():
             self.DATASET_MAX_SIZE = config['dataset_size']
             self.optimizer = torch.optim.Adam(self.proposal.editor.parameters(), lr=config['lr'])
 
+
     def scores_from_dicts(self, dicts):
         '''
         @params:
@@ -56,14 +59,15 @@ class Sampler():
             scores (list): sum of property scores of each molecule after clipping
         '''
         scores = []
-        score_norm = sum(self.score_wght.values())
+        # score_norm = sum(self.score_wght.values())
         for score_dict in dicts:
             score = 0.
             for k, v in score_dict.items():
-                if self.score_clip[k] > 0.:
-                    v = min(v, self.score_clip[k])
-                score += self.score_wght[k] * v
-            score /= score_norm
+                # if self.score_clip[k] > 0.:
+                #     v = min(v, self.score_clip[k])
+                # score += self.score_wght[k] * v
+                score += v 
+            # score /= score_norm
             score = max(score, 0.)
             scores.append(score)
         return scores
@@ -158,28 +162,53 @@ class Sampler():
         '''
         raise NotImplementedError
 
-    def sample(self, run_dir, mols_init):
+    def sample(self, run_dir, mols_init, mol_buffer):
         '''
         sample molecules from initial ones
         @params:
             mols_init : initial molecules
         '''
-        self.run_dir = run_dir
+        self.run_dir = run_dir 
         self.writer = SummaryWriter(log_dir=run_dir)
         
         ### sample
         old_mols = [mol for mol in mols_init]
-        old_dicts = self.estimator.get_scores(old_mols)
-        old_scores = self.scores_from_dicts(old_dicts)
+        old_dicts = [{} for i in old_mols]
+        old_smiles = [Chem.MolToSmiles(mol) for mol in old_mols]
+        for ii,smiles in enumerate(old_smiles): 
+            if smiles in mol_buffer:
+                value = mol_buffer[smiles][0]
+            else: 
+                value = self.oracle(smiles)
+                mol_buffer[smiles] = [value, len(mol_buffer)+1]
+            old_dicts[ii][smiles] = value 
+        old_scores = [mol_buffer[smiles][0] for smiles in old_smiles]
+        # old_dicts = self.estimator.get_scores(old_mols)
+        # old_scores = self.scores_from_dicts(old_dicts)
         acc_rates = [0. for _ in old_mols]
-        self.record(-1, old_mols, old_dicts, acc_rates)
+        # self.record(-1, old_mols, old_dicts, acc_rates)
 
-        for step in range(self.num_step):
+        for step in tqdm(range(self.num_step)):
+            if len(mol_buffer) >= self.max_n_oracles:
+                print('max oracle number hit')
+                break 
+
             if self.patience <= 0: break
             self.step = step
             new_mols, fixings = self.proposal.propose(old_mols) 
-            new_dicts = self.estimator.get_scores(new_mols)
-            new_scores = self.scores_from_dicts(new_dicts)
+
+            new_dicts = [{} for i in new_mols]
+            new_smiles = [Chem.MolToSmiles(mol) for mol in new_mols]
+            for ii,smiles in enumerate(new_smiles):
+                if smiles in mol_buffer:
+                    value = mol_buffer[smiles][0]
+                else:
+                    value = self.oracle(smiles)
+                    mol_buffer[smiles] = [value, len(mol_buffer)+1]
+                new_dicts[ii][smiles] = value 
+            new_scores = [mol_buffer[smiles][0] for smiles in new_smiles]
+            # new_dicts = self.estimator.get_scores(new_mols)
+            # new_scores = self.scores_from_dicts(new_dicts)
             
             indices = [i for i in range(len(old_mols)) if new_scores[i] > old_scores[i]]
             with open(os.path.join(self.run_dir, 'edits.txt'), 'a') as f:
@@ -198,8 +227,8 @@ class Sampler():
                 old_mols[i] = new_mols[i]
                 old_scores[i] = new_scores[i]
                 old_dicts[i] = new_dicts[i]
-            if step % self.log_every == 0:
-                self.record(step, old_mols, old_dicts, acc_rates)
+            # if step % self.log_every == 0:
+            #     self.record(step, old_mols, old_dicts, acc_rates)
 
             ### train editor
             if self.train:
@@ -241,10 +270,13 @@ class Sampler():
                     torch.device('cpu'):
                     torch.cuda.empty_cache()
 
+        return mol_buffer 
+
 
 class Sampler_SA(Sampler):
-    def __init__(self, config, proposal, estimator):
-        super().__init__(config, proposal, estimator)
+
+    def __init__(self, config, proposal, oracle, max_n_oracles):
+        super().__init__(config, proposal, oracle, max_n_oracles)
         self.k = 0
         self.step_cur_T = 0
         self.T = Sampler_SA.T_k(self.k)
@@ -282,8 +314,8 @@ class Sampler_SA(Sampler):
 
 
 class Sampler_MH(Sampler):
-    def __init__(self, config, proposal, estimator):
-        super().__init__(config, proposal, estimator)
+    def __init__(self, config, proposal, oracle, max_n_oracles):
+        super().__init__(config, proposal, oracle, max_n_oracles)
         self.power = 30.
         
     def acc_rates(self, new_scores, old_scores, fixings):
@@ -296,8 +328,8 @@ class Sampler_MH(Sampler):
     
 
 class Sampler_Recursive(Sampler):
-    def __init__(self, config, proposal, estimator):
-        super().__init__(config, proposal, estimator)
+    def __init__(self, config, proposal, oracle, max_n_oracles):
+        super().__init__(config, proposal, oracle, max_n_oracles)
         
     def acc_rates(self, new_scores, old_scores, fixings):
         acc_rates = []
@@ -305,4 +337,10 @@ class Sampler_Recursive(Sampler):
             A = 1.
             acc_rates.append(A)
         return acc_rates
+
+
+
+
+
+
 

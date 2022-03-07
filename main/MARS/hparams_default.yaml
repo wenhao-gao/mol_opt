@@ -1,0 +1,30 @@
+population_size: 50
+max_generations: 50
+max_n_oracles: 3000
+lamb: 2
+topk: 5
+epsilon: 0.7
+device: 'cpu'
+data_dir: 'data'
+run_dir: 'runs/'
+train: True
+root_dir: './main/MARS/'
+editor_dir: 
+mols_ref: 
+mols_init: 
+vocab: 'chembl'
+vocab_size: 1000
+max_size: 40
+num_mols: 1000
+num_step: 500
+log_every: 1
+sampler: 'sa'
+proposal: 'editor'
+lr: 0.0003
+dataset_size: 50000
+batch_size: 128
+n_atom_feat: 17
+n_bond_feat: 5
+n_node_hidden: 64
+n_edge_hidden: 128
+n_layers: 6
