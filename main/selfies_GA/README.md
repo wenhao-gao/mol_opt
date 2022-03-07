@@ -6,7 +6,7 @@ This repository contains code for the paper: [Augmenting genetic algorithms with
 ## Prerequisites
 
 Before running the code, please ensure you have the following:
-- [SELFIES (any version)](https://github.com/aspuru-guzik-group/selfies) - 
+- [SELFIES (any version)](https://github.com/aspuru-guzik-group/selfies): `pip install selfies`
   The code was run with v0.1.1 (which is the fastest), however, the code is compatible with any version. 
 - [RDKit](https://www.rdkit.org/docs/Install.html)
 - [tensorboardX](https://pypi.org/project/tensorboardX/)

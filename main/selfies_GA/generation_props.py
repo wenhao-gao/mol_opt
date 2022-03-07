@@ -8,7 +8,7 @@ import numpy as np
 from random import randrange
 import discriminator as D
 import evolution_functions as evo
-from SAS_calculator.sascorer import calculateScore
+# from SAS_calculator.sascorer import calculateScore
 manager = multiprocessing.Manager()
 lock = multiprocessing.Lock()
 
@@ -104,9 +104,9 @@ def score_mol(smiles, score_fn, f_cache):
     print("f_cache", len(f_cache), smiles, 'exists' if is_exists else 'new')
     return f_cache[smiles]
 
-def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache,  max_oracle_call, 
+def fitness(molecules_here,    oracle, f_cache, 
             discriminator,     disc_enc_type,         generation_index,
-            max_molecules_len, device,                num_processors,    writer, beta, 
+            max_molecules_len, device,                num_processors,    beta, 
             data_dir,          max_fitness_collector, impose_time_adapted_pen):
     ''' Calculate fitness fo a generation in the GA
     
@@ -139,55 +139,25 @@ def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache,  max_orac
     else:
         discriminator_predictions = D.do_predictions(discriminator, dataset_x, device)
     
-    if properties_calc_ls == None:
-        fitness = discriminator_predictions
-    
-    else:
-        
+
+    if True:         
         molecules_here_unique = list(set(molecules_here))
-        
         # ratio            = len(molecules_here_unique) / num_processors 
         # chunks           = evo.get_chunks(molecules_here_unique, num_processors, ratio) 
         # chunks           = [item for item in chunks if len(item) >= 1]
-        
-        # logP_results, SAS_results, ringP_results, QED_results = {}, {}, {}, {}
-        # # Parallelize the calculation of logPs
-        # if 'logP' in properties_calc_ls:
-        #     logP_results = create_parr_process(chunks, 'logP')
 
-        # # Parallelize the calculation of SAS
-        # if 'SAS' in properties_calc_ls:
-        #     SAS_results = create_parr_process(chunks, 'SAS')
-
-        # # Parallize the calculation of Ring Penalty
-        # if 'RingP' in properties_calc_ls:
-        #     ringP_results = create_parr_process(chunks, 'RingP')
-            
-        # if 'QED' in properties_calc_ls:
-        #     QED_results = {}
-        #     for smi in molecules_here:
-        #         QED_results[smi] = Chem.QED.qed(Chem.MolFromSmiles(smi))
-
-        # logP_calculated, SAS_calculated, RingP_calculated, logP_norm, SAS_norm, RingP_norm, QED_results = obtained_standardized_properties(molecules_here, logP_results, SAS_results, ringP_results, QED_results, properties_calc_ls)
-
-        # Add SAS and Ring Penalty 
-        # Note: The fitness function must include the properties of var. 'properties_calc_ls'
-        # fitness = (logP_norm) - (SAS_norm) - (RingP_norm)
         fitness = []
         # global f_cache 
         for smiles in molecules_here:
-            value = score_mol(smiles, oracle, f_cache)
-            # assert smiles in f_cache 
+            value = f_cache[smiles][0]
             fitness.append(value)
         fitness = np.array(fitness).reshape(-1,1)
-
         # Plot fitness without discriminator 
         # writer.add_scalar('max fitness without discr',  max(fitness),     generation_index)
         # writer.add_scalar('avg fitness without discr',  fitness.mean(),   generation_index)
         
-        
         max_fitness_collector.append(max(fitness)[0])
-        
+
         ## Impose the beta cuttoff! --------------------------
         if impose_time_adapted_pen: 
             if generation_index > 100:
@@ -198,114 +168,20 @@ def fitness(molecules_here,    properties_calc_ls,    oracle, f_cache,  max_orac
                     f.write(str(generation_index) + '\n')
                     f.close()
         ## beta cuttoff imposed! --------------------------
-        
-        # max fitness without discriminator
-        # f = open('{}/max_fitness_no_discr.txt'.format(data_dir), 'a+')
-        # f.write(str(max(fitness)[0]) + '\n')
-        # f.close()
-        # # avg fitness without discriminator
-        # f = open('{}/avg_fitness_no_discr.txt'.format(data_dir), 'a+')
-        # f.write(str(fitness.mean()) + '\n')
-        # f.close()
 
         print('beta value: ', beta)
         fitness = (beta * discriminator_predictions) + fitness
-        
-        # Plot fitness with discriminator 
-        # writer.add_scalar('max fitness with discrm',  max(fitness),     generation_index)   
-        # writer.add_scalar('avg fitness with discrm',  fitness.mean(),   generation_index)   
-
-        # max fitness with discriminator
-        # f = open('{}/max_fitness_discr.txt'.format(data_dir), 'a+')
-        # f.write(str(max(fitness)[0]) + '\n')
-        # f.close()
-        # # avg fitness with discriminator
-        # f = open('{}/avg_fitness_discr.txt'.format(data_dir), 'a+')
-        # f.write(str(fitness.mean()) + '\n')
-        # f.close()
-        
-
-        # Plot properties 
-        # writer.add_scalar('non standr max logp',   max(logP_calculated),    generation_index) # logP plots      
-        # writer.add_scalar('non standr mean logp',  logP_calculated.mean(),  generation_index)                    
-        # writer.add_scalar('non standr min sas',    min(SAS_calculated),     generation_index) # SAS plots  
-        # writer.add_scalar('non standr mean sas',   SAS_calculated.mean(),   generation_index)
-        # writer.add_scalar('non standr min ringp',  min(RingP_calculated),   generation_index) # RingP plots
-        # writer.add_scalar('non standr mean ringp', RingP_calculated.mean(), generation_index)
-
-        # max logP - non standardized
-        # f = open('{}/max_logp.txt'.format(data_dir), 'a+')
-        # f.write(str(max(logP_calculated)) + '\n')
-        # f.close()
-        # # mean logP - non standardized
-        # f = open('{}/avg_logp.txt'.format(data_dir), 'a+')
-        # f.write(str(logP_calculated.mean()) + '\n')
-        # f.close()
-        # # min SAS - non standardized 
-        # f = open('{}/min_SAS.txt'.format(data_dir), 'a+')
-        # f.write(str(min(SAS_calculated)) + '\n')
-        # f.close()
-        # # mean SAS - non standardized 
-        # f = open('{}/avg_SAS.txt'.format(data_dir), 'a+')
-        # f.write(str(SAS_calculated.mean()) + '\n')
-        # f.close()
-        # # min RingP - non standardized 
-        # f = open('{}/min_RingP.txt'.format(data_dir), 'a+')
-        # f.write(str(min(RingP_calculated)) + '\n')
-        # f.close()
-        # # mean RingP - non standardized 
-        # f = open('{}/avg_RingP.txt'.format(data_dir), 'a+')
-        # f.write(str(RingP_calculated.mean()) + '\n')
-        # f.close()
-
 
     return fitness, discriminator_predictions
     # return fitness, logP_calculated, SAS_calculated, RingP_calculated, discriminator_predictions
 
 
-# def obtained_standardized_properties(molecules_here,  logP_results, SAS_results, ringP_results, QED_results, properties_calc_ls):
-#     ''' Obtain calculated properties of molecules in molecules_here, and standardize
-#     values base on properties of the Zinc Data set. 
-#     '''
-#     logP_calculated  = []
-#     SAS_calculated   = []
-#     RingP_calculated = []
-#     QED_calculated = []
 
-#     for smi in molecules_here:
-#         if 'logP' in properties_calc_ls: 
-#             logP_calculated.append(logP_results[smi])
-#         if 'SAS' in properties_calc_ls:
-#             SAS_calculated.append(SAS_results[smi])
-#         if 'RingP' in properties_calc_ls:
-#             RingP_calculated.append(ringP_results[smi])
-#         if 'QED' in properties_calc_ls:
-#             QED_calculated.append(QED_results[smi])
 
-#     logP_calculated  = np.array(logP_calculated)
-#     SAS_calculated   = np.array(SAS_calculated)
-#     RingP_calculated = np.array(RingP_calculated)
-#     QED_calculated   = np.array(QED_calculated)
-   
-#     # Standardize logP based on zinc logP (mean: 2.4729421499641497 & std : 1.4157879815362406)
-#     logP_norm = (logP_calculated - 2.4729421499641497) / 1.4157879815362406
-#     logP_norm = logP_norm.reshape((logP_calculated.shape[0], 1))  
-    
-#     # Standardize SAS based on zinc SAS(mean: 3.0470797085649894    & std: 0.830643172314514)
-#     SAS_norm = (SAS_calculated - 3.0470797085649894) / 0.830643172314514
-#     SAS_norm = SAS_norm.reshape((SAS_calculated.shape[0], 1))  
-    
-#     # Standardiize RingP based on zinc RingP(mean: 0.038131530820234766 & std: 0.2240274735210179)
-#     RingP_norm = (RingP_calculated - 0.038131530820234766) / 0.2240274735210179
-#     RingP_norm = RingP_norm.reshape((RingP_calculated.shape[0], 1))  
-    
-#     return logP_calculated, SAS_calculated, RingP_calculated, logP_norm, SAS_norm, RingP_norm, QED_calculated
-        
-
-def obtain_fitness(disc_enc_type, smiles_here, selfies_here, properties_calc_ls, 
-                   oracle,  f_cache, max_oracle_call, 
+def obtain_fitness(disc_enc_type, smiles_here, selfies_here,  
+                   oracle,  f_cache, 
                    discriminator, generation_index, max_molecules_len, device, 
-                   generation_size, num_processors, writer, beta, image_dir,
+                   generation_size, num_processors, beta, image_dir,
                    data_dir, max_fitness_collector, impose_time_adapted_pen):
     ''' Obtain fitness of generation based on choices of disc_enc_type.
         Essentially just calls 'fitness'
@@ -313,17 +189,21 @@ def obtain_fitness(disc_enc_type, smiles_here, selfies_here, properties_calc_ls,
     # ANALYSE THE GENERATION  
     # global f_cache   
     if disc_enc_type == 'smiles' or disc_enc_type == 'properties_rdkit':
-        fitness_here,  discriminator_predictions = fitness(smiles_here,   properties_calc_ls , 
-                                                                          oracle, f_cache, max_oracle_call,   
-                                                                          discriminator, 
-                                                                           disc_enc_type, generation_index,   max_molecules_len, device, num_processors, writer, beta, data_dir, 
-                                                                           max_fitness_collector, impose_time_adapted_pen) 
+        fitness_here,  discriminator_predictions = fitness(smiles_here,  
+                                                           oracle, f_cache,   
+                                                           discriminator, 
+                                                           disc_enc_type, generation_index,   
+                                                           max_molecules_len, device, num_processors, 
+                                                           beta, data_dir, 
+                                                           max_fitness_collector, impose_time_adapted_pen) 
     elif disc_enc_type == 'selfies':
-        fitness_here,  discriminator_predictions = fitness(selfies_here,  properties_calc_ls , 
-                                                                          oracle, f_cache,  max_oracle_call, 
-                                                                          discriminator, 
-                                                                           disc_enc_type, generation_index,   max_molecules_len, device, num_processors, writer, beta, data_dir, 
-                                                                           max_fitness_collector, impose_time_adapted_pen) 
+        fitness_here,  discriminator_predictions = fitness(selfies_here,  
+                                                           oracle, f_cache,  
+                                                           discriminator, 
+                                                           disc_enc_type, generation_index,   
+                                                           max_molecules_len, device, num_processors, 
+                                                           beta, data_dir, 
+                                                           max_fitness_collector, impose_time_adapted_pen) 
         
     # logP_calculated, SAS_calculated, RingP_calculated,
 

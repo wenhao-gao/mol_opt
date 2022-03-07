@@ -65,7 +65,7 @@ def obtain_initial_discriminator(disc_enc_type, disc_layers, max_molecules_len, 
 
 
 
-def do_x_training_steps(data_x, data_y, net, optimizer, loss_func, steps, graph_x_counter, device, writer, data_dir):
+def do_x_training_steps(data_x, data_y, net, optimizer, loss_func, steps, graph_x_counter, device, data_dir):
     
     data_x = torch.tensor(data_x.astype(np.float32), device=device)
     data_y = torch.tensor(data_y, device=device, dtype=torch.float)
@@ -76,7 +76,6 @@ def do_x_training_steps(data_x, data_y, net, optimizer, loss_func, steps, graph_
         loss = loss_func(predictions, data_y)
         
         # TensorBoard graphing (loss and weights histogram)
-        writer.add_scalar('loss',  loss, graph_x_counter*steps + t)
         f = open('{}/discr_loss.txt'.format(data_dir), 'a+')
         f.write(str(float(loss)) + '\n')
         f.close()
