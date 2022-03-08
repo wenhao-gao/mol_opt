@@ -54,6 +54,8 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
                 all_smiles = self.load_smiles_from_file(self.smi_file)
                 starting_population = self.top_k(all_smiles, scoring_function, self.mols_to_sample)
 
+        print('finish selecting initial population...')
+
         cuda_available = torch.cuda.is_available()
         device = "cuda" if cuda_available else "cpu"
         model_def = Path(self.pretrained_model_path).with_suffix('.json')
@@ -63,6 +65,7 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         generator = SmilesRnnMoleculeGenerator(model=model,
                                                max_len=self.max_len,
                                                device=device)
+        print('build generator')
 
         molecules = generator.optimise(objective=scoring_function,
                                        start_population=starting_population,

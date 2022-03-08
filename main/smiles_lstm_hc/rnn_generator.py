@@ -6,7 +6,7 @@ from typing import List, Set
 import numpy as np
 import torch
 import torch.nn as nn
-
+from tqdm import tqdm 
 from guacamol.scoring_function import ScoringFunction
 from guacamol.utils.chemistry import canonicalize_list
 
@@ -85,7 +85,7 @@ class SmilesRnnMoleculeGenerator:
                 results.append(k)
                 seen.add(k.smiles)
 
-        for epoch in range(1, 1 + n_epochs):
+        for epoch in tqdm(range(1, 1 + n_epochs)):
 
             t0 = time.time()
             samples = self.sampler.sample(self.model, mols_to_sample, max_seq_len=self.max_len)
@@ -97,7 +97,8 @@ class SmilesRnnMoleculeGenerator:
 
             seen.update(canonicalized_samples)
 
-            scores = objective.score_list(payload)
+            # scores = objective.score_list(payload)
+            scores = objective(payload)
             int_results = [OptResult(smiles=smiles, score=score) for smiles, score in zip(payload, scores)]
 
             t2 = time.time()
@@ -175,7 +176,8 @@ class SmilesRnnMoleculeGenerator:
 
         logger.info("finetuning with {} molecules for {} epochs".format(start_population_size, pretrain_epochs))
 
-        scores = scoring_function.score_list(training)
+        # scores = scoring_function.score_list(training)
+        scores = scoring_function(training)
         seed.extend(OptResult(smiles=smiles, score=score) for smiles, score in zip(training, scores))
 
         train_seqs, _ = load_smiles_from_list(training, max_len=self.max_len)
