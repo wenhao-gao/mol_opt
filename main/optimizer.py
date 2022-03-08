@@ -12,6 +12,104 @@ import wandb
 from main.utils.chem import *
 
 
+class Oracle:
+    def __init__(self, mol_buffer, freq_log=100, max_oracle_calls=10000):
+        self.name = None
+        self.evaluator = None
+        self.mol_buffer = mol_buffer
+        self.freq_log = freq_log
+        self.max_oracle_calls = max_oracle_calls
+        self.sa_scorer = tdc.Oracle(name = 'SA')
+        self.diversity_evaluator = tdc.Evaluator(name = 'Diversity')
+        self.last_log = 0
+
+    def assign_evaluator(self, evaluator):
+        self.evaluator = evaluator
+
+    def sort_buffer(self):
+        self.mol_buffer = dict(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][0], reverse=True))
+
+    def log_intermediate(self, mols=None, scores=None, finish=False):
+
+        if finish:
+            temp_top100 = list(self.mol_buffer.items())[:100]
+            smis = [item[0] for item in temp_top100]
+            scores = [item[1][0] for item in temp_top100]
+            n_calls = self.max_oracle_calls
+        else:
+            if mols is None and scores is None:
+                if len(self.mol_buffer) <= self.max_oracle_calls:
+                    # If not spefcified, log current top-100 mols in buffer
+                    temp_top100 = list(self.mol_buffer.items())[:100]
+                    smis = [item[0] for item in temp_top100]
+                    scores = [item[1][0] for item in temp_top100]
+                    n_calls = len(self.mol_buffer)
+                else:
+                    results = list(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][1], reverse=False))[:self.max_oracle_calls]
+                    temp_top100 = sorted(results, key=lambda kv: kv[1][0], reverse=True)[:100]
+                    smis = [item[0] for item in temp_top100]
+                    scores = [item[1][0] for item in temp_top100]
+                    n_calls = self.max_oracle_calls
+            else:
+                # Otherwise, log the input moleucles
+                smis = [Chem.MolToSmiles(m) for m in mols]
+                n_calls = len(self.mol_buffer)
+        
+        # Uncomment this line if want to log top-10 moelucles figures, so as the best_mol key values.
+        # temp_top10 = list(self.mol_buffer.items())[:10]
+
+        # try:
+        wandb.log({
+            "avg_top1": np.max(scores), 
+            "avg_top10": np.mean(sorted(scores, reverse=True)[:10]), 
+            "avg_top100": np.mean(scores), 
+            "avg_sa": np.mean(self.sa_scorer(smis)),
+            "diversity_top100": self.diversity_evaluator(smis),
+            "n_oracle": n_calls,
+            # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
+            #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
+        })
+
+    def score_smi(self, smi):
+        """
+        Function to score one molecule
+        """
+        if len(self.mol_buffer) > self.max_oracle_calls:
+            return 0
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None or len(smi) == 0:
+            return 0
+        else:
+            if smi in self.mol_buffer:
+                pass
+            else:
+                self.mol_buffer[smi] = [self.evaluator(smi), len(self.mol_buffer)+1]
+            return self.mol_buffer[smi][0]
+    
+    def __call__(self, smiles_lst):
+        """
+        Score
+        """
+        if type(smiles_lst) == list:
+            score_list = []
+            for smi in smiles_lst:
+                score_list.append(self.score_smi(smi))
+                if len(self.mol_buffer) % self.freq_log == 0 and len(self.mol_buffer) > self.last_log:
+                    self.log_intermediate()
+                    self.last_log = len(self.mol_buffer)
+        else:  ### a string of SMILES 
+            score_list = self.score_smi(smiles_lst)
+            if len(self.mol_buffer) % self.freq_log == 0 and len(self.mol_buffer) > self.last_log:
+                self.log_intermediate()
+                self.last_log = len(self.mol_buffer)
+        self.sort_buffer()
+        return score_list
+
+    @property
+    def finish(self):
+        return len(self.mol_buffer) >= self.max_oracle_calls
+
+
 class BaseOptimizer:
 
     def __init__(self, args=None):
@@ -21,6 +119,7 @@ class BaseOptimizer:
         self.pool = joblib.Parallel(n_jobs=self.n_jobs)
         self.smi_file = args.smi_file
         self.mol_buffer = {}
+        self.oracle = Oracle(self.mol_buffer)
         if self.smi_file is not None:
             self.all_smiles = self.load_smiles_from_file(self.smi_file)
         else:
@@ -122,6 +221,8 @@ class BaseOptimizer:
     def log_result(self):
 
         print(f"Logging final results...")
+
+        # import ipdb; ipdb.set_trace()
         
         log_num_oracles = [100, 500, 1000, 3000, 5000, 10000]
         
@@ -174,6 +275,10 @@ class BaseOptimizer:
                 np.mean(self.sa_scorer(smis)), 
                 float(len(smis_pass) / 100), 
                 top1_pass]
+
+    def reset(self):
+        self.mol_buffer = {}
+        self.oracle = Oracle(self.mol_buffer)
         
     def _optimize(self, oracle, config):
         raise NotImplementedError
@@ -186,7 +291,7 @@ class BaseOptimizer:
             with wandb.init(config=hparam_default) as run:
                 config = wandb.config
                 self._optimize(oracle, config)
-            self.mol_buffer = {}
+            self.reset()
 
         sweep_id = wandb.sweep(hparam_space)
         # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)
@@ -199,7 +304,7 @@ class BaseOptimizer:
         self._optimize(oracle, config)
         self.log_result()
         self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
-        self.mol_buffer = {}
+        self.reset()
         run.finish()
 
     def production(self, oracle, config, num_runs=5, project="production"):
@@ -209,5 +314,5 @@ class BaseOptimizer:
         seeds = seeds[:num_runs]
         for seed in seeds:
             self.optimize(oracle, config, seed, project)
-            self.mol_buffer = {}
+            self.reset()
 

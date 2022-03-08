@@ -190,7 +190,7 @@ class Node:
 
 def tree_policy(node, exploration_coefficient=(1/math.sqrt(2.0))):
     # a hack to force 'exploitation' in a game where there are many options, and you may never/not want to fully expand first
-    while node.fully_expanded():
+    while node.fully_expanded() and not node.state.oracle.finish:
         node = best_child(node, exploration_coefficient)
 
     if node.state.terminal():
@@ -202,7 +202,7 @@ def tree_policy(node, exploration_coefficient=(1/math.sqrt(2.0))):
 
 def expand_all(node):
     lcount = 0
-    while not node.fully_expanded() and lcount < node.state.max_children:
+    while not node.fully_expanded() and lcount < node.state.max_children and not node.state.oracle.finish:
         lcount += 1
         node = expand(node)
     return node
@@ -240,7 +240,7 @@ def best_child(node, exploration_coefficient):
 
 
 def default_policy(state, best_state):
-    while not state.terminal():
+    while not state.terminal() and not state.oracle.finish:
         state = state.next_state()
     reward = state.reward(best_state)
     if reward == 1:
@@ -264,9 +264,11 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         
+        self.oracle.assign_evaluator(oracle)
+
         init_mol = Chem.MolFromSmiles(config["init_smiles"])
-        global f_cache
-        f_cache = dict()
+        # global f_cache
+        # f_cache = dict()
         stats = get_stats_from_pickle(self.args.pickle_directory)
 
         # evolution: go go go!!
@@ -276,7 +278,7 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
             tmp_seed = int(time())
             np.random.seed(tmp_seed)
             best_state = None
-            root_node = Node(State(oracle=oracle,
+            root_node = Node(State(oracle=self.oracle,
                                 mol=init_mol,
                                 smiles=config["init_smiles"],
                                 max_atoms=config["max_atoms"],
@@ -286,20 +288,25 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
 
             for _ in range(int(config["num_sims"])):
                 front = tree_policy(root_node, exploration_coefficient=config["exploration_coefficient"])
+                if len(self.mol_buffer) >= config["max_n_oracles"]:
+                    break
                 for child in front.children:
                     reward, best_state = default_policy(child.state, best_state)
                     backup(child, reward)
+                    if len(self.mol_buffer) >= config["max_n_oracles"]:
+                        break
+        self.mol_buffer = self.oracle.mol_buffer
     
-            self.mol_buffer = f_cache
-            self.sort_buffer()
+            # self.mol_buffer = f_cache
+            # self.sort_buffer()
 
-            print(f'{generation} | '
-                  f'{len(self.mol_buffer)} oracle calls')
+            # print(f'{generation} | '
+            #       f'{len(self.mol_buffer)} oracle calls')
             
-            self.log_intermediate()
+            # self.log_intermediate()
             
-            if len(self.mol_buffer) >= config["max_n_oracles"]:
-                break
+            # if len(self.mol_buffer) >= config["max_n_oracles"]:
+            #     break
 
 
 def main():
