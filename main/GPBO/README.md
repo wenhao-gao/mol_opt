@@ -1,9 +1,7 @@
-# Code for "A Fresh Look at De Novo Molecular Design Benchmarks"
+# GPBO 
 
-This is the code for the [workshop paper](https://openreview.net/forum?id=gS3XMun4cl_) presented at NeurIPS 2021 AI for Science: Mind the Gaps workshop.
-The code is fairly rough as it was originally part of a code base for another project.
-I have tried to extract out just the parts for this workshop paper.
-If you are unable to get the code to run, feel free to contact us.
+This is adapted from the code repository for the [workshop paper: A Fresh Look at De Novo Molecular Design Benchmarks](https://openreview.net/forum?id=gS3XMun4cl_) presented at NeurIPS 2021 AI for Science: Mind the Gaps workshop.
+
 
 ## Data
 

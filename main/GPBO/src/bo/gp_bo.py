@@ -70,6 +70,7 @@ def maximize_acquisition_func_ga(
 def gp_bo_loop(
     gp_model: TanimotoGP,
     scoring_function: Union[callable, CachedFunction],
+    mol_buffer: dict, 
     smiles_to_np_fingerprint: callable,
     acq_func_of_time: callable,
     max_bo_iter: int,
@@ -190,6 +191,13 @@ def gp_bo_loop(
 
     # Actual BO loop
     for bo_iter in range(1, max_bo_iter + 1):
+
+
+
+        print(">>>> dictionary size", len(mol_buffer))
+        if len(mol_buffer) > max_func_calls:
+            break 
+
         logger.info(f"Start iter {bo_iter}")
 
         # Make starting population for GA from a combination of
