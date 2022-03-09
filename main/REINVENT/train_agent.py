@@ -10,7 +10,7 @@ from data_structs import Vocabulary, Experience
 from scoring_functions import get_scoring_function
 from utils import Variable, seq_to_smiles, fraction_valid_smiles, unique
 from vizard_logger import VizardLog
-
+from tqdm import tqdm 
 
 
 
@@ -25,8 +25,8 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
                 batch_size=64, n_steps=3000,
                 num_processes=0, sigma=60,
                 experience_replay=0):
-
-    voc = Vocabulary(init_from_file="data/Voc")
+    path_here = os.path.dirname(os.path.realpath(__file__))
+    voc = Vocabulary(init_from_file=os.path.join(path_here, "data/Voc"))
 
     start_time = time.time()
 
@@ -39,10 +39,10 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
     # Saved models are partially on the GPU, but if we dont have cuda enabled we can remap these
     # to the CPU.
     if torch.cuda.is_available():
-        Prior.rnn.load_state_dict(torch.load('data/Prior.ckpt'))
+        Prior.rnn.load_state_dict(torch.load(os.path.join(path_here,'data/Prior.ckpt')))
         Agent.rnn.load_state_dict(torch.load(restore_agent_from))
     else:
-        Prior.rnn.load_state_dict(torch.load('data/Prior.ckpt', map_location=lambda storage, loc: storage))
+        Prior.rnn.load_state_dict(torch.load(os.path.join(path_here, 'data/Prior.ckpt'), map_location=lambda storage, loc: storage))
         Agent.rnn.load_state_dict(torch.load(restore_agent_from, map_location=lambda storage, loc: storage))
 
     # We dont need gradients with respect to Prior
@@ -52,8 +52,8 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
     optimizer = torch.optim.Adam(Agent.rnn.parameters(), lr=0.0005)
 
     # Scoring_function
-    scoring_function = get_scoring_function(scoring_function=scoring_function, num_processes=num_processes,
-                                            **scoring_function_kwargs)
+    # scoring_function = get_scoring_function(scoring_function=scoring_function, num_processes=num_processes,
+    #                                         **scoring_function_kwargs)
 
     # For policy based RL, we normally train on-policy and correct for the fact that more likely actions
     # occur more often (which means the agent can get biased towards them). Using experience replay is
@@ -72,7 +72,7 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
 
     print("Model initialized, starting training...")
 
-    for step in range(n_steps):
+    for step in tqdm(range(n_steps)):
 
         # Sample from Agent
         seqs, agent_likelihood, entropy = Agent.sample(batch_size)
@@ -86,8 +86,17 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
         # Get prior likelihood and score
         prior_likelihood, _ = Prior.likelihood(Variable(seqs))
         smiles = seq_to_smiles(seqs, voc)
-        score = scoring_function(smiles)
+        score = np.array(scoring_function(smiles))
+        # score = scoring_function(smiles)
+        if scoring_function.finish:
+            print('max oracle hit')
+            break 
+        else:
+            print('----- not hit ------ ', len(scoring_function.mol_buffer))
 
+        # print("prior_likelihood", type(prior_likelihood), prior_likelihood.dtype)
+        # print("score", score, type(score), Variable(score).dtype)
+        # print(Variable(score).shape)
         # Calculate augmented likelihood
         augmented_likelihood = prior_likelihood + sigma * Variable(score)
         loss = torch.pow((augmented_likelihood - agent_likelihood), 2)
@@ -149,26 +158,29 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
                             (smiles[:12], score[:12])]), "SMILES", dtype="text", overwrite=True)
         logger.log(np.array(step_score), "Scores")
 
+    return scoring_function.mol_buffer  
+
     # If the entire training finishes, we create a new folder where we save this python file
     # as well as some sampled sequences and the contents of the experinence (which are the highest
     # scored sequences seen during training)
-    if not save_dir:
-        save_dir = 'data/results/run_' + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
-    os.makedirs(save_dir)
-    copyfile('train_agent.py', os.path.join(save_dir, "train_agent.py"))
+    # if not save_dir:
+    #     save_dir = 'data/results/run_' + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
+    #     save_dir = os.path.join(path_here, save_dir)
+    # os.makedirs(path_here, save_dir)
+    # copyfile('train_agent.py', os.path.join(save_dir, "train_agent.py"))
 
-    experience.print_memory(os.path.join(save_dir, "memory"))
-    torch.save(Agent.rnn.state_dict(), os.path.join(save_dir, 'Agent.ckpt'))
+    # experience.print_memory(os.path.join(save_dir, "memory"))
+    # torch.save(Agent.rnn.state_dict(), os.path.join(save_dir, 'Agent.ckpt'))
 
-    seqs, agent_likelihood, entropy = Agent.sample(256)
-    prior_likelihood, _ = Prior.likelihood(Variable(seqs))
-    prior_likelihood = prior_likelihood.data.cpu().numpy()
-    smiles = seq_to_smiles(seqs, voc)
-    score = scoring_function(smiles)
-    with open(os.path.join(save_dir, "sampled"), 'w') as f:
-        f.write("SMILES Score PriorLogP\n")
-        for smiles, score, prior_likelihood in zip(smiles, score, prior_likelihood):
-            f.write("{} {:5.2f} {:6.2f}\n".format(smiles, score, prior_likelihood))
+    # seqs, agent_likelihood, entropy = Agent.sample(256)
+    # prior_likelihood, _ = Prior.likelihood(Variable(seqs))
+    # prior_likelihood = prior_likelihood.data.cpu().numpy()
+    # smiles = seq_to_smiles(seqs, voc)
+    # score = scoring_function(smiles)
+    # with open(os.path.join(save_dir, "sampled"), 'w') as f:
+    #     f.write("SMILES Score PriorLogP\n")
+    #     for smiles, score, prior_likelihood in zip(smiles, score, prior_likelihood):
+    #         f.write("{} {:5.2f} {:6.2f}\n".format(smiles, score, prior_likelihood))
 
 if __name__ == "__main__":
     train_agent()

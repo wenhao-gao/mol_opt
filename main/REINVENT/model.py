@@ -59,7 +59,7 @@ class RNN():
         x = torch.cat((start_token, target[:, :-1]), 1)
         h = self.rnn.init_h(batch_size)
 
-        log_probs = Variable(torch.zeros(batch_size))
+        log_probs = Variable(torch.zeros(batch_size).float())
         entropy = Variable(torch.zeros(batch_size))
         for step in range(seq_length):
             logits, h = self.rnn(x[:, step], h)

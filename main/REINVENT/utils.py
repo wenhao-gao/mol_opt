@@ -8,7 +8,7 @@ def Variable(tensor):
        the GPU. Be aware in case some operations are better
        left to the CPU."""
     if isinstance(tensor, np.ndarray):
-        tensor = torch.from_numpy(tensor)
+        tensor = torch.from_numpy(tensor).float()
     if torch.cuda.is_available():
         return torch.autograd.Variable(tensor).cuda()
     return torch.autograd.Variable(tensor)

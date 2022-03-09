@@ -119,7 +119,7 @@ class BaseOptimizer:
         self.pool = joblib.Parallel(n_jobs=self.n_jobs)
         self.smi_file = args.smi_file
         self.mol_buffer = {}
-        self.oracle = Oracle(self.mol_buffer)
+        self.oracle = Oracle(self.mol_buffer, max_oracle_calls = args.max_oracle_calls)
         if self.smi_file is not None:
             self.all_smiles = self.load_smiles_from_file(self.smi_file)
         else:
