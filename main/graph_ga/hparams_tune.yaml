@@ -16,5 +16,3 @@ parameters:
     value: 5
   max_generations:
     value: 1000
-  max_n_oracles:
-    value: 10000

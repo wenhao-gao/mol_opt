@@ -22,5 +22,3 @@ parameters:
     max: 5
   n_search: 
     value: 10000
-  max_n_oracles: 
-    value: 10000

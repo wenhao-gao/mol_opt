@@ -4,4 +4,3 @@ max_children: 10
 num_sims: 8
 exploration_coefficient: 1.2
 n_search: 10000
-max_n_oracles: 10000
