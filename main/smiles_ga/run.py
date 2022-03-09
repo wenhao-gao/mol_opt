@@ -118,6 +118,8 @@ class SMILES_GA_Optimizer(BaseOptimizer):
         self.model_name = "smiles_ga"
 
     def _optimize(self, oracle, config):
+
+        self.oracle.assign_evaluator(oracle)
         
         if self.smi_file is not None:
             # Exploitation run
@@ -133,7 +135,7 @@ class SMILES_GA_Optimizer(BaseOptimizer):
                             for s in starting_population]
 
         # score initial population
-        population_scores = self.score_smiles(oracle, population_smi)
+        population_scores = self.oracle(population_smi)
         population = [(population_smi[i], population_genes[i]) for i in range(len(population_smi))]
 
         patience = 0
@@ -152,7 +154,7 @@ class SMILES_GA_Optimizer(BaseOptimizer):
             # join and dedup
             population += new_population
             population = deduplicate(population)
-            population_scores = self.score_smiles(oracle, [molecule[0] for molecule in population])
+            population_scores = self.oracle([molecule[0] for molecule in population])
 
             # survival of the fittest
             population_tuples = list(zip(population_scores, population))
@@ -168,10 +170,8 @@ class SMILES_GA_Optimizer(BaseOptimizer):
                     break
             else:
                 patience = 0
-
-            self.log_intermediate()
-            
-            if len(self.mol_buffer) >= config["max_n_oracles"]:
+                
+            if self.finish:
                 break
 
 

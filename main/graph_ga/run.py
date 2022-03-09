@@ -58,6 +58,8 @@ class GB_GA_Optimizer(BaseOptimizer):
         self.model_name = "graph_ga"
 
     def _optimize(self, oracle, config):
+
+        self.oracle.assign_evaluator(oracle)
         
         if self.smi_file is not None:
             # Exploitation run
@@ -70,7 +72,7 @@ class GB_GA_Optimizer(BaseOptimizer):
         # population_smiles = heapq.nlargest(config["population_size"], starting_population, key=oracle)
         population_smiles = starting_population
         population_mol = [Chem.MolFromSmiles(s) for s in population_smiles]
-        population_scores = self.score_mol(oracle, population_mol)
+        population_scores = self.oracle([Chem.MolToSmiles(mol) for mol in population_mol])
 
         patience = 0
 
@@ -86,7 +88,7 @@ class GB_GA_Optimizer(BaseOptimizer):
 
             # stats
             old_scores = population_scores
-            population_scores = self.score_mol(oracle, population_mol)
+            population_scores = self.oracle([Chem.MolToSmiles(mol) for mol in population_mol])
             population_tuples = list(zip(population_scores, population_mol))
             population_tuples = sorted(population_tuples, key=lambda x: x[0], reverse=True)[:config["population_size"]]
             population_mol = [t[1] for t in population_tuples]
@@ -101,10 +103,7 @@ class GB_GA_Optimizer(BaseOptimizer):
             else:
                 patience = 0
                 
-            # self.log_intermediate(population_mol, population_scores)
-            self.log_intermediate()
-            
-            if len(self.mol_buffer) >= config["max_n_oracles"]:
+            if self.finish:
                 break
 
 
