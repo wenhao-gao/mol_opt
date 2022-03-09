@@ -5,7 +5,7 @@ import joblib
 import torch
 
 from guacamol.goal_directed_generator import GoalDirectedGenerator
-from guacamol.scoring_function import ScoringFunction
+# from guacamol.scoring_function import ScoringFunction
 from guacamol.utils.chemistry import canonicalize_list, canonicalize
 from joblib import delayed
 
@@ -42,7 +42,7 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         scored_smiles = sorted(scored_smiles, key=lambda x: x[0], reverse=True)
         return [smile for score, smile in scored_smiles][:k]
 
-    def generate_optimized_molecules(self, scoring_function: ScoringFunction, number_molecules: int,
+    def generate_optimized_molecules(self, scoring_function, number_molecules: int,
                                      starting_population: Optional[List[str]] = None) -> List[str]:
 
         # fetch initial population?
@@ -84,7 +84,8 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
 
         # calculate the scores and return the best ones
         samples = canonicalize_list(samples)
-        scores = scoring_function.score_list(samples)
+        # scores = scoring_function.score_list(samples)
+        scores = scoring_function(samples)
 
         scored_molecules = zip(samples, scores)
         sorted_scored_molecules = sorted(scored_molecules, key=lambda x: (x[1], hash(x[0])), reverse=True)
