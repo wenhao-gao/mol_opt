@@ -25,10 +25,12 @@ Differences from implmentation in the paper:
 This package requires:
 * Python 3.6
 * PyTorch 0.1.12 
-* [RDkit](http://www.rdkit.org/docs/Install.html)
-* Scikit-Learn (for QSAR scoring function)
-* tqdm (for training Prior)
-* pexpect
+* RDkit
+* Scikit-Learn 
+* tqdm
+* pexpect: `pip install pexpect`
+
+
 
 ## Usage
 
@@ -50,15 +52,18 @@ Training can be visualized using the Vizard bokeh app. The vizard_logger.py is u
 
 
 
-
+## pretrain
 
 ```bash 
-python train_prior.py 
+python pretrain.py 
 ```
 
+- output: `data/Prior.ckpt`
+
+## run 
 
 ```bash 
-python main.py --scoring-function activity_model --num-steps 1000
+python run.py --scoring-function activity_model --num-steps 1000
 ```
 
 

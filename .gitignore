@@ -167,6 +167,8 @@ main/DST/__pycache__/
 
 # GPBO
 main/GPBO/data/
+main/GPBO/upload.sh 
+main/GPBO/dockstring/ 
 
 
 # jtvae
@@ -189,7 +191,11 @@ main/MIMOSA/__pycache__/
 
 
 
+# REINVENT
+main/REINVENT/data
 
 
+# smiles_lstm_hc
+main/smiles_lstm_hc/pretrained_model/model_final_0.473.pt
 
 

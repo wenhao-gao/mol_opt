@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import torch
 import pickle
 import numpy as np
@@ -12,6 +10,12 @@ from data_structs import Vocabulary, Experience
 from scoring_functions import get_scoring_function
 from utils import Variable, seq_to_smiles, fraction_valid_smiles, unique
 from vizard_logger import VizardLog
+
+
+
+
+
+
 
 def train_agent(restore_prior_from='data/Prior.ckpt',
                 restore_agent_from='data/Prior.ckpt',
