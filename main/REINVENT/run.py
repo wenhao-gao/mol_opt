@@ -77,7 +77,7 @@ class REINVENToptimizer(BaseOptimizer):
                 sigma=config['sigma'],
                 experience_replay=0)
 
-        self.mol_buffer = mol_buffer  
+        self.oracle.mol_buffer = mol_buffer  
 
 def main():
     parser = argparse.ArgumentParser()
@@ -88,7 +88,7 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=110)
+    parser.add_argument('--max_oracle_calls', type=int, default=120)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()

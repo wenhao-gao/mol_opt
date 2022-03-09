@@ -224,8 +224,9 @@ class BaseOptimizer:
         print(f"Logging final results...")
 
         # import ipdb; ipdb.set_trace()
-        
+
         log_num_oracles = [100, 500, 1000, 3000, 5000, 10000]
+        assert len(self.mol_buffer) > 0 
         
         results = list(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][1], reverse=False))
         if len(results) > 10000:

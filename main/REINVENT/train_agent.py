@@ -158,6 +158,8 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
                             (smiles[:12], score[:12])]), "SMILES", dtype="text", overwrite=True)
         logger.log(np.array(step_score), "Scores")
 
+
+    print('train_agent', scoring_function.mol_buffer)
     return scoring_function.mol_buffer  
 
     # If the entire training finishes, we create a new folder where we save this python file
