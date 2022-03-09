@@ -13,7 +13,7 @@ from main.utils.chem import *
 
 
 class Oracle:
-    def __init__(self, mol_buffer, freq_log=100, max_oracle_calls=10000):
+    def __init__(self, mol_buffer={}, freq_log=100, max_oracle_calls=10000):
         self.name = None
         self.evaluator = None
         self.mol_buffer = mol_buffer
@@ -118,8 +118,9 @@ class BaseOptimizer:
         self.n_jobs = args.n_jobs
         self.pool = joblib.Parallel(n_jobs=self.n_jobs)
         self.smi_file = args.smi_file
-        self.mol_buffer = {}
-        self.oracle = Oracle(self.mol_buffer, max_oracle_calls = args.max_oracle_calls)
+        # self.mol_buffer = {}
+        # self.oracle = Oracle(self.mol_buffer)
+        self.oracle = Oracle(max_oracle_calls = args.max_oracle_calls)
         if self.smi_file is not None:
             self.all_smiles = self.load_smiles_from_file(self.smi_file)
         else:
@@ -149,31 +150,31 @@ class BaseOptimizer:
         return new_mol_list
         
     def sort_buffer(self):
-        self.mol_buffer = dict(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][0], reverse=True))
+        self.oracle.sort_buffer()
             
-    def score_mol(self, oracle_func, mol_list):
-        score_list = []
-        for mol in mol_list:
-            if mol is None:
-                score = 0
-                self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
-                score_list.append(score)
-            else:
-                smi = Chem.MolToSmiles(mol)
-                if smi in self.mol_buffer:
-                    _ = self.mol_buffer[smi]
-                    score_list.append(_[0])
-                else:
-                    score = oracle_func(smi)
-                    self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
-                    score_list.append(score)
+    # def score_mol(self, oracle_func, mol_list):
+    #     score_list = []
+    #     for mol in mol_list:
+    #         if mol is None:
+    #             score = 0
+    #             self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
+    #             score_list.append(score)
+    #         else:
+    #             smi = Chem.MolToSmiles(mol)
+    #             if smi in self.mol_buffer:
+    #                 _ = self.mol_buffer[smi]
+    #                 score_list.append(_[0])
+    #             else:
+    #                 score = oracle_func(smi)
+    #                 self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
+    #                 score_list.append(score)
                 
-        self.sort_buffer()
-        return score_list
+    #     self.sort_buffer()
+    #     return score_list
 
-    def score_smiles(self, oracle_func, smi_list):
-        mol_list = [Chem.MolFromSmiles(smi) if smi is not None else None for smi in smi_list]
-        return self.score_mol(oracle_func, mol_list)
+    # def score_smiles(self, oracle_func, smi_list):
+    #     mol_list = [Chem.MolFromSmiles(smi) if smi is not None else None for smi in smi_list]
+    #     return self.score_mol(oracle_func, mol_list)
     
     def log_intermediate(self, mols=None, scores=None, max_oracle_calls=10000, finish=False):
 
@@ -277,8 +278,17 @@ class BaseOptimizer:
                 top1_pass]
 
     def reset(self):
-        self.mol_buffer = {}
-        self.oracle = Oracle(self.mol_buffer)
+        # self.mol_buffer = {}
+        # self.oracle = Oracle(self.mol_buffer)
+        self.oracle = Oracle()
+
+    @property
+    def mol_buffer(self):
+        return self.oracle.mol_buffer
+
+    @property
+    def finish(self):
+        return self.oracle.finish
         
     def _optimize(self, oracle, config):
         raise NotImplementedError

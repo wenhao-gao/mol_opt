@@ -17,15 +17,6 @@ from stats import Stats, get_stats_from_pickle
 from main.optimizer import BaseOptimizer
 
 
-global f_cache
-f_cache = {}
-
-def score_mol(smiles, score_fn):
-    global f_cache
-    if smiles not in f_cache:
-        f_cache[smiles] = [score_fn(smiles), len(f_cache)+1]
-    return f_cache[smiles][0]
-
 def run_rxn(rxn_smarts, mol):
     new_mol_list = []
     patt = rxn_smarts.split('>>')[0]
@@ -81,7 +72,6 @@ def expand_small_rings(rdkit_mol):
     rxn_smarts = '[*;r3,r4;!R2:1][*;r3,r4:2]>>[*:1]C[*:2]'
     while rdkit_mol.HasSubstructMatch(Chem.MolFromSmarts('[r3,r4]=[r3,r4]')):
         rdkit_mol = run_rxn(rxn_smarts, rdkit_mol)
-
     return rdkit_mol
 
 
@@ -94,7 +84,6 @@ def valences_not_too_large(rdkit_mol):
     for valence, number_of_bonds in zip(valences, number_of_bonds_list):
         if number_of_bonds > valence:
             return False
-
     return True
 
 
@@ -105,7 +94,7 @@ class State:
         self.turn = max_atoms
         self.smiles = smiles
         self.oracle = oracle
-        self.score = score_mol(self.smiles, oracle)
+        self.score = self.oracle(self.smiles)
         self.max_children = max_children
         self.stats = stats
         self.seed = seed
@@ -118,7 +107,6 @@ class State:
             smiles = Chem.MolToSmiles(mol)
             if smiles != self.smiles:
                 break
-
         next_state = State(oracle=self.oracle,
                            mol=mol,
                            smiles=smiles,
@@ -267,8 +255,6 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
         self.oracle.assign_evaluator(oracle)
 
         init_mol = Chem.MolFromSmiles(config["init_smiles"])
-        # global f_cache
-        # f_cache = dict()
         stats = get_stats_from_pickle(self.args.pickle_directory)
 
         # evolution: go go go!!
@@ -288,25 +274,13 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
 
             for _ in range(int(config["num_sims"])):
                 front = tree_policy(root_node, exploration_coefficient=config["exploration_coefficient"])
-                if len(self.mol_buffer) >= config["max_n_oracles"]:
+                if self.oracle.finish:
                     break
                 for child in front.children:
                     reward, best_state = default_policy(child.state, best_state)
                     backup(child, reward)
-                    if len(self.mol_buffer) >= config["max_n_oracles"]:
+                    if self.oracle.finish:
                         break
-        self.mol_buffer = self.oracle.mol_buffer
-    
-            # self.mol_buffer = f_cache
-            # self.sort_buffer()
-
-            # print(f'{generation} | '
-            #       f'{len(self.mol_buffer)} oracle calls')
-            
-            # self.log_intermediate()
-            
-            # if len(self.mol_buffer) >= config["max_n_oracles"]:
-            #     break
 
 
 def main():
