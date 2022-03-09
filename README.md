@@ -38,7 +38,7 @@ conda activate molopt
 | **SELFIES GA**     | ✅        | ✅           |          |        |         |
 | **SELFIES GA +D**  | ✅        | ✅           |          |        |         |
 | **Graph MCTS**     | ✅        | ✅           |          |        |         |
-| **SMILES HC**      |           |              |          |        |         |
+| **SMILES HC**      | ✅        |              |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
 | **SMILES VAE BO**  |           |              |          |        |         |
 | **SELFIES VAE BO** |           |              |          |        |         |
