@@ -12,7 +12,5 @@ parameters:
     values: [100, 200, 300]
   max_generations: 
     value: 10000
-  max_n_oracles: 
-    value: 10000
   patience: 
     value: 5
