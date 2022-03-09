@@ -7,3 +7,4 @@ optimize_batch_size: 256
 benchmark_num_samples: 4096 
 random_start: True
 n_jobs: -1 
+max_n_oracles: 10000

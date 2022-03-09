@@ -94,6 +94,8 @@ def main():
             except:
                 config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
 
+
+        max_n_oracles = config['max_n_oracles']
         oracle = Oracle(name = oracle_name)
         optimizer = LSTM_HC_Optimizer(args=args)
 
