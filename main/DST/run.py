@@ -19,11 +19,12 @@ class DSToptimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
 		super().__init__(args)
-		self.model_name = "DST"
+		self.model_name = "dst"
 
 	def _optimize(self, oracle, config):
+
 		self.oracle.assign_evaluator(oracle)
-		max_n_oracles = config["max_n_oracles"]
+
 		max_generations = config["max_generations"]
 		population_size = config['population_size']
 		lamb = config['lamb']
@@ -36,7 +37,6 @@ class DSToptimizer(BaseOptimizer):
 		start_smiles_lst = ['C1(N)=NC=CC=N1']
 		model_ckpt = os.path.join(path_here, "pretrained_model/qed_epoch_4_iter_0_validloss_0.57661.ckpt")
 		gnn = torch.load(model_ckpt)
-
 
 		current_set = set(start_smiles_lst)
 		for i_gen in tqdm(range(max_generations)):
@@ -59,7 +59,7 @@ class DSToptimizer(BaseOptimizer):
 			# current_set = [i[0] for i in smiles_score_lst[:population_size]]  # Option I: top-k 
 			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) # Option II: DPP
 
-			if self.oracle.finish:
+			if self.finish:
 				break
 
 def main():
