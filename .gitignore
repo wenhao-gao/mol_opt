@@ -148,14 +148,6 @@ result*.yaml
 
 
 
-
-
-
-
-
-
-
-
 # DST
 main/DST/data/
 main/DST/wandb/
@@ -185,15 +177,13 @@ main/MARS/data/kinase.tsv
 
 
 # MIMOSA
-main/MIMOSA/data/
+# main/MIMOSA/data/
 main/MIMOSA/results/
 main/MIMOSA/__pycache__/
 
 
-
 # REINVENT
 main/REINVENT/data
-
 
 # smiles_lstm_hc
 main/smiles_lstm_hc/pretrained_model/model_final_0.473.pt

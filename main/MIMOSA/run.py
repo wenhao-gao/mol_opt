@@ -24,11 +24,11 @@ class MIMOSA_Optimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
 		super().__init__(args)
-		self.model_name = "MIMOSA"
+		self.model_name = "mimosa"
 
 	def _optimize(self, oracle, config):
 		self.oracle.assign_evaluator(oracle)
-		max_n_oracles = config["max_n_oracles"]
+		# max_n_oracles = config["max_n_oracles"]
 		max_generations = config["max_generations"]
 		population_size = config['population_size']
 		lamb = config['lamb']
@@ -53,7 +53,7 @@ class MIMOSA_Optimizer(BaseOptimizer):
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)
 			print(smiles_score_lst[:5], "Oracle num: ", len(self.mol_buffer))
 			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) 	# Option II: DPP
-			if self.oracle.finish:
+			if self.finish:
 				break 
 
 
@@ -67,7 +67,8 @@ def main():
 	parser.add_argument('--output_dir', type=str, default=None)
 	parser.add_argument('--patience', type=int, default=5)
 	parser.add_argument('--n_runs', type=int, default=5)
-	parser.add_argument('--max_oracle_calls', type=int, default=1000)
+	parser.add_argument('--max_oracle_calls', type=int, default=10000)
+	parser.add_argument('--freq_log', type=int, default=100)
 	parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
 	parser.add_argument('--oracles', nargs="+", default=["QED"])
 	args = parser.parse_args()
@@ -105,13 +106,5 @@ def main():
 			optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
  
 
-
 if __name__ == "__main__":
-	main() 
-
-
-
-
-
-
-
+	main()
