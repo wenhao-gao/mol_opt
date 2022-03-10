@@ -28,7 +28,7 @@ from bo import acquisition_funcs, gp_bo
 
 # from mol_opt.mol_opt import get_base_molopt_parser, get_cached_objective_and_dataframe
 from mol_opt.mol_opt import get_cached_objective_and_dataframe
-from dockstring_data import DATASET_PATH, process_dataframe
+# from dockstring_data import DATASET_PATH, process_dataframe
 
 
 def get_trained_gp(X_train, y_train,):
@@ -40,14 +40,16 @@ def get_trained_gp(X_train, y_train,):
     fit_gp_hyperparameters(model)
     return model
 
-class GPBOoptimizer(BaseOptimizer):
+class GPBO_optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "GPBO"
+        self.model_name = "gp_bo"
 
     def _optimize(self, oracle, config):
+
         self.oracle.assign_evaluator(oracle)
+
         # Ensure float64 for good accuracy
         torch.set_default_dtype(torch.float64)
         NP_DTYPE = np.float64
@@ -56,18 +58,6 @@ class GPBOoptimizer(BaseOptimizer):
         # Load dataset   args.dataset: DATASET_PATH
         dataset = pd.read_csv(config['dataset'], sep="\t", header=0)
 
-        # Get function to be optimized
-        # opt_func, df_processed = get_cached_objective_and_dataframe(
-        #     objective_name=config['objective'],
-        #     dataset=dataset,
-        #     minimize=not config['maximize'],
-        #     keep_nan=False,
-        #     max_docking_score=0.0,
-        #     dock_kwargs=dict(
-        #         num_cpus=config['num_cpu'],
-        #     ),
-        # )
-
         opt_func, df_processed = get_cached_objective_and_dataframe(
             oracle = self.oracle, 
             dataset=dataset,
@@ -75,7 +65,6 @@ class GPBOoptimizer(BaseOptimizer):
             keep_nan=False,
             max_docking_score=0.0,
         )
-
 
 
         dataset_smiles = set(map(str, df_processed.smiles))
@@ -112,7 +101,8 @@ class GPBOoptimizer(BaseOptimizer):
         my_smiles_to_fp_array = functools.partial(
             smiles_to_fp_array, fingerprint_func=fingerprint_func
         )
-        all_smiles = list(dataset_smiles)
+        # all_smiles = list(dataset_smiles)
+        all_smiles = self.all_smiles
         x_train = np.stack([my_smiles_to_fp_array(s) for s in all_smiles]).astype(NP_DTYPE)
         # values = opt_func(all_smiles, batch= True)
         values = self.oracle(all_smiles)
@@ -123,7 +113,7 @@ class GPBOoptimizer(BaseOptimizer):
         ind_idx_start = get_inducing_indices(y_train)
         x_train = torch.as_tensor(x_train)
         y_train = torch.as_tensor(y_train)
-        gp_model = gp_model_exact = get_trained_gp(
+        gp_model = get_trained_gp(
             x_train[ind_idx_start], y_train[ind_idx_start]
         )
 
@@ -167,35 +157,6 @@ class GPBOoptimizer(BaseOptimizer):
                 max_ga_start_population_size=config['ga_pop_params'][2],
             )
 
-        # Format results by providing new SMILES + scores
-        new_smiles = [r["smiles"] for r in bo_res[0] if r["smiles"] not in dataset_smiles]
-        new_smiles_scores = [opt_func(s) for s in new_smiles]
-        new_smiles_raw_info = [opt_func.cache[s] for s in new_smiles]
-        json_res = dict(
-            gp_params=gp_model.hparam_dict,
-            new_smiles=new_smiles,
-            scores=new_smiles_scores,
-            raw_scores=new_smiles_raw_info,
-        )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -205,8 +166,9 @@ def main():
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
@@ -233,7 +195,7 @@ def main():
                 config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
 
         oracle = Oracle(name = oracle_name)
-        optimizer = GPBOoptimizer(args=args)
+        optimizer = GPBO_optimizer(args=args)
 
         if args.task == "simple":
             optimizer.optimize(oracle=oracle, config=config_default)
