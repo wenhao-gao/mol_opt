@@ -1,14 +1,10 @@
 from __future__ import print_function
 
 import argparse
-import heapq
 import yaml
 import os
 import random
-from time import time
 from typing import List, Optional
-
-import joblib
 import numpy as np
 from joblib import delayed
 from rdkit import Chem, rdBase
@@ -116,6 +112,8 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()

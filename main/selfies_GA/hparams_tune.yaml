@@ -1,4 +1,4 @@
-name: graph_ga
+name: selfies_ga
 method: random
 metric:
   goal: maximize

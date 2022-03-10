@@ -2,13 +2,8 @@ from __future__ import print_function
 
 import argparse
 import copy
-import json
 import os
-from collections import namedtuple
-from time import time
 from typing import List, Optional
-from random import shuffle 
-import joblib
 import nltk
 import yaml
 import numpy as np
@@ -183,6 +178,8 @@ def main():
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
