@@ -104,7 +104,7 @@ def score_mol(smiles, score_fn, f_cache):
     print("f_cache", len(f_cache), smiles, 'exists' if is_exists else 'new')
     return f_cache[smiles]
 
-def fitness(molecules_here,    oracle, f_cache, 
+def fitness(molecules_here,    oracle, 
             discriminator,     disc_enc_type,         generation_index,
             max_molecules_len, device,                num_processors,    beta, 
             data_dir,          max_fitness_collector, impose_time_adapted_pen):
@@ -149,7 +149,7 @@ def fitness(molecules_here,    oracle, f_cache,
         fitness = []
         # global f_cache 
         for smiles in molecules_here:
-            value = f_cache[smiles][0]
+            value = oracle(smiles)
             fitness.append(value)
         fitness = np.array(fitness).reshape(-1,1)
         # Plot fitness without discriminator 
@@ -179,7 +179,7 @@ def fitness(molecules_here,    oracle, f_cache,
 
 
 def obtain_fitness(disc_enc_type, smiles_here, selfies_here,  
-                   oracle,  f_cache, 
+                   oracle,  
                    discriminator, generation_index, max_molecules_len, device, 
                    generation_size, num_processors, beta, image_dir,
                    data_dir, max_fitness_collector, impose_time_adapted_pen):
@@ -190,7 +190,7 @@ def obtain_fitness(disc_enc_type, smiles_here, selfies_here,
     # global f_cache   
     if disc_enc_type == 'smiles' or disc_enc_type == 'properties_rdkit':
         fitness_here,  discriminator_predictions = fitness(smiles_here,  
-                                                           oracle, f_cache,   
+                                                           oracle,   
                                                            discriminator, 
                                                            disc_enc_type, generation_index,   
                                                            max_molecules_len, device, num_processors, 
@@ -198,13 +198,13 @@ def obtain_fitness(disc_enc_type, smiles_here, selfies_here,
                                                            max_fitness_collector, impose_time_adapted_pen) 
     elif disc_enc_type == 'selfies':
         fitness_here,  discriminator_predictions = fitness(selfies_here,  
-                                                           oracle, f_cache,  
+                                                           oracle,  
                                                            discriminator, 
                                                            disc_enc_type, generation_index,   
                                                            max_molecules_len, device, num_processors, 
                                                            beta, data_dir, 
                                                            max_fitness_collector, impose_time_adapted_pen) 
-        
+
     # logP_calculated, SAS_calculated, RingP_calculated,
 
     fitness_here = fitness_here.reshape((generation_size, ))

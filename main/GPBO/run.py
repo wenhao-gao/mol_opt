@@ -26,7 +26,8 @@ from gp import (
 from fingerprints import smiles_to_fp_array
 from bo import acquisition_funcs, gp_bo
 
-from mol_opt.mol_opt import get_base_molopt_parser, get_cached_objective_and_dataframe
+# from mol_opt.mol_opt import get_base_molopt_parser, get_cached_objective_and_dataframe
+from mol_opt.mol_opt import get_cached_objective_and_dataframe
 from dockstring_data import DATASET_PATH, process_dataframe
 
 
@@ -46,6 +47,7 @@ class GPBOoptimizer(BaseOptimizer):
         self.model_name = "GPBO"
 
     def _optimize(self, oracle, config):
+        self.oracle.assign_evaluator(oracle)
         # Ensure float64 for good accuracy
         torch.set_default_dtype(torch.float64)
         NP_DTYPE = np.float64
@@ -67,8 +69,7 @@ class GPBOoptimizer(BaseOptimizer):
         # )
 
         opt_func, df_processed = get_cached_objective_and_dataframe(
-            oracle = oracle, 
-            mol_buffer = self.mol_buffer,  
+            oracle = self.oracle, 
             dataset=dataset,
             minimize=not config['maximize'],
             keep_nan=False,
@@ -113,8 +114,9 @@ class GPBOoptimizer(BaseOptimizer):
         )
         all_smiles = list(dataset_smiles)
         x_train = np.stack([my_smiles_to_fp_array(s) for s in all_smiles]).astype(NP_DTYPE)
-        values = opt_func(all_smiles, batch= True)
-        print(values)
+        # values = opt_func(all_smiles, batch= True)
+        values = self.oracle(all_smiles)
+        # print(values) 
         y_train = np.asarray(values).astype(NP_DTYPE)
         # y_train = np.asarray(opt_func(all_smiles, batch=True)).astype(NP_DTYPE)
 
@@ -144,8 +146,7 @@ class GPBOoptimizer(BaseOptimizer):
         with gpytorch.settings.sgpr_diagonal_correction(False):
             bo_res = gp_bo.gp_bo_loop(
                 gp_model=gp_model,
-                scoring_function=opt_func,
-                mol_buffer = self.mol_buffer, 
+                scoring_function=self.oracle,
                 smiles_to_np_fingerprint=my_smiles_to_fp_array,
                 acq_func_of_time=acq_f_of_time,
                 max_bo_iter=config['max_bo_iter'],
@@ -205,6 +206,7 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()

@@ -125,7 +125,6 @@ def _get_safe_dock_function(target_name, **dock_kwargs):
 
 def get_cached_objective_and_dataframe(
     oracle, 
-    mol_buffer, 
     dataset: pd.DataFrame,
     minimize: bool = True,
     keep_nan=False,
@@ -140,100 +139,8 @@ def get_cached_objective_and_dataframe(
     #     dock_kwargs = dict()
     if process_df_kwargs is None:
         process_df_kwargs = dict()
-
-    # # Does the objective name have a penalty at the end?
-    # mol_wt_pen_v1 = "_mol-wt-pen-v1"
-    # qed_pen_v1 = "_qed-pen-v1"
-    # qed_pen_v2 = "_qed-pen-v2"
-    # qed_pen_v3 = "_qed-pen-v3"
-    # qed_pen_v4 = "_qed-pen-v4"
-    # if objective_name.endswith(mol_wt_pen_v1):
-    #     objective_suffix = mol_wt_pen_v1
-    #     objective_name = objective_name[: objective_name.index(mol_wt_pen_v1)]
-    # elif objective_name.endswith(qed_pen_v1):
-    #     objective_suffix = qed_pen_v1
-    #     objective_name = objective_name[: objective_name.index(qed_pen_v1)]
-    # elif objective_name.endswith(qed_pen_v2):
-    #     objective_suffix = qed_pen_v2
-    #     objective_name = objective_name[: objective_name.index(qed_pen_v2)]
-    # elif objective_name.endswith(qed_pen_v3):
-    #     objective_suffix = qed_pen_v3
-    #     objective_name = objective_name[: objective_name.index(qed_pen_v3)]
-    # elif objective_name.endswith(qed_pen_v4):
-    #     objective_suffix = qed_pen_v4
-    #     objective_name = objective_name[: objective_name.index(qed_pen_v4)]
-    # else:
-    #     objective_suffix = None
-
-    # # Which things are calculated to make the score?
     items_to_calculate = dict()
-    # if objective_name in DOCKING_TARGETS:
-    #     items_to_calculate[objective_name] = _get_safe_dock_function(
-    #         objective_name, **dock_kwargs
-    #     )
-    #     scalar_fn = _sum_scalarization
-    # elif objective_name == "PPAR-all":
-    #     for protein in ["PPARG", "PPARD", "PPARA"]:
-    #         items_to_calculate[protein] = _get_safe_dock_function(
-    #             protein, **dock_kwargs
-    #         )
-    #     scalar_fn = _max_scalarization
-    # elif objective_name == "JAK2-not-LCK-v1":
-    #     for protein in ["JAK2", "LCK"]:
-    #         items_to_calculate[protein] = _get_safe_dock_function(
-    #             protein, **dock_kwargs
-    #         )
-    #     scalar_fn = _jak2_not_lck_v1
-    # elif objective_name == "JAK2-not-LCK-v2":
-    #     for protein in ["JAK2", "LCK"]:
-    #         items_to_calculate[protein] = _get_safe_dock_function(
-    #             protein, **dock_kwargs
-    #         )
-    #     scalar_fn = _jak2_not_lck_v2
-    # elif objective_name in GUACAMOL_FUNCTIONS:
-    #     items_to_calculate[objective_name] = guacamol_funcs[objective_name]
-    #     # Guacamol functions are scaled up so variance is closer to 1
-    #     scalar_fn = functools.partial(_sum_scalarization, mult=10.0)
-    # elif objective_name == FNAME_LOGP:
-    #     items_to_calculate[objective_name] = logP_fn
-    #     scalar_fn = _sum_scalarization
-    # elif objective_name == FNAME_PEN_LOGP:
-    #     items_to_calculate[objective_name] = plogP_fn
-    #     scalar_fn = _sum_scalarization
-    # elif objective_name == FNAME_QED:
-    #     items_to_calculate[objective_name] = qed_fn
-
-    #     # QED is scaled up by 10 for modelling so its variance is closer to 1
-    #     scalar_fn = functools.partial(_sum_scalarization, mult=10.0)
-    # else:
-    #     raise ValueError(objective_name)
-
-    # # Add a possible penalty
-    # if objective_suffix is None:
-    #     pass
-    # elif objective_suffix == mol_wt_pen_v1:
-    #     items_to_calculate[FNAME_MOLWT] = mol_wt_fn
-    #     scalar_fn = functools.partial(_add_molwt_pen_v1, prev_scoring_fn=scalar_fn)
-    # elif objective_suffix == qed_pen_v1:
-    #     items_to_calculate[FNAME_QED] = qed_fn
-    #     scalar_fn = functools.partial(_add_qed_pen_v1, prev_scoring_fn=scalar_fn)
-    # elif objective_suffix == qed_pen_v2:
-    #     items_to_calculate[FNAME_QED] = qed_fn
-    #     scalar_fn = functools.partial(_add_qed_pen_v2, prev_scoring_fn=scalar_fn)
-    # elif objective_suffix == qed_pen_v3:
-    #     items_to_calculate[FNAME_QED] = qed_fn
-    #     scalar_fn = functools.partial(_add_qed_pen_v3, prev_scoring_fn=scalar_fn)
-    # elif objective_suffix == qed_pen_v4:
-    #     items_to_calculate[FNAME_QED] = qed_fn
-    #     scalar_fn = functools.partial(_add_qed_pen_v4, prev_scoring_fn=scalar_fn)
-
-
-    def score_smiles(smiles):
-        if smiles not in mol_buffer:
-            mol_buffer[smiles] = [oracle(smiles), len(mol_buffer)+1]
-        return mol_buffer[smiles][0]
-
-    items_to_calculate['QED'] = score_smiles
+    items_to_calculate['QED'] = oracle
 
 
     # Get processed dataset for necessary targets
@@ -261,49 +168,6 @@ def get_cached_objective_and_dataframe(
     # Define final objective!
     def objective(smiles: str) -> dict:
         return {fname: f(smiles) for fname, f in items_to_calculate.items()}
-
-    # # Define the transform that scalarized this function (into something to be minimized)
-    # def scalarize(score_dict):
-
-    #     # If there are NaNs then the score is undefined
-    #     if keep_nan and any(np.isnan(score) for score in score_dict.values()):
-    #         return math.nan
-
-    #     # Adjust the scores to handle NaNs, positive docking scores, etc
-    #     adjusted_score_dict = dict()
-    #     for name, score in score_dict.items():
-    #         new_score = score
-
-    #         if np.isnan(score):
-    #             new_score = NAN_REPLACE_VALUES[name]
-
-    #         if name in DOCKING_TARGETS:
-    #             new_score = min(new_score, max_docking_score)
-    #         adjusted_score_dict[name] = new_score
-
-    #     # Final scalarization
-    #     return scalar_fn(adjusted_score_dict)
-
-    # # Whether to maximize or minimize the objective
-    # def _max_objective(v):
-    #     return float(v)
-
-    # def _min_objective(v):
-    #     return -float(v)
-
-    # if minimize:
-    #     sign_fn = _min_objective
-    # else:
-    #     sign_fn = _max_objective
-
-    # # Final transform
-    # def final_transform(score_dict):
-    #     v = scalarize(score_dict)
-    #     return sign_fn(v)
-
-    # cached_objective = CachedFunction(
-    #     objective, cache=start_cache, transform=final_transform
-    # )
 
     cached_objective = CachedFunction(
         objective, cache=start_cache, 
@@ -347,45 +211,48 @@ def get_cached_objective_and_dataframe(
 
 
 
-def get_base_molopt_parser():
+# def get_base_molopt_parser():
 
-    parser = argparse.ArgumentParser(add_help=False)
+#     parser = argparse.ArgumentParser(add_help=False)
 
-    parser.add_argument(
-        "--objective",
-        type=str,
-        required=True,
-        help="Objective to optimize.",
-    )
-    parser.add_argument(
-        "--dataset", type=str, default=DATASET_PATH, help="Path to dataset tsv file."
-    )
-    parser.add_argument(
-        "--max_func_calls",
-        type=int,
-        default=None,
-        help="Maximum number of calls to objective function. "
-        "Default is no explicit maximum.",
-    )
-    parser.add_argument(
-        "--output_path", type=str, required=True, help="Path to output file (json)."
-    )
-    parser.add_argument(
-        "--num_cpu",
-        type=int,
-        default=-1,
-        help="Number of CPUs to use for docking, etc.",
-    )
-    parser.add_argument(
-        "--maximize",
-        action="store_true",
-        help="Flag to maximize function (default is to minimize it).",
-    )
-    parser.add_argument(
-        "--extra_output_path",
-        type=str,
-        default=None,
-        help="Optional path to save extra outputs/logs.",
-    )
+#     parser.add_argument(
+#         "--objective",
+#         type=str,
+#         required=True,
+#         help="Objective to optimize.",
+#     )
+#     parser.add_argument(
+#         "--dataset", type=str, default=DATASET_PATH, help="Path to dataset tsv file."
+#     )
+#     parser.add_argument(
+#         "--max_func_calls",
+#         type=int,
+#         default=None,
+#         help="Maximum number of calls to objective function. "
+#         "Default is no explicit maximum.",
+#     )
+#     parser.add_argument(
+#         "--output_path", type=str, required=True, help="Path to output file (json)."
+#     )
+#     parser.add_argument(
+#         "--num_cpu",
+#         type=int,
+#         default=-1,
+#         help="Number of CPUs to use for docking, etc.",
+#     )
+#     parser.add_argument(
+#         "--maximize",
+#         action="store_true",
+#         help="Flag to maximize function (default is to minimize it).",
+#     )
+#     parser.add_argument(
+#         "--extra_output_path",
+#         type=str,
+#         default=None,
+#         help="Optional path to save extra outputs/logs.",
+#     )
 
-    return parser
+#     return parser
+
+
+

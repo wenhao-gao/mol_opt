@@ -70,6 +70,10 @@ class Oracle:
             #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
         })
 
+
+    def __len__(self):
+        return len(self.mol_buffer) 
+
     def score_smi(self, smi):
         """
         Function to score one molecule
@@ -225,7 +229,7 @@ class BaseOptimizer:
 
         log_num_oracles = [100, 500, 1000, 3000, 5000, 10000]
         assert len(self.mol_buffer) > 0 
-        
+
         results = list(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][1], reverse=False))
         if len(results) > 10000:
             results = results[:10000]

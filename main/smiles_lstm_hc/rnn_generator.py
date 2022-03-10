@@ -59,7 +59,7 @@ class SmilesRnnMoleculeGenerator:
                                         optimizer=self.optimizer,
                                         device=self.device)
 
-    def optimise(self, objective: ScoringFunction, start_population, keep_top, n_epochs, mols_to_sample,
+    def optimise(self, objective, start_population, keep_top, n_epochs, mols_to_sample,
                  optimize_n_epochs, optimize_batch_size, pretrain_n_epochs) -> List[OptResult]:
         """
         Takes an objective and tries to optimise it
@@ -99,6 +99,9 @@ class SmilesRnnMoleculeGenerator:
 
             # scores = objective.score_list(payload)
             scores = objective(payload)
+            if objective.finish: 
+                break 
+
             int_results = [OptResult(smiles=smiles, score=score) for smiles, score in zip(payload, scores)]
 
             t2 = time.time()

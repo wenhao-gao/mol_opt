@@ -23,6 +23,7 @@ class SELFIES_GA_optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
 
+        self.oracle.assign_evaluator(oracle)
         beta = config['beta']
         max_n_oracles = config["max_n_oracles"]
         max_generations = config['max_generations'] ## 1000
@@ -72,18 +73,21 @@ class SELFIES_GA_optimizer(BaseOptimizer):
                                                                          generation_index,  selfies_all,      smiles_all)
 
             # Calculate fitness of previous generation (shape: (generation_size, ))
-            value = self.score_smiles(oracle, smiles_here)
+            value = self.oracle(smiles_here)
             fitness_here, order, fitness_ordered, smiles_ordered, selfies_ordered = gen_func.obtain_fitness(
-                                                                                        disc_enc_type, smiles_here, selfies_here,  
-                                                                                        oracle, self.mol_buffer,   
+                                                                                        disc_enc_type,      smiles_here,   selfies_here,  
+                                                                                        self.oracle,    
                                                                                         discriminator, generation_index,
                                                                                         max_molecules_len, device, generation_size,  
                                                                                         num_processors, beta,            
                                                                                         image_dir, data_dir, max_fitness_collector, 
                                                                                         impose_time_adapted_pen)
 
+
             if self.finish:
                 break 
+            else:
+                print("# of oracle calls", len(self.oracle))
             # Obtain molecules that need to be replaced & kept
             to_replace, to_keep = gen_func.apply_generation_cutoff(order, generation_size)
             # Obtain new generation of molecules 
@@ -115,6 +119,7 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
