@@ -19,13 +19,13 @@ class SELFIES_GA_optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "SELFIES_GA"
+        self.model_name = "selfies_ga"
 
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+
         beta = config['beta']
-        max_n_oracles = config["max_n_oracles"]
         max_generations = config['max_generations'] ## 1000
         generation_size = config['generation_size'] ##  500
 
@@ -84,7 +84,7 @@ class SELFIES_GA_optimizer(BaseOptimizer):
                                                                                         image_dir,          data_dir,      max_fitness_collector, 
                                                                                         impose_time_adapted_pen)
 
-            if self.oracle.finish:
+            if self.finish:
                 break 
             else:
                 print("# of oracle calls", len(self.oracle))
@@ -119,7 +119,8 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
