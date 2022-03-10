@@ -1,14 +1,8 @@
 """ Constants relating to the dataset. """
 
 from typing import List
-
 import pandas as pd
-
 from fingerprints import smiles_to_fp_array
-
-DATASET_PATH = "./data/dockstring-excape/dockstring-dataset.tsv"
-CLUSTER_SPLIT_PATH = "./data/dockstring-excape/cluster_split.tsv"
-
 
 def process_dataframe(
     df: pd.DataFrame,

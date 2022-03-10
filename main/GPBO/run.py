@@ -7,7 +7,7 @@ import functools, os
 import yaml
 from tdc import Oracle
 import sys
-
+from random import shuffle 
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(path_here, 'src'))
 sys.path.append('.')
@@ -28,7 +28,6 @@ from bo import acquisition_funcs, gp_bo
 
 # from mol_opt.mol_opt import get_base_molopt_parser, get_cached_objective_and_dataframe
 from mol_opt.mol_opt import get_cached_objective_and_dataframe
-# from dockstring_data import DATASET_PATH, process_dataframe
 
 
 def get_trained_gp(X_train, y_train,):
@@ -63,9 +62,7 @@ class GPBO_optimizer(BaseOptimizer):
             dataset=dataset,
             minimize=not config['maximize'],
             keep_nan=False,
-            max_docking_score=0.0,
         )
-
 
         dataset_smiles = set(map(str, df_processed.smiles))
 
@@ -103,6 +100,8 @@ class GPBO_optimizer(BaseOptimizer):
         )
         # all_smiles = list(dataset_smiles)
         all_smiles = self.all_smiles
+        shuffle(all_smiles)
+        all_smiles = all_smiles[:config['start_train_num']]
         x_train = np.stack([my_smiles_to_fp_array(s) for s in all_smiles]).astype(NP_DTYPE)
         # values = opt_func(all_smiles, batch= True)
         values = self.oracle(all_smiles)
@@ -166,7 +165,7 @@ def main():
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
@@ -207,32 +206,3 @@ def main():
 
 if __name__ == "__main__":
     main() 
-
-
-"""
-
-  python run.py \
-    --num_cpu=6 \
-    \
-    --dataset="./data/guacamol-splits/seed_1/rand_100.tsv" \
-    --objective=QED \
-    --maximize \
-    \
-    --n_train_gp_best=2000 \
-    --n_train_gp_rand=3000 \
-    --bo_batch_size=1000 \
-    \
-    --fp_radius=2 \
-    --fp_nbits=4096 \
-    \
-    --ga_max_generations=5 \
-    --ga_offspring_size=100 \
-    --ga_pop_params 25 50 100 \
-    \
-    --output_path=result.json 
-
-"""
-
-
-
-

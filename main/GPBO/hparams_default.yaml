@@ -13,3 +13,4 @@ num_cpu: -1
 maximize: True
 dataset: main/GPBO/data/guacamol-splits/seed_1/rand_100.tsv
 objective: QED
+start_train_num: 200

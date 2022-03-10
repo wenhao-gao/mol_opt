@@ -8,6 +8,7 @@ from typing import Union
 
 import numpy as np
 import torch
+from tqdm import tqdm 
 
 from function_utils import CachedFunction, CachedBatchFunction
 from gp import TanimotoGP, batch_predict_mu_var_numpy
@@ -191,7 +192,7 @@ def gp_bo_loop(
         refit_gp_func(bo_iter=0, gp_model=gp_model, bo_state_dict=bo_state_dict)
 
     # Actual BO loop
-    for bo_iter in range(1, max_bo_iter + 1):
+    for bo_iter in tqdm(range(1, max_bo_iter + 1)):
 
         print(">>>> # of used oracal call ", len(scoring_function))
         if scoring_function.finish: 

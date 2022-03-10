@@ -2,10 +2,9 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-# import dockstring
 
 # from dockstring_data import DATASET_PATH, process_dataframe
-from mol_funcs.dockstring_funcs import safe_dock_function
+from dockstring_data import process_dataframe
 from mol_funcs.simple_funcs import (
     logP as logP_fn,
     QED as qed_fn,
@@ -37,7 +36,6 @@ def get_cached_objective_and_dataframe(
     dataset: pd.DataFrame,
     minimize: bool = True,
     keep_nan=False,
-    max_docking_score=0.0,
     evaluate_cheap_functions: bool = True,
     dock_kwargs: dict = None,
     process_df_kwargs: dict = None,
