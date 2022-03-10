@@ -19,7 +19,7 @@ class SELFIES_GA_optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "SELFIES_GA"
+        self.model_name = "selfies_ga"
 
     def _optimize(self, oracle, config):
 
@@ -64,7 +64,6 @@ class SELFIES_GA_optimizer(BaseOptimizer):
         molecules_reference = dict.fromkeys(molecules_reference, '') # convert the zinc data set into a dictionary
 
         # Set up Generation Loop 
-        total_time = time.time()
         for generation_index in range(1, max_generations+1):
             print("   ###   On generation %i of %i"%(generation_index, max_generations))
                   
@@ -75,20 +74,20 @@ class SELFIES_GA_optimizer(BaseOptimizer):
             # Calculate fitness of previous generation (shape: (generation_size, ))
             value = self.score_smiles(oracle, smiles_here)
             fitness_here, order, fitness_ordered, smiles_ordered, selfies_ordered = gen_func.obtain_fitness(
-                                                                                        disc_enc_type,      smiles_here,   selfies_here,  
-                                                                                        oracle,        self.mol_buffer,   
+                                                                                        disc_enc_type, smiles_here, selfies_here,  
+                                                                                        oracle, self.mol_buffer,   
                                                                                         discriminator, generation_index,
-                                                                                        max_molecules_len,  device,        generation_size,  
-                                                                                        num_processors,     beta,            
-                                                                                        image_dir,          data_dir,      max_fitness_collector, 
+                                                                                        max_molecules_len, device, generation_size,  
+                                                                                        num_processors, beta,            
+                                                                                        image_dir, data_dir, max_fitness_collector, 
                                                                                         impose_time_adapted_pen)
 
-            if len(self.mol_buffer) >= max_n_oracles:
+            if self.finish:
                 break 
             # Obtain molecules that need to be replaced & kept
             to_replace, to_keep = gen_func.apply_generation_cutoff(order, generation_size)
             # Obtain new generation of molecules 
-            smiles_mutated, selfies_mutated = gen_func.obtain_next_gen_molecules(order,           to_replace,     to_keep, 
+            smiles_mutated, selfies_mutated = gen_func.obtain_next_gen_molecules(order, to_replace, to_keep, 
                                                                                  selfies_ordered, smiles_ordered, max_molecules_len)
             # Record in collective list of molecules 
             smiles_all, selfies_all, smiles_all_counter = gen_func.update_gen_res(smiles_all, smiles_mutated, 
