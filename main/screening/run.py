@@ -1,18 +1,10 @@
 from __future__ import print_function
 
 import argparse
-import heapq
 import yaml
 import os
-import random
-from time import time
-from typing import List, Optional
-
-import joblib
+from copy import deepcopy
 import numpy as np
-from joblib import delayed
-from rdkit import Chem
-from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
 from main.optimizer import BaseOptimizer
 
@@ -23,17 +15,16 @@ class Exhaustive_Optimizer(BaseOptimizer):
         self.model_name = "screening"
 
     def _optimize(self, oracle, config):
-        
-        # import ipdb; ipdb.set_trace()
-        all_mols = self.sanitize([Chem.MolFromSmiles(smi) for smi in self.all_smiles])
+
+        self.oracle.assign_evaluator(oracle)
+
+        all_mols = deepcopy(self.all_smiles)
         np.random.shuffle(all_mols)
 
         for i in range(0, len(all_mols), 100):
-            population_scores = self.score_mol(oracle, all_mols[i: i+100])
-            self.log_intermediate()
-            if len(self.mol_buffer) >= config["max_n_oracles"]:
+            scores = self.oracle(all_mols[i: i+100])
+            if self.finish:
                 break
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -43,6 +34,8 @@ def main():
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
