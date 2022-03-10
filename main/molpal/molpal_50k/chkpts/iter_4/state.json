@@ -1,0 +1,15 @@
+{
+    "iter": 4,
+    "scores": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_4/scores.pkl",
+    "failures": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_4/failures.pkl",
+    "new_scores": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_4/new_scores.pkl",
+    "adjustment": 0,
+    "updated_model": false,
+    "recent_avgs": [
+        9.144023904382514,
+        9.393625498007964,
+        9.50179282868525
+    ],
+    "preds": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_4/preds.npz",
+    "model": "molpal_50k/chkpts/iter_4/model/model.pkl"
+}

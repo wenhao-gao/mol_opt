@@ -1,0 +1,18 @@
+name: mol_pal
+method: random
+metric:
+  goal: maximize
+  name: avg_top100
+parameters:
+  pool: lazy
+  library: data/zinc.csv.gz
+  metric: ucb
+  beta: 2
+  init-size: 500
+  batch-sizes: 100
+  epsilon: 0.05
+  model: mpn
+  init-lr: 1e-4
+  max-lr: 1e-3s
+  final-lr: 1e-4
+  conf-method: mve

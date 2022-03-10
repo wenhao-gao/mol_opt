@@ -1,0 +1,11 @@
+{
+    "iter": 1,
+    "scores": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_1/scores.pkl",
+    "failures": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_1/failures.pkl",
+    "new_scores": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_1/new_scores.pkl",
+    "adjustment": 0,
+    "updated_model": null,
+    "recent_avgs": [],
+    "preds": "/home/whgao/mol_opt/main/molpal/molpal_50k/chkpts/iter_1/preds.npz",
+    "model": "molpal_50k/chkpts/iter_1/model/model.pkl"
+}

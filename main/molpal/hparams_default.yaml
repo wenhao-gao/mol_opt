@@ -1,0 +1,14 @@
+## Pool arguments
+pool: lazy
+## Acquisition arguments
+metric: ucb
+beta: 2
+init-size: 500
+batch-sizes: 100
+epsilon: 0.05
+## Model arguments
+model: mpn
+init-lr: 1e-4
+max-lr: 1e-3s
+final-lr: 1e-4
+conf-method: mve

@@ -1,0 +1,25 @@
+name: molpal
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # uncomment the corresponding line for your specific CUDA version
+  # - nvidia::cudatoolkit # for cuda >= 11
+  # - pytorch::cudatoolkit # for cuda < 11
+  # - pytorch::cpuonly
+  - python=3.8
+  - pytorch::pytorch
+  - rdkit
+  - pip
+  - pip:
+    - configargparse
+    - h5py
+    - numpy
+    - ray[default] >= 1.7
+    - pytorch-lightning
+    - scikit-learn
+    - tensorflow
+    - tensorflow-addons
+    - tqdm
