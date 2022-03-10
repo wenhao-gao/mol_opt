@@ -31,12 +31,13 @@ conda activate molopt
 |                    | `runable` | `compatible` | `hparam` | `test` | `unity` |
 |--------------------|-----------|--------------|----------|--------|---------|
 | **Screening**      | ✅        | ✅           | ✅       |        |         |
+| **Mol PAL**        | ✅        | ✅           |          |        |         |
 | **Graph Ga**       | ✅        | ✅           | ✅       |        |         |
-| **SMILES GA**      | ✅        | ✅           |          |        |         |
+| **SMILES GA**      | ✅        | ✅           | ✅       |        |         |
 | **SELFIES GA**     | ✅        | ✅           |          |        |         |
 | **SELFIES GA +D**  | ✅        | ✅           |          |        |         |
-| **Graph MCTS**     | ✅        | ✅           |          |        |         |
-| **SMILES HC**      | ✅        |              |          |        |         |
+| **Graph MCTS**     | ✅        | ✅           | ✅       |        |         |
+| **SMILES HC**      | ✅        | ✅           |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
 | **SMILES VAE BO**  |           |              |          |        |         |
 | **SELFIES VAE BO** |           |              |          |        |         |
@@ -58,7 +59,7 @@ conda activate molopt
 | **Pasithea**       |           |              |          |        |         |
 | **DST**            | ✅        | ✅           |          |        |         |
 | **GFlowNet**       |           |              |          |        |         |
-| **GFlowNet (AL)**  |           |              |          |        |         |
+| **GFlowNet (AL)**  |           |              |          |        |         ||
 
 # Contribution Guide
 

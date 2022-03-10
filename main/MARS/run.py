@@ -1,12 +1,8 @@
 import os
-import rdkit
 import torch
 import random
-import pathlib
 import argparse
 import numpy as np
-import logging as log
-from tqdm import tqdm
 from tdc import Oracle 
 from rdkit import Chem, RDLogger
 import sys, yaml 
@@ -14,7 +10,6 @@ path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-from estimator.estimator import Estimator
 from proposal.models.editor_basic import BasicEditor
 from proposal.proposal import Proposal_Random, Proposal_Editor, Proposal_Mix
 from sampler import Sampler_SA, Sampler_MH, Sampler_Recursive
@@ -45,7 +40,7 @@ estimator is used for scoring, will be replaced by tdc.oracle
 class MARS_Optimizer(BaseOptimizer):
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "MARS"
+        self.model_name = "mars"
 
 
     def _optimize(self, oracle, config):
@@ -103,7 +98,8 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
