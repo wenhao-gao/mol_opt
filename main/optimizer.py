@@ -122,7 +122,9 @@ class BaseOptimizer:
         self.n_jobs = args.n_jobs
         self.pool = joblib.Parallel(n_jobs=self.n_jobs)
         self.smi_file = args.smi_file
-        self.oracle = Oracle(max_oracle_calls = args.max_oracle_calls, freq_log=args.freq_log)
+        # self.mol_buffer = {}
+        # self.oracle = Oracle(self.mol_buffer)
+        self.oracle = Oracle(max_oracle_calls = args.max_oracle_calls)
         if self.smi_file is not None:
             self.all_smiles = self.load_smiles_from_file(self.smi_file)
         else:
@@ -281,7 +283,9 @@ class BaseOptimizer:
                 top1_pass]
 
     def reset(self):
-        self.oracle = Oracle(max_oracle_calls = self.args.max_oracle_calls, freq_log=self.args.freq_log)
+        # self.mol_buffer = {}
+        # self.oracle = Oracle(self.mol_buffer)
+        self.oracle = Oracle()
 
     @property
     def mol_buffer(self):
