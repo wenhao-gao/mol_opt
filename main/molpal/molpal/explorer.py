@@ -354,7 +354,8 @@ class Explorer:
 
         # import ipdb; ipdb.set_trace()
 
-        new_scores = self.objective(inputs)
+        new_scores_scores = self.objective(inputs)
+        new_scores = {inputs[i]: new_scores_scores[i] for i in range(len(inputs))}
         self._clean_and_update_scores(new_scores)
 
         # self.top_k_avg = self.avg()
@@ -405,7 +406,8 @@ class Explorer:
             cluster_sizes=self.pool.cluster_sizes, t=(self.iter-1),
         )
 
-        new_scores = self.objective(inputs)
+        new_scores_scores = self.objective(inputs)
+        new_scores = {inputs[i]: new_scores_scores[i] for i in range(len(inputs))}
         self._clean_and_update_scores(new_scores)
 
         if len(self.scores) >= self.k:

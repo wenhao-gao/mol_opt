@@ -11,4 +11,4 @@ model: mpn
 init-lr: 1e-4
 max-lr: 1e-3s
 final-lr: 1e-4
-conf-method: mve
+conf_method: mve

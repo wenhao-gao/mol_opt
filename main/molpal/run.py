@@ -21,7 +21,7 @@ class MolPAL_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "mol_apl"
+        self.model_name = "mol_pal"
         print('''\
 *********************************************************************
 *  __    __     ______     __         ______   ______     __        *
