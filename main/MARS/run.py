@@ -45,13 +45,11 @@ estimator is used for scoring, will be replaced by tdc.oracle
 class MARS_Optimizer(BaseOptimizer):
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "mars"
+        self.model_name = "MARS"
 
 
     def _optimize(self, oracle, config):
-
         self.oracle.assign_evaluator(oracle)
-
         config['device'] = torch.device(config['device'])
         config['run_dir'] = os.path.join(config['root_dir'], config['run_dir'])
         config['data_dir'] = os.path.join(config['root_dir'], config['data_dir'])
