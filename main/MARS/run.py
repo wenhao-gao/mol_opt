@@ -49,7 +49,7 @@ class MARS_Optimizer(BaseOptimizer):
 
 
     def _optimize(self, oracle, config):
-
+        self.oracle.assign_evaluator(oracle)
         config['device'] = torch.device(config['device'])
         config['run_dir'] = os.path.join(config['root_dir'], config['run_dir'])
         config['data_dir'] = os.path.join(config['root_dir'], config['data_dir'])
@@ -78,9 +78,9 @@ class MARS_Optimizer(BaseOptimizer):
         elif config['proposal'] == 'mix': proposal = Proposal_Mix(config, editor)
 
         ### sampler
-        if config['sampler'] == 're': sampler = Sampler_Recursive(config, proposal, oracle, config['max_n_oracles']) 
-        elif config['sampler'] == 'sa': sampler = Sampler_SA(config, proposal, oracle, config['max_n_oracles'])
-        elif config['sampler'] == 'mh': sampler = Sampler_MH(config, proposal, oracle, config['max_n_oracles'])
+        if config['sampler'] == 're': sampler = Sampler_Recursive(config, proposal, self.oracle) 
+        elif config['sampler'] == 'sa': sampler = Sampler_SA(config, proposal, self.oracle)
+        elif config['sampler'] == 'mh': sampler = Sampler_MH(config, proposal, self.oracle)
 
         ### sampling
         if config['mols_init']:
@@ -89,7 +89,8 @@ class MARS_Optimizer(BaseOptimizer):
             mols_init = mols[:config['num_mols']]
         else: 
             mols_init = [Chem.MolFromSmiles('CC') for _ in range(config['num_mols'])]
-        self.mol_buffer = sampler.sample(run_dir, mols_init, self.mol_buffer)
+        # print("mols_init", mols_init)
+        sampler.sample(run_dir, mols_init)
 
 
 
@@ -102,6 +103,7 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()

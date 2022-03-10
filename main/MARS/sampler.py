@@ -17,11 +17,10 @@ from datasets.datasets import ImitationDataset, \
                                GraphClassificationDataset
 
 class Sampler():
-    def __init__(self, config, proposal, oracle, max_n_oracles):
+    def __init__(self, config, proposal, oracle):
         self.proposal = proposal
         # self.estimator = estimator
         self.oracle = oracle 
-        self.max_n_oracles = max_n_oracles 
         
         self.writer = None
         self.run_dir = None
@@ -162,7 +161,7 @@ class Sampler():
         '''
         raise NotImplementedError
 
-    def sample(self, run_dir, mols_init, mol_buffer):
+    def sample(self, run_dir, mols_init):
         '''
         sample molecules from initial ones
         @params:
@@ -176,22 +175,25 @@ class Sampler():
         old_dicts = [{} for i in old_mols]
         old_smiles = [Chem.MolToSmiles(mol) for mol in old_mols]
         for ii,smiles in enumerate(old_smiles): 
-            if smiles in mol_buffer:
-                value = mol_buffer[smiles][0]
-            else: 
-                value = self.oracle(smiles)
-                mol_buffer[smiles] = [value, len(mol_buffer)+1]
+            # if smiles in mol_buffer:
+            #     value = mol_buffer[smiles][0]
+            # else: 
+            #     value = self.oracle(smiles)
+            #     mol_buffer[smiles] = [value, len(mol_buffer)+1]
+            value = self.oracle(smiles)
             old_dicts[ii][smiles] = value 
-        old_scores = [mol_buffer[smiles][0] for smiles in old_smiles]
+        old_scores = [self.oracle(smiles) for smiles in old_smiles]
         # old_dicts = self.estimator.get_scores(old_mols)
         # old_scores = self.scores_from_dicts(old_dicts)
         acc_rates = [0. for _ in old_mols]
         # self.record(-1, old_mols, old_dicts, acc_rates)
 
         for step in tqdm(range(self.num_step)):
-            if len(mol_buffer) >= self.max_n_oracles:
+            if self.oracle.finish:
                 print('max oracle number hit')
                 break 
+            else:
+                print("# of oracle", len(self.oracle))
 
             if self.patience <= 0: break
             self.step = step
@@ -200,13 +202,14 @@ class Sampler():
             new_dicts = [{} for i in new_mols]
             new_smiles = [Chem.MolToSmiles(mol) for mol in new_mols]
             for ii,smiles in enumerate(new_smiles):
-                if smiles in mol_buffer:
-                    value = mol_buffer[smiles][0]
-                else:
-                    value = self.oracle(smiles)
-                    mol_buffer[smiles] = [value, len(mol_buffer)+1]
+                # if smiles in mol_buffer:
+                #     value = mol_buffer[smiles][0]
+                # else:
+                #     value = self.oracle(smiles)
+                #     mol_buffer[smiles] = [value, len(mol_buffer)+1]
+                value = self.oracle(smiles)
                 new_dicts[ii][smiles] = value 
-            new_scores = [mol_buffer[smiles][0] for smiles in new_smiles]
+            new_scores = [self.oracle(smiles) for smiles in new_smiles]
             # new_dicts = self.estimator.get_scores(new_mols)
             # new_scores = self.scores_from_dicts(new_dicts)
             
@@ -235,6 +238,7 @@ class Sampler():
                 dataset = self.proposal.dataset
                 dataset = data.Subset(dataset, indices)
                 if self.dataset: 
+                    print(dataset)
                     self.dataset.merge_(dataset)
                 else: self.dataset = ImitationDataset.reconstruct(dataset)
                 n_sample = len(self.dataset)
@@ -270,13 +274,12 @@ class Sampler():
                     torch.device('cpu'):
                     torch.cuda.empty_cache()
 
-        return mol_buffer 
-
+        # return mol_buffer 
 
 class Sampler_SA(Sampler):
 
-    def __init__(self, config, proposal, oracle, max_n_oracles):
-        super().__init__(config, proposal, oracle, max_n_oracles)
+    def __init__(self, config, proposal, oracle,):
+        super().__init__(config, proposal, oracle, )
         self.k = 0
         self.step_cur_T = 0
         self.T = Sampler_SA.T_k(self.k)
@@ -314,8 +317,8 @@ class Sampler_SA(Sampler):
 
 
 class Sampler_MH(Sampler):
-    def __init__(self, config, proposal, oracle, max_n_oracles):
-        super().__init__(config, proposal, oracle, max_n_oracles)
+    def __init__(self, config, proposal, oracle, ):
+        super().__init__(config, proposal, oracle, )
         self.power = 30.
         
     def acc_rates(self, new_scores, old_scores, fixings):
@@ -328,8 +331,8 @@ class Sampler_MH(Sampler):
     
 
 class Sampler_Recursive(Sampler):
-    def __init__(self, config, proposal, oracle, max_n_oracles):
-        super().__init__(config, proposal, oracle, max_n_oracles)
+    def __init__(self, config, proposal, oracle, ):
+        super().__init__(config, proposal, oracle,)
         
     def acc_rates(self, new_scores, old_scores, fixings):
         acc_rates = []

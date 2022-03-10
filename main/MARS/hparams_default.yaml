@@ -7,7 +7,7 @@ epsilon: 0.7
 device: 'cpu'
 data_dir: 'data'
 run_dir: 'runs/'
-train: True
+train: False
 root_dir: './main/MARS/'
 editor_dir: 
 mols_ref: 
