@@ -6,14 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-
-
-
-
-
-
-
-
 # Distribution / packaging
 .Python
 build/
@@ -155,37 +147,33 @@ main/DST/oracle/
 main/DST/results/
 main/DST/__pycache__/
 
-
-
 # GPBO
 main/GPBO/data/
 main/GPBO/upload.sh 
 main/GPBO/dockstring/ 
-
 
 # jtvae
 main/JTVAE/molvae
 main/JTVAE/download.sh
 main/JTVAE/jtnn 
 
-
 # mars 
 main/MARS/estimator/scorer/kinase_rf/
 main/MARS/runs/ 
 main/MARS/data/kinase.tsv
-
-
 
 # MIMOSA
 # main/MIMOSA/data/
 main/MIMOSA/results/
 main/MIMOSA/__pycache__/
 
-
 # REINVENT
 main/REINVENT/data
 
 # smiles_lstm_hc
-main/smiles_lstm_hc/pretrained_model/model_final_0.473.pt
+# main/smiles_lstm_hc/pretrained_model/model_final_0.473.pt
 
-
+# Mol_PAL
+# main/molpal/molpal_50k
+checkpoints
+molpal_out
