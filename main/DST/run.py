@@ -22,6 +22,7 @@ class DSToptimizer(BaseOptimizer):
 		self.model_name = "DST"
 
 	def _optimize(self, oracle, config):
+		self.oracle.assign_evaluator(oracle)
 		max_n_oracles = config["max_n_oracles"]
 		max_generations = config["max_generations"]
 		population_size = config['population_size']
@@ -50,15 +51,15 @@ class DSToptimizer(BaseOptimizer):
 				except:
 					pass 
 			smiles_lst = list(next_set)
-			score_lst = self.score_smiles(oracle, smiles_lst)
+			score_lst = self.oracle(smiles_lst)
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)
-			print(smiles_score_lst[:5], "Oracle num: ", len(self.mol_buffer))
+			print(smiles_score_lst[:5], "Oracle num: ", len(self.oracle))
 
 			# current_set = [i[0] for i in smiles_score_lst[:population_size]]  # Option I: top-k 
 			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) # Option II: DPP
 
-			if len(self.mol_buffer) >= max_n_oracles:
+			if self.oracle.finish:
 				break
 
 def main():
@@ -70,6 +71,7 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
