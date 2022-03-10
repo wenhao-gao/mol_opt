@@ -56,11 +56,12 @@ class REINVENToptimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "REINVENT"
+        self.model_name = "reinvent"
 
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+
         restore_prior_from=os.path.join(path_here, 'data/Prior.ckpt')
         restore_agent_from=restore_prior_from 
 
@@ -77,7 +78,7 @@ class REINVENToptimizer(BaseOptimizer):
                 sigma=config['sigma'],
                 experience_replay=0)
 
-        self.oracle.mol_buffer = mol_buffer  
+        # self.oracle.mol_buffer = mol_buffer  
 
 def main():
     parser = argparse.ArgumentParser()

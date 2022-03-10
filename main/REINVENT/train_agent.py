@@ -3,18 +3,12 @@ import pickle
 import numpy as np
 import time
 import os
-from shutil import copyfile
 
 from model import RNN
 from data_structs import Vocabulary, Experience
-from scoring_functions import get_scoring_function
 from utils import Variable, seq_to_smiles, fraction_valid_smiles, unique
 from vizard_logger import VizardLog
 from tqdm import tqdm 
-
-
-
-
 
 
 def train_agent(restore_prior_from='data/Prior.ckpt',
