@@ -68,9 +68,8 @@ def maximize_acquisition_func_ga(
 
 # Whole GP BO loop
 def gp_bo_loop(
-    gp_model: TanimotoGP,
-    scoring_function: Union[callable, CachedFunction],
-    mol_buffer: dict, 
+    gp_model,
+    scoring_function,
     smiles_to_np_fingerprint: callable,
     acq_func_of_time: callable,
     max_bo_iter: int,
@@ -95,25 +94,27 @@ def gp_bo_loop(
     logger.info("Starting GP BO")
 
     # Create the cached function
-    if not isinstance(scoring_function, CachedFunction):
-        scoring_function = CachedFunction(scoring_function, transform=y_transform)
-    start_cache = dict(scoring_function.cache)
-    start_cache_size = len(start_cache)
-    logger.debug(f"Starting cache made, has size {start_cache_size}")
-    logger.info(
-        f"Top {n_top_log} known starting scores:\n"
-        + ", ".join(
-            f"#{i+1}={v:.3f}"
-            for i, v in enumerate(
-                heapq.nlargest(
-                    n_top_log, scoring_function(list(start_cache.keys()), batch=True)
-                )
-            )
-        )
-    )
+    # if not isinstance(scoring_function, CachedFunction):
+    #     scoring_function = CachedFunction(scoring_function, transform=y_transform)
+    # start_cache = dict(scoring_function.cache)
+    # start_cache_size = len(start_cache)
+    # logger.debug(f"Starting cache made, has size {start_cache_size}")
+    # logger.info(
+    #     f"Top {n_top_log} known starting scores:\n"
+    #     + ", ".join(
+    #         f"#{i+1}={v:.3f}"
+    #         for i, v in enumerate(
+    #             heapq.nlargest(
+    #                 n_top_log, scoring_function(list(start_cache.keys()), batch=True)
+    #             )
+    #         )
+    #     )
+    # )
 
     # Set up which SMILES the GP should be trained on
     # If not given, it is assumed that the GP is trained on all known smiles
+    start_cache = scoring_function.mol_buffer 
+    start_cache_size = len(scoring_function) 
     if gp_train_smiles is None:
         logger.debug(
             "No GP training SMILES given. "
@@ -159,7 +160,7 @@ def gp_bo_loop(
         )
     logger.debug("Scoring training points.")
     gp_train_smiles_list = list(gp_train_smiles_set)
-    gp_train_smiles_scores = scoring_function(gp_train_smiles_list, batch=True)
+    gp_train_smiles_scores = scoring_function(gp_train_smiles_list)
     logger.debug("Scoring of training points done.")
 
     # Store GP training data
@@ -192,10 +193,8 @@ def gp_bo_loop(
     # Actual BO loop
     for bo_iter in range(1, max_bo_iter + 1):
 
-
-
-        print(">>>> dictionary size", len(mol_buffer))
-        if len(mol_buffer) > max_func_calls:
+        print(">>>> # of used oracal call ", len(scoring_function))
+        if scoring_function.finish: 
             break 
 
         logger.info(f"Start iter {bo_iter}")
@@ -210,7 +209,7 @@ def gp_bo_loop(
                 ga_pool_num_best,
                 [
                     (scoring_function(smiles), smiles)
-                    for smiles in scoring_function.cache.keys()
+                    for smiles in scoring_function.mol_buffer.keys()
                 ],
             )
         ]
@@ -295,7 +294,7 @@ def gp_bo_loop(
         logger.debug(
             f"Evaluating scoring function on SMILES batch of size {len(smiles_batch)}."
         )
-        smiles_batch_scores = scoring_function(smiles_batch, batch=True)
+        smiles_batch_scores = scoring_function(smiles_batch)
         logger.debug(f"Scoring complete.")
 
         # Add new points to GP training data
@@ -340,7 +339,7 @@ def gp_bo_loop(
         # Assemble full batch results
         batch_results = []
         for i, s in enumerate(smiles_batch):
-            transformed_score = scoring_function(s, batch=False)
+            transformed_score = scoring_function(s)
             pred_dict = dict(
                 mu=float(smiles_batch_mu_pre[i]),
                 std=float(np.sqrt(smiles_batch_var_pre[i])),
@@ -356,7 +355,7 @@ def gp_bo_loop(
             res = dict(
                 bo_iter=bo_iter,
                 smiles=s,
-                raw_score=scoring_function.cache[s],
+                raw_score=scoring_function(s),
                 transformed_score=transformed_score,
                 predictions=pred_dict,
                 predictions_after_fit=pred_dict_post1,
@@ -410,7 +409,7 @@ def gp_bo_loop(
                 heapq.nlargest(n_top_log, [scoring_function(s) for s in new_bo_smiles])
             )
         )
-        func_evals_so_far = len(scoring_function.cache) - start_cache_size
+        func_evals_so_far = len(scoring_function.mol_buffer) - start_cache_size
         bo_iter_status_update += f"\n\tFunction calls so far: {func_evals_so_far}"
         logger.info(bo_iter_status_update)
 
@@ -433,4 +432,4 @@ def gp_bo_loop(
         del func_evals_so_far
 
     logger.info("End of BO loop.")
-    return (bo_query_res, scoring_function.cache)
+    return (bo_query_res, scoring_function.mol_buffer)
