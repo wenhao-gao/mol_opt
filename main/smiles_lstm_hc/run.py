@@ -29,15 +29,18 @@ default
     # n_jobs = -1 
 '''
 
-class LSTM_HC_Optimizer(BaseOptimizer):
+class SMILES_LSTM_HC_Optimizer(BaseOptimizer):
 
   def __init__(self, args=None):
     super().__init__(args)
-    self.model_name = "LSTM_HC"
+    self.model_name = "smiles_lstm_hc"
 
   def _optimize(self, oracle, config):
+
     self.oracle.assign_evaluator(oracle)
+
     model_path = os.path.join(path_here, 'pretrained_model', 'model_final_0.473.pt')
+
     smiles_file = os.path.join(path_here, 'zinc_500.txt')
     with open(smiles_file, 'r') as fin:
       lines = fin.readlines() 
@@ -55,7 +58,7 @@ class LSTM_HC_Optimizer(BaseOptimizer):
                                            smi_file=smiles_file,
                                            n_jobs=config['n_jobs'])
 
-    result = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 1000,
+    result = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 10100,
                                      starting_population = start_smiles_lst)
 
 
@@ -69,7 +72,8 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     args = parser.parse_args()
@@ -98,7 +102,7 @@ def main():
 
         # max_n_oracles = config['max_n_oracles']
         oracle = Oracle(name = oracle_name)
-        optimizer = LSTM_HC_Optimizer(args=args)
+        optimizer = SMILES_LSTM_HC_Optimizer(args=args)
 
         if args.task == "simple":
             optimizer.optimize(oracle=oracle, config=config_default)
