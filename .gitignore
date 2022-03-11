@@ -177,3 +177,8 @@ main/REINVENT/data
 # main/molpal/molpal_50k
 checkpoints
 molpal_out
+
+# GFlowNet
+results
+main/gflownet/results
+main/gflownet/__pycache__
