@@ -1,5 +1,6 @@
 import copy
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import random
 import json
 import time
@@ -27,9 +28,8 @@ from networks.distributional_net import DistributionalMultiLayerNetwork
 class DQN(object):
     """The Deep Q Learning Agent class""" 
     def __init__(self,
-                max_oracle_call, 
+                oracle, 
                 q_fn, 
-                score_fn,
                 task='moldqn',
                 # objective,
                 args=None,
@@ -48,76 +48,56 @@ class DQN(object):
         :param model_path: Path to store checkpoints.
         :param gen_file: The name of file to store generated molecules
         """
-        self.max_oracle_call = max_oracle_call 
-        self.score_fn = score_fn 
+        self.oracle = oracle
+        # max_oracle_call 
+        # self.score_fn = score_fn 
         self.task = task
         self.args = args
-        self.num_episodes = self.args.num_episodes
-        self.max_steps_per_episode = self.args.max_steps_per_episode
-        self.batch_size = self.args.batch_size
-        self.gamma = self.args.gamma
-        # self.smiles_dict = dict() 
+        self.num_episodes = self.args['num_episodes']
+        self.max_steps_per_episode = self.args['max_steps_per_episode']
+        self.batch_size = self.args['batch_size']
+        self.gamma = self.args['gamma']
+        # Replay buffer option
+        self.prioritized = self.args['prioritized']
+        self.replay_buffer_size = self.args['replay_buffer_size']
+        self.prioritized_alpha = self.args['prioritized_alpha']
+        self.prioritized_beta = self.args['prioritized_beta']
+        self.prioritized_epsilon = self.args['prioritized_epsilon']
+        self.distribution = self.args['distribution']
+        # Double DQN option
+        self.double = self.args['double_q']
+        self.update_frequency = self.args['update_frequency']
+        # Bootstrap option
+        self.num_bootstrap_heads = self.args['num_bootstrap_heads']
 
-        # env_options = {
-        #     'logp_scaled': envs.OptLogPMolecule,
-        #     'logp': envs.OptRawLogPMolecule,
-        #     'qed': envs.OptQEDMolecule, }
+        self.noisy = self.args['noisy'] 
+        self.save_frequency = self.args['save_frequency']
+        self.learning_rate_decay_rate = self.args['learning_rate_decay_rate']
 
-        # if objective is not None:
-        #     assert objective in env_options.keys()
-        #     env = env_options[objective]
-        #     self.env = env(
-        #         discount_factor=self.args.discount_factor,
-        #         init_mol=self.args.init_mol,
-        #         atom_types=set(self.args.atom_types),
-        #         allow_removal=self.args.allow_removal,
-        #         allow_no_modification=self.args.allow_no_modification,
-        #         allow_bonds_between_rings=self.args.allow_bonds_between_rings,
-        #         allowed_ring_sizes=set(self.args.allowed_ring_sizes),
-        #         max_steps=self.args.max_steps_per_episode,
-        #         args=self.args
-        #     )
-        # else:
-        #     # Case to use Guacamol benchmark
-        #     self.env = envs.OptGuacamol(
-        #         scoring_function=score_fn,
-        #         discount_factor=self.args.discount_factor,
-        #         init_mol=self.args.init_mol,
-        #         atom_types=set(self.args.atom_types),
-        #         allow_removal=self.args.allow_removal,
-        #         allow_no_modification=self.args.allow_no_modification,
-        #         allow_bonds_between_rings=self.args.allow_bonds_between_rings,
-        #         allowed_ring_sizes=set(self.args.allowed_ring_sizes),
-        #         max_steps=self.args.max_steps_per_episode,
-        #         args=self.args
-        #     )
-
-        """
-                 atom_types,
-                 discount_factor,
-                 oracle, 
-                 init_mol='C',
-                 allow_removal=True,
-                 allow_no_modification=True,
-                 allow_bonds_between_rings=True,
-                 allowed_ring_sizes=None,
-                 max_steps=10,
-                 target_fn=None,
-                 record_path=False,
-                 args=None
-        """ 
+        # Training attribute
+        self.learning_frequency = self.args['learning_frequency']
+        self.learning_rate_decay_steps = self.args['learning_rate_decay_steps']
+        self.grad_clipping = self.args['grad_clipping']
+        self.learning_rate = self.args['learning_rate'] 
+        self.allowed_ring_sizes = self.args['allowed_ring_sizes']
+        self.allow_bonds_between_rings = self.args['allow_bonds_between_rings']
+        self.allow_no_modification = self.args['allow_no_modification']
+        self.allow_removal = self.args['allow_removal']
+        self.init_mol = self.args['init_mol']
+        self.discount_factor = self.args['discount_factor']
+        self.atom_types = self.args['atom_types']
 
         self.env = envs.Molecule(
-                atom_types=set(self.args.atom_types), 
-                discount_factor=self.args.discount_factor, 
-                oracle = self.score_fn, 
-                init_mol=self.args.init_mol,
-                allow_removal=self.args.allow_removal,
-                allow_no_modification=self.args.allow_no_modification,
-                allow_bonds_between_rings=self.args.allow_bonds_between_rings,
-                allowed_ring_sizes=set(self.args.allowed_ring_sizes),
-                max_steps=self.args.max_steps_per_episode,
-                args=self.args) 
+                atom_types=set(self.atom_types), 
+                discount_factor=self.discount_factor, 
+                oracle = self.oracle, 
+                init_mol=self.init_mol,
+                allow_removal=self.allow_removal,
+                allow_no_modification=self.allow_no_modification,
+                allow_bonds_between_rings=self.allow_bonds_between_rings,
+                allowed_ring_sizes=set(self.allowed_ring_sizes),
+                max_steps=self.max_steps_per_episode,
+                ) 
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if torch.cuda.is_available():
@@ -125,11 +105,11 @@ class DQN(object):
         print(f'Using Device: {self.device}')
 
         q_fn_options = {
-            'mlp': mlp.MultiLayerNetwork if not args.noisy else noisy_net.MultiLayerNetwork,
+            'mlp': mlp.MultiLayerNetwork if not self.noisy else noisy_net.MultiLayerNetwork,
             'mpnn': mpnn.MessagePassingNetwork
         }
         self.model_type = q_fn 
-        if not self.args.distribution:
+        if not self.distribution:
             model = q_fn_options[q_fn]
         else:
             model = DistributionalMultiLayerNetwork
@@ -149,15 +129,12 @@ class DQN(object):
         self.q_fn_target = self.q_fn_target.to(self.device)
         self.q_fn = self.q_fn.to(self.device)
 
-        # Training attribute
-        self.learning_frequency = self.args.learning_frequency
-        self.learning_rate_decay_steps = self.args.learning_rate_decay_steps
-        self.grad_clipping = self.args.grad_clipping
+
 
         self.optimizer = optim.Adam(
             params=self.q_fn.parameters(),
-            lr=self.args.learning_rate,
-            betas=(self.args.adam_beta_1, self.args.adam_beta_2),
+            lr=self.learning_rate,
+            betas=(self.args['adam_beta_1'], self.args['adam_beta_2']),
             eps=1e-08,
             weight_decay=0,
             amsgrad=False
@@ -165,8 +142,10 @@ class DQN(object):
 
         self.lr_schedule = optim.lr_scheduler.ExponentialLR(
             optimizer=self.optimizer,
-            gamma=self.args.learning_rate_decay_rate
+            gamma=self.learning_rate_decay_rate
         )
+
+
 
         if not os.path.exists(model_path):
             os.makedirs(model_path)
@@ -174,16 +153,13 @@ class DQN(object):
         self.writer = SummaryWriter(self.log_path)
 
         # Logging attribute
-        self.save_frequency = self.args.save_frequency
         self.tracker = Storage(keep=keep)
 
         # Generation options
-        # self.gen_epsilon = self.args.gen_epsilon
         self.gen_file = gen_file + task + '.json'
-        # self.gen_num_episode = self.args.gen_number
 
         # epsilon-greedy exploration schedule
-        if not args.noisy:
+        if not self.noisy:
             self.exploration = PiecewiseSchedule(
                 [(0, 0), (int(self.num_episodes * 2 / 3), 0), (self.num_episodes, 0)],
                 outside_value=0.01
@@ -194,13 +170,6 @@ class DQN(object):
                 outside_value=0.01
             )
 
-        # Replay buffer option
-        self.prioritized = self.args.prioritized
-        self.replay_buffer_size = self.args.replay_buffer_size
-        self.prioritized_alpha = self.args.prioritized_alpha
-        self.prioritized_beta = self.args.prioritized_beta
-        self.prioritized_epsilon = self.args.prioritized_epsilon
-
         if self.prioritized:
             self.memory = PrioritizedReplayBuffer(self.replay_buffer_size, self.prioritized_alpha)
             self.beta_schedule = LinearSchedule(self.num_episodes, initial_p=self.prioritized_beta, final_p=0)
@@ -208,20 +177,12 @@ class DQN(object):
             self.memory = ReplayBuffer(self.replay_buffer_size)
             self.beta_schedule = None
 
-        # Double DQN option
-        self.double = self.args.double_q
-        self.update_frequency = self.args.update_frequency
-
-        # Bootstrap option
-        self.num_bootstrap_heads = self.args.num_bootstrap_heads
-
         # Distributional option
         self.vmin=0
         self.vmax=1
 
     def train(self):
-        if self.args.verbose:
-            print(self.q_fn)
+        print(self.q_fn)
 
         global_step = 0
         for episode in range(self.num_episodes):
@@ -229,18 +190,17 @@ class DQN(object):
 
 
             oracle_num = self.env.called_oracle_number()
-            if oracle_num > self.max_oracle_call:
-                return self.env.smiles_dict 
+            if self.oracle.finish:
+                return
 
             # Save checkpoint
             if episode % self.save_frequency == 0:
                 model_name = 'dqn_checkpoint_' + str(episode) + '.pth'
                 torch.save(self.q_fn.state_dict(), os.path.join(self.log_path, model_name))
 
-        with open(self.gen_file, 'w') as f:
-            json.dump(self.tracker.content, f)
+        # with open(self.gen_file, 'w') as f:
+        #     json.dump(self.tracker.content, f)
 
-        return self.env.smiles_dict 
         # return self.tracker.content
 
     def _episode(self,
@@ -284,7 +244,7 @@ class DQN(object):
                 # self.writer.add_scalar('sa', sa_score, episode)
 
             # Training the network
-            start_train = 3 if self.args.noisy else 50
+            start_train = 3 # if self.args.noisy else 50
             if (episode > min(start_train, self.num_episodes / 10)) and (global_step % self.learning_frequency == 0):
 
                 # Update learning rate
@@ -388,7 +348,7 @@ class DQN(object):
         self.q_fn.train()
         self.q_fn_target.train()
 
-        if self.args.distribution:
+        if self.distribution:
 
             # Case for distributional DQN
             support = torch.linspace(self.vmin, self.vmax, self.num_bootstrap_heads).to(self.device)
@@ -539,7 +499,7 @@ class DQN(object):
                 indices, prios
             )
 
-        if self.args.noisy:
+        if self.args['noisy']:
             self.q_fn.reset_noise()
             self.q_fn_target.reset_noise()
 
@@ -563,7 +523,7 @@ class DQN(object):
             else:
                 q_value = self.q_fn.forward(observation, [np.array(steps_left)]).squeeze(1)
 
-            if self.args.distribution:
+            if self.distribution:
                 q_value = q_value * torch.linspace(self.vmin, self.vmax, self.num_bootstrap_heads).to(self.device)
                 # print(q_value.shape)
                 q_value = q_value.sum(1)
