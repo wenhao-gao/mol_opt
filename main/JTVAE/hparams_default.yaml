@@ -1,0 +1,10 @@
+max_iter: 50
+data_path: 'main/JTVAE/data/moses/train_validity_5k.txt'
+vocab_path: 'main/JTVAE/data/moses/vocab.txt'
+model_path: 'main/JTVAE/fast_molvae/vae_model/model.iter-5000'
+hidden_size: 450
+latent_size: 56
+depthT: 20
+depthG: 3
+save_dir: 
+random_seed: 1
