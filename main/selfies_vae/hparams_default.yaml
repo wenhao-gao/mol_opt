@@ -1,0 +1,3 @@
+iter_num: 200 
+save_model: './main/selfies_vae/checkpoint/selfies_vae_model_020.pt'
+train_num: 100
