@@ -1,4 +1,13 @@
 #!/bin/bash  
 
-python main/graph_mcts/run.py --task simple --n_runs 1 --oracles qed
+ulimit -n 4096
+
+METHOD='graph_ga'
+OBJ='zaleplon_mpo'
+# OBJ='ranolazine_mpo'
+
+CUDA_VISIBLE_DEVICES= nohup python -u main/${METHOD}/run.py \
+    --task production \
+    --n_runs 5 \
+    --oracles ${OBJ} &> ${METHOD}_${OBJ}.out&
 

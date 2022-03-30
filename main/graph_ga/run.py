@@ -78,6 +78,8 @@ class GB_GA_Optimizer(BaseOptimizer):
 
         for _ in range(config["max_generations"]):
 
+            # import ipdb; ipdb.set_trace()
+
             # new_population
             mating_pool = make_mating_pool(population_mol, population_scores, config["population_size"])
             offspring_mol = self.pool(delayed(reproduce)(mating_pool, config["mutation_rate"]) for _ in range(config["offspring_size"]))

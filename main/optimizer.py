@@ -12,6 +12,27 @@ import wandb
 from main.utils.chem import *
 
 
+def top_auc(buffer, top_n, finish, freq_log, max_oracle_calls):
+    # import ipdb; ipdb.set_trace()
+    sum = 0
+    prev = 0
+    called = 0
+    ordered_results = list(sorted(buffer.items(), key=lambda kv: kv[1][1], reverse=False))
+    for idx in range(freq_log, min(len(buffer), max_oracle_calls), freq_log):
+        temp_result = ordered_results[:idx]
+        temp_result = list(sorted(temp_result, key=lambda kv: kv[1][0], reverse=True))[:top_n]
+        top_n_now = np.mean([item[1][0] for item in temp_result])
+        sum += freq_log * (top_n_now + prev) / 2
+        prev = top_n_now
+        called = idx
+    temp_result = list(sorted(ordered_results, key=lambda kv: kv[1][0], reverse=True))[:top_n]
+    top_n_now = np.mean([item[1][0] for item in temp_result])
+    sum += (len(buffer) - called) * (top_n_now + prev) / 2
+    if finish and len(buffer) < max_oracle_calls:
+        sum += (max_oracle_calls - len(buffer)) * top_n_now
+    return sum / max_oracle_calls
+
+
 class Oracle:
     def __init__(self, mol_buffer={}, freq_log=100, max_oracle_calls=10000):
         self.name = None
@@ -63,6 +84,9 @@ class Oracle:
             "avg_top1": np.max(scores), 
             "avg_top10": np.mean(sorted(scores, reverse=True)[:10]), 
             "avg_top100": np.mean(scores), 
+            "auc_top1": top_auc(self.mol_buffer, 1, finish, self.freq_log, self.max_oracle_calls),
+            "auc_top10": top_auc(self.mol_buffer, 10, finish, self.freq_log, self.max_oracle_calls),
+            "auc_top100": top_auc(self.mol_buffer, 100, finish, self.freq_log, self.max_oracle_calls),
             "avg_sa": np.mean(self.sa_scorer(smis)),
             "diversity_top100": self.diversity_evaluator(smis),
             "n_oracle": n_calls,
@@ -77,6 +101,12 @@ class Oracle:
     def score_smi(self, smi):
         """
         Function to score one molecule
+
+        Argguments:
+            smi: One SMILES string represnets a moelcule.
+
+        Return:
+            score: a float represents the property of the molecule.
         """
         if len(self.mol_buffer) > self.max_oracle_calls:
             return 0
@@ -84,10 +114,11 @@ class Oracle:
         if mol is None or len(smi) == 0:
             return 0
         else:
+            smi = Chem.MolToSmiles(mol)
             if smi in self.mol_buffer:
                 pass
             else:
-                self.mol_buffer[smi] = [self.evaluator(smi), len(self.mol_buffer)+1]
+                self.mol_buffer[smi] = [float(self.evaluator(smi)), len(self.mol_buffer)+1]
             return self.mol_buffer[smi][0]
     
     def __call__(self, smiles_lst):
@@ -153,73 +184,9 @@ class BaseOptimizer:
         
     def sort_buffer(self):
         self.oracle.sort_buffer()
-            
-    # def score_mol(self, oracle_func, mol_list):
-    #     score_list = []
-    #     for mol in mol_list:
-    #         if mol is None:
-    #             score = 0
-    #             self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
-    #             score_list.append(score)
-    #         else:
-    #             smi = Chem.MolToSmiles(mol)
-    #             if smi in self.mol_buffer:
-    #                 _ = self.mol_buffer[smi]
-    #                 score_list.append(_[0])
-    #             else:
-    #                 score = oracle_func(smi)
-    #                 self.mol_buffer[smi] = [score, len(self.mol_buffer)+1]
-    #                 score_list.append(score)
-                
-    #     self.sort_buffer()
-    #     return score_list
-
-    # def score_smiles(self, oracle_func, smi_list):
-    #     mol_list = [Chem.MolFromSmiles(smi) if smi is not None else None for smi in smi_list]
-    #     return self.score_mol(oracle_func, mol_list)
     
-    def log_intermediate(self, mols=None, scores=None, max_oracle_calls=10000, finish=False):
-
-        if finish:
-            temp_top100 = list(self.mol_buffer.items())[:100]
-            smis = [item[0] for item in temp_top100]
-            scores = [item[1][0] for item in temp_top100]
-            n_calls = max_oracle_calls
-        else:
-            if mols is None and scores is None:
-                if len(self.mol_buffer) <= max_oracle_calls:
-                    # If not spefcified, log current top-100 mols in buffer
-                    temp_top100 = list(self.mol_buffer.items())[:100]
-                    smis = [item[0] for item in temp_top100]
-                    scores = [item[1][0] for item in temp_top100]
-                    n_calls = len(self.mol_buffer)
-                else:
-                    results = list(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][1], reverse=False))[:max_oracle_calls]
-                    temp_top100 = sorted(results, key=lambda kv: kv[1][0], reverse=True)[:100]
-                    smis = [item[0] for item in temp_top100]
-                    scores = [item[1][0] for item in temp_top100]
-                    n_calls = max_oracle_calls
-            else:
-                # Otherwise, log the input moleucles
-                smis = [Chem.MolToSmiles(m) for m in mols]
-                n_calls = len(self.mol_buffer)
-        
-        # Uncomment this line if want to log top-10 moelucles figures, so as the best_mol key values.
-        # temp_top10 = list(self.mol_buffer.items())[:10]
-
-        # try:
-        wandb.log({
-            "avg_top1": np.max(scores), 
-            "avg_top10": np.mean(sorted(scores, reverse=True)[:10]), 
-            "avg_top100": np.mean(scores), 
-            "avg_sa": np.mean(self.sa_scorer(smis)),
-            "diversity_top100": self.diversity_evaluator(smis),
-            "n_oracle": n_calls,
-            # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
-            #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
-        })
-        # except:
-        #     import ipdb; ipdb.set_trace()
+    def log_intermediate(self, mols=None, scores=None, finish=False):
+        self.oracle.log_intermediate(mols=mols, scores=scores, finish=finish)
     
     def log_result(self):
 
@@ -294,16 +261,22 @@ class BaseOptimizer:
     def _optimize(self, oracle, config):
         raise NotImplementedError
             
-    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, seed=0, project="tune"):
+    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, num_runs=2, project="tune"):
+        seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        seeds = seeds[:num_runs]
         hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
-        np.random.seed(seed)
         
         def _func():
             with wandb.init(config=hparam_default) as run:
-                config = wandb.config
-                self._optimize(oracle, config)
-            self.reset()
-
+                auc_top10s = []
+                for seed in seeds:
+                    np.random.seed(seed)
+                    config = wandb.config
+                    self._optimize(oracle, config)
+                    auc_top10s.append(top_auc(self.oracle.mol_buffer, 10, True, self.oracle.freq_log, self.oracle.max_oracle_calls))
+                    self.reset()
+                wandb.log({"avg_auc": np.mean(auc_top10s)})
+            
         sweep_id = wandb.sweep(hparam_space)
         # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)
         wandb.agent(sweep_id, function=_func, count=count, entity="mol_opt")
@@ -319,7 +292,8 @@ class BaseOptimizer:
         run.finish()
 
     def production(self, oracle, config, num_runs=5, project="production"):
-        seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        # seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        seeds = [23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
         if num_runs > len(seeds):
             raise ValueError(f"Current implementation only allows at most {len(seeds)} runs.")
         seeds = seeds[:num_runs]
