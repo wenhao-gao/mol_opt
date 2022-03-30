@@ -1,5 +1,7 @@
 #!/bin/bash  
 
+export PYTHONPATH=`pwd`
+
 ulimit -n 4096
 
 METHOD='graph_ga'
