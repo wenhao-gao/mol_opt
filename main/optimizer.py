@@ -44,6 +44,10 @@ class Oracle:
         self.diversity_evaluator = tdc.Evaluator(name = 'Diversity')
         self.last_log = 0
 
+    @property
+    def budget(self):
+        return self.max_oracle_calls
+
     def assign_evaluator(self, evaluator):
         self.evaluator = evaluator
 
