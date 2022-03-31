@@ -16,6 +16,9 @@ from tdc import Oracle
 
 
 class SELFIES_GA_optimizer(BaseOptimizer):
+    """
+    This 
+    """
 
     def __init__(self, args=None):
         super().__init__(args)
