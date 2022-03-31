@@ -1,4 +1,4 @@
-name: DST
+name: MARS
 method: random
 metric:
   goal: maximize

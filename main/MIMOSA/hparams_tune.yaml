@@ -1,4 +1,4 @@
-name: DST
+name: MIMOSA
 method: random
 metric:
   goal: maximize

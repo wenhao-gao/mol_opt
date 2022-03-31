@@ -1,4 +1,4 @@
-name: DST
+name: JTVAE
 method: random
 metric:
   goal: maximize
