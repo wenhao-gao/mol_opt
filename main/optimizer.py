@@ -261,8 +261,8 @@ class BaseOptimizer:
     def _optimize(self, oracle, config):
         raise NotImplementedError
             
-    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, num_runs=2, project="tune"):
-        seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, num_runs=3, project="tune"):
+        seeds = [0, 1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
         seeds = seeds[:num_runs]
         hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
         
@@ -292,8 +292,8 @@ class BaseOptimizer:
         run.finish()
 
     def production(self, oracle, config, num_runs=5, project="production"):
-        # seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
-        seeds = [23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        seeds = [0, 1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+        # seeds = [23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
         if num_runs > len(seeds):
             raise ValueError(f"Current implementation only allows at most {len(seeds)} runs.")
         seeds = seeds[:num_runs]

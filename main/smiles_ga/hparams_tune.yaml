@@ -1,15 +1,19 @@
 name: smiles_ga
-method: random
+method: bayes
 metric:
   goal: maximize
-  name: avg_top100
+  name: avg_auc
 parameters:
   gene_size: 
     values: [200, 300, 400]
   population_size: 
-    values: [50, 100, 150, 200]
+    distribution: int_uniform
+    min: 50
+    max: 200
   n_mutations: 
-    values: [100, 200, 300]
+    distribution: int_uniform
+    min: 100
+    max: 300
   max_generations: 
     value: 10000
   patience: 
