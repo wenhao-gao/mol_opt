@@ -10,6 +10,21 @@ NOTE:
   as loaders.py (which contains the Sampler and dataset getters it uses)
 """
 
+
+
+
+
+
+
+
+
+import sys 
+sys.path.append('.')
+# export PYTHONPATH="${PYTHONPATH}:${PWD}:${PWD}/rdkit_contrib:${PWD}/synth/:${PWD}/synth/rexgen_direct"
+sys.path.append('./rdkit_contrib')
+sys.path.append('./synth/')
+sys.path.append('./synth/rexgen_direct')
+
 from myrdkit import *  # :(
 
 from argparse import Namespace, ArgumentParser

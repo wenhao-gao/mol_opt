@@ -141,7 +141,6 @@ class GPBandit(GPBandit_):
 class CPGPBandit(GPBandit):
     """ A GP Bandit class on Cartesian product spaces. """
     def __init__(self, func_caller, worker_manager, 
-                 max_oracle_num, 
                  is_mf=False, 
                  domain_dist_computers=None, options=None, reporter=None):
         """ Constructor. """ 
@@ -156,7 +155,6 @@ class CPGPBandit(GPBandit):
         self.capital_type = options.capital_type  # store capital_type for Explorer
         super(CPGPBandit, self).__init__(func_caller, worker_manager, is_mf=is_mf,
                                          options=options, reporter=reporter)
-        self.max_oracle_num = max_oracle_num 
 
     def _child_opt_method_set_up(self):
         """ Set up for child class. Override this method in child class. """
@@ -165,7 +163,7 @@ class CPGPBandit(GPBandit):
             self.domain_dist_computers = [None] * self.domain.num_domains
         self.kernel_params_for_each_domain = [{} for _ in range(self.domain.num_domains)]
         # Create a Dummy GP Fitter so that we can get the mislabel and struct coeffs for
-        # otmann.
+        # otmann. 
         if self.is_an_mf_method():
             fs_orderings = self.func_caller.fidel_space_orderings
             d_orderings = self.func_caller.domain_orderings
@@ -181,7 +179,7 @@ class CPGPBandit(GPBandit):
                 domain_dist_computers=None,
                 options=self.options, reporter=self.reporter
             )
-        else:
+        else:  ##### use this 
             dummy_gp_fitter = MolCPGPFitter(
                 [], [], self.func_caller.domain,
                 domain_kernel_ordering=self.func_caller.domain_orderings.kernel_ordering,

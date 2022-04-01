@@ -10,6 +10,8 @@ NOTE:
   (see reset_default_options method in Chemist)
 """
 
+
+
 import logging
 from argparse import Namespace
 
@@ -27,12 +29,11 @@ from mols.mol_gp import get_default_kernel_type
 
 
 class Chemist:
-    def __init__(self, objective_func, max_oracle_num, 
+    def __init__(self, objective_func,  
                  domain_config, chemist_args=None, 
                  worker_manager='default', reporter='default', 
                  is_mf=False, mf_strategy=None):
 
-        self.max_oracle_num = max_oracle_num 
         self.reporter = get_reporter(reporter)
         self.worker_manager = get_worker_manager(worker_manager)
         if domain_config is None:
@@ -146,7 +147,6 @@ class Chemist:
         optimiser = CPGPBandit(
             self.func_caller,
             self.worker_manager,
-            max_oracle_num = self.max_oracle_num,
             is_mf=self.is_mf,
             options=self.options,
             reporter=self.reporter,
@@ -156,8 +156,8 @@ class Chemist:
 
         return optimiser.optimise(max_capital)
 
-    def get_raw_domain_point_from_processed(self, opt_point):
-        return self.func_caller.get_raw_domain_point_from_processed(opt_point)
+    # def get_raw_domain_point_from_processed(self, opt_point):
+    #     return self.func_caller.get_raw_domain_point_from_processed(opt_point)
 
 
 def get_worker_manager(worker_manager):

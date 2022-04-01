@@ -1,7 +1,5 @@
 # ChemBO
 
-*Authors: Ksenia Korovina (kkorovin@cs.cmu.edu), Sailun (Celsius) Xu (sailunx@andrew.cmu.edu), Kirthevasan Kandasamy (kandasamy@cs.cmu.edu)*
-
 ChemBO is library for joint molecular optimization and synthesis. It is based on Dragonfly - a framework for scalable Bayesian optimization.
 
 ## Structure of the repo

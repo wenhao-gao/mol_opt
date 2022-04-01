@@ -1,6 +1,9 @@
 #!/bin/bash
 # Runner of all experiments
 
+export PYTHONPATH="${PYTHONPATH}:${PWD}:${PWD}/rdkit_contrib:${PWD}/synth/:${PWD}/synth/rexgen_direct"
+
+
 n_exp_runs=$1
 
 if [ -z $n_exp_runs ]

@@ -111,7 +111,7 @@ class RandomExplorer(object):
         # print('outcomes', outcomes)
 
         top_pt, top_val = self.select_product(outcomes, criterion="product")
-        print("top_pt", top_pt)
+        # print("top_pt", top_pt)
         self.pool.append(top_pt)
 
         # filter
