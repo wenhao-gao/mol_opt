@@ -17,12 +17,12 @@ class AtomVGNN(nn.Module):
 
     def __init__(self, args):
         super(AtomVGNN, self).__init__()
-        self.latent_size = args.latent_size
-        self.encoder = GraphEncoder(args.atom_vocab, args.rnn_type, args.embed_size, args.hidden_size, args.depth)
-        self.decoder = GraphDecoder(args.atom_vocab, args.rnn_type, args.embed_size, args.hidden_size, args.latent_size, args.diter)
+        self.latent_size = args['latent_size']
+        self.encoder = GraphEncoder(args['atom_vocab'], args['rnn_type'], args['embed_size'], args['hidden_size'], args['depth'])
+        self.decoder = GraphDecoder(args['atom_vocab'], args['rnn_type'], args['embed_size'], args['hidden_size'], args['latent_size'], args['diter'])
 
-        self.G_mean = nn.Linear(args.hidden_size, args.latent_size)
-        self.G_var = nn.Linear(args.hidden_size, args.latent_size)
+        self.G_mean = nn.Linear(args['hidden_size'], args['latent_size'])
+        self.G_var = nn.Linear(args['hidden_size'], args['latent_size'])
 
     def encode(self, graph_tensors):
         graph_vecs = self.encoder(graph_tensors)

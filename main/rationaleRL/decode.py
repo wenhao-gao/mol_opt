@@ -58,3 +58,8 @@ with torch.no_grad():
         for x,y in zip(init_smiles, final_smiles):
             print(x, y)
 
+
+
+
+
+

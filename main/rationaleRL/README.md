@@ -75,7 +75,7 @@ Here `--ref_path` contains all the reference molecules which is used for computi
 ## environment
 
 ```bash
-rationalRL 
+conda activate rationalRL 
 ```
 
 
@@ -83,20 +83,16 @@ rationalRL
 ## pretrain 
 
 ```bash
-python gnn_train.py --train chembl-processed --save_dir ckpt/chembl-molgen
+python pretrain.py
 ```
 
-## finetune 
+output is `./ckpt/model`, the size is 14 M.  
+
+
+## finetune & evaluation 
 
 ```bash
 python finetune.py   --init_model ckpt/chembl-h400beta0.3/model.20 --save_dir ckpt/tmp/   --rationale data/gsk3_jnk3_qed_sa/rationales.txt --num_decode 200 --prop gsk3,jnk3,qed,sa --epoch 30 --alpha 0.5
-```
-
-
-## test
-
-```bash
-python decode.py --rationale gsk3_rationales.txt --model ckpt/chembl-h400beta0.3/model.20 --num_decode 1000
 ```
 
 
