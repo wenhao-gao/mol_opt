@@ -363,13 +363,16 @@ def synthetic_tree_decoder(z_target,
     kdtree     = BallTree(bb_emb, metric=cosine_distance)
     mol_recent = None
 
+    # print("z_target", z_target.shape) ### (1,4096)
+
+
     # Start iteration
     # try:
     for i in range(max_step):
         # Encode current state
         state = tree.get_state() # a set
-        z_state = set_embedding(z_target, state, nbits=n_bits, _mol_embedding=mol_fp)
-
+        z_state = set_embedding(z_target, state, nbits=n_bits, _mol_embedding=mol_fp)  #### z_state [1,12288]
+        # print("z_target, z_state", z_target.shape, z_state.shape)
         # Predict action type, masked selection
         # Action: (Add: 0, Expand: 1, Merge: 2, End: 3)
         action_proba = action_net(torch.Tensor(z_state))
@@ -377,9 +380,10 @@ def synthetic_tree_decoder(z_target,
         action_mask = get_action_mask(tree.get_state(), reaction_templates)
         act = np.argmax(action_proba * action_mask)
 
-        reactant1_net_input = torch.Tensor(
-            np.concatenate([z_state, one_hot_encoder(act, 4)], axis=1)
-        )
+        # reactant1_net_input = torch.Tensor(
+        #     np.concatenate([z_state, one_hot_encoder(act, 4)], axis=1)
+        # ) ### original 
+        reactant1_net_input = torch.Tensor(z_state) #### debug mode 
         z_mol1 = reactant1_net(reactant1_net_input)
         z_mol1 = z_mol1.detach().numpy()
 
@@ -397,6 +401,7 @@ def synthetic_tree_decoder(z_target,
 
         z_mol1 = mol_fp(mol1)
 
+        z_mol1 = z_mol1.reshape(1,-1) #### [4096] -> [1,4096] #### debug 
         # Select reaction
         rxn_net_input  = torch.Tensor(np.concatenate([z_state, z_mol1], axis=1))
         reaction_proba = rxn_net(rxn_net_input)

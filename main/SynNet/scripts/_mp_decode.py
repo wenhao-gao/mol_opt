@@ -77,8 +77,9 @@ def func(emb):
         SyntheticTree: The generated synthetic tree.
     """
     emb = emb.reshape((1, -1))
-    try:
-        tree, action = synthetic_tree_decoder(z_target=emb,
+    print('mpdecode.func: emb.shape', emb.shape) #### [1, 4096]
+    # try:
+    tree, action = synthetic_tree_decoder(z_target=emb,
                                               building_blocks=building_blocks,
                                               bb_dict=bb_dict,
                                               reaction_templates=rxns,
@@ -91,9 +92,9 @@ def func(emb):
                                               rxn_template=rxn_template,
                                               n_bits=nbits,
                                               max_step=15)
-    except Exception as e:
-        print(e)
-        action = -1
+    # except Exception as e:
+    #     print("exception in synthetic_tree_decoder", e)
+    #     action = -1
     if action != 3:
         return None, None
     else:

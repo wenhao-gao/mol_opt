@@ -33,42 +33,6 @@ drd2  = Oracle(name = 'DRD2')
 # _drd3 = Oracle(name = 'drd3_docking')
 
 
-def dock_drd3(smi):
-    """
-    Returns the docking score for the DRD3 target.
-
-    Args:
-        smi (str): SMILES for the molecule to predict the docking score of.
-
-    Returns:
-        float: Predicted docking score against the DRD3 target.
-    """
-    if smi is None:
-        return 0.0
-    else:
-        try:
-            return - _drd3(smi)
-        except:
-            return 0.0
-
-def dock_7l11(smi):
-    """
-    Returns the docking score for the 7L11 target.
-
-    Args:
-        smi (str): SMILES for the molecule to predict the docking score of.
-
-    Returns:
-        float: Predicted docking score against the 7L11 target.
-    """
-    if smi is None:
-        return 0.0
-    else:
-        try:
-            return - _7l11(smi)
-        except:
-            return 0.0
-
 
 def fitness(embs, _pool, obj):
     """
@@ -91,7 +55,15 @@ def fitness(embs, _pool, obj):
         trees (list): Contains the synthetic trees generated from the input
             embeddings.
     """
+    # print(embs.shape, 'fitness:embs.shape') #### [x, 4096]
     results = _pool.map(decode.func, embs)
+
+    ### debug mode: without pool (parallel)
+    # results = []
+    # for emb in embs:
+    #     results.append(decode.func(emb))
+    ### debug mode 
+
     smiles  = [r[0] for r in results]
     trees   = [r[1] for r in results]
     if obj == 'qed':
@@ -104,10 +76,6 @@ def fitness(embs, _pool, obj):
         scores = [gsk(smi) if smi is not None else 0.0 for smi in smiles]
     elif obj == 'drd2':
         scores = [drd2(smi) if smi is not None else 0.0 for smi in smiles]
-    elif obj == '7l11':
-        scores = [dock_7l11(smi) for smi in smiles]
-    elif obj == 'drd3':
-        scores = [dock_drd3(smi) for smi in smiles]
     else:
         raise ValueError('Objective function not implemneted')
     return scores, smiles, trees
@@ -177,14 +145,14 @@ if __name__ == '__main__':
                         help="Radius for Morgan fingerprint.")
     parser.add_argument("--nbits", type=int, default=4096,
                         help="Number of Bits for Morgan fingerprint.")
-    parser.add_argument("--num_population", type=int, default=100,
+    parser.add_argument("--num_population", type=int, default=20,
                         help="Number of parents sets to keep.")
-    parser.add_argument("--num_offspring", type=int, default=300,
+    parser.add_argument("--num_offspring", type=int, default=50,
                         help="Number of offsprings to generate each iteration.")
-    parser.add_argument("--num_gen", type=int, default=30,
+    parser.add_argument("--num_gen", type=int, default=10,
                         help="Number of generations to proceed.")
     parser.add_argument("--ncpu", type=int, default=16,
-                        help="Number of cpus")
+                        help="Number of cpus") ##### default=16, 
     parser.add_argument("--mut_probability", type=float, default=0.5,
                         help="Probability to mutate for one offspring.")
     parser.add_argument("--num_mut_per_ele", type=int, default=1,
@@ -212,6 +180,9 @@ if __name__ == '__main__':
             # print(population.shape, 'population shape ------')
             # population = population.reshape((population.shape[0], population.shape[2]))
             print(f"Starting with {len(starting_smiles)} fps from {args.input_file}")
+    # exit() 
+
+    # population = population[:5] #### debug mode 
 
     with mp.Pool(processes=args.ncpu) as pool:
         scores, mols, trees = fitness(embs=population,
@@ -226,6 +197,7 @@ if __name__ == '__main__':
     print(f"Scores: {scores}")
     print(f"Top-3 Smiles: {mols[:3]}")
     print()
+    # exit() 
 
     recent_scores = []
 
@@ -246,6 +218,8 @@ if __name__ == '__main__':
         new_population = np.unique(np.concatenate([population, offspring], axis=0), axis=0)
         with mp.Pool(processes=args.ncpu) as pool:
             new_scores, new_mols, trees = fitness(new_population, pool, args.objective)
+
+
         new_scores = np.array(new_scores)
         scores = []
         mols = []
