@@ -22,13 +22,14 @@ conda activate molopt
 
 - runable 
 - make compatible (run.py with TDC type oracle)
-- hyper-param tuning 
-- test run 
-- code unify 
+- hyper-param tuning (on ranolazine_mpo and zaleplon_mpo, with 3 runs per h-param set and 30 loops)
+- test run (5 independent runs for each oracle)
+- code oragnization and cleaning
+
 
 ## Models
 
-|                    | `runable` | `compatible` | `hparam` | `test` | `unity` |
+|                    | `runable` | `compatible` | `hparam` | `test` | `clean` |
 |--------------------|-----------|--------------|----------|--------|---------|
 | **Screening**      | ✅        | ✅           | ✅       |        |         |
 | **Mol PAL**        | ✅        | ✅           |          |        |         |
@@ -39,26 +40,26 @@ conda activate molopt
 | **Graph MCTS**     | ✅        | ✅           | ✅       |        |         |
 | **SMILES HC**      | ✅        | ✅           |          |        |         |
 | **SELFIES HC**     |           |              |          |        |         |
-| **SMILES VAE BO**  |           |              |          |        |         |
+| **SMILES VAE BO**  | ✅        |              |          |        |         |
 | **SELFIES VAE BO** |           |              |          |        |         |
 | **JTVAE BO**       | ✅        |              |          |        |         |
-| **BOSS (SMILES)**  |           |              |          |        |         |
+| **BOSS (SMILES)**  | ✅        |              |          |        |         |
 | **BOSS (SELFIES)** |           |              |          |        |         |
-| **Graph-GA+GP-BO** |           |              |          |        |         |
-| **ORGAN**          | doing     |              |          |        |         |
+| **Graph-GA+GP-BO** | ✅        |              |          |        |         |
+| **ORGAN**          |           |              |          |        |         |
 | **MolGAN**         | ✅        |              |          |        |         |
-| **ChemBO**         | -         |              |          |        |         |
-| **REINVENT**       |           |              |          |        |         |
-| **RationaleRL**    |           |              |          |        |         |
-| **MolDQN**         | ✅        |              |          |        |         |
+| **ChemBO**         | ✅        |              |          |        |         |
+| **REINVENT**       | ✅        |              |          |        |         |
+| **RationaleRL**    | ✅        |              |          |        |         |
+| **MolDQN**         | ✅        |  ✅          |          |        |         |
 | **MIMOSA**         | ✅        | ✅           |          |        |         |
 | **MARS**           | ✅        | ✅           |          |        |         |
-| **DoG-Gen**        | -         |              |          |        |         |
-| **DoG-AE BO**      | -         |              |          |        |         |
-| **SynNet**         |           |              |          |        |         |
-| **Pasithea**       |           |              |          |        |         |
+| **DoG-Gen**        | doing     |              |          |        |         |
+| **DoG-AE BO**      | doing     |              |          |        |         |
+| **SynNet**         | ✅        |              |          |        |         |
+| **Pasithea**       | ✅        |              |          |        |         |
 | **DST**            | ✅        | ✅           |          |        |         |
-| **GFlowNet**       |           |              |          |        |         |
+| **GFlowNet**       | ✅        |  ✅          |          |        |         |
 | **GFlowNet (AL)**  |           |              |          |        |         ||
 
 # Contribution Guide
