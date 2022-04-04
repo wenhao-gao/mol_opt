@@ -23,7 +23,7 @@ conda activate molopt
 - runable 
 - make compatible (run.py with TDC type oracle)
 - hyper-param tuning (on ranolazine_mpo and zaleplon_mpo, with 3 runs per h-param set and 30 loops)
-- test run (5 independent runs for each oracle)
+- test run (5 independent runs for each oracle, 10k oracle calls for exploration and 1k for exploitation)
 - code oragnization and cleaning
 
 
