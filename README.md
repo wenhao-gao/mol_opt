@@ -146,63 +146,22 @@ class MODEL_NAME_Optimizer(BaseOptimizer):
 
 ## 3) Copy a main function
 
-After implementing your optimizer class, you could copy a main function from other model directories and change the class name to your class: `MODEL_NAME_Optimizer`. Note the arguments in argparse are for task-level control, i.e., what type of runs, how many independent runs, optimize which oracle functions, etc. Hyper-parameters for molecular optimization algorithms should be defined in `main/MODEL_NAME/hparams_default.yaml` and their search space for tuning should be defined in `main/MODEL_NAME/hparams_tune.yaml`. We will detail them in the next section.
+After implementing your optimizer class, you could add the class to the `run.py` file. Note the arguments in argparse are for task-level control, i.e., what type of runs, how many independent runs, optimize which oracle functions, etc. Hyper-parameters for molecular optimization algorithms should be defined in `main/MODEL_NAME/hparams_default.yaml` and their search space for tuning should be defined in `main/MODEL_NAME/hparams_tune.yaml`. We will explain them in the next section.
 
 ```python
-def main():
-    # 1. hyperparameter 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
+from main.graph_ga.run import GB_GA_Optimizer
+from main.MODEL_NAME.run import MODEL_NAME_Optimizer
 
-    path_here = os.path.dirname(os.path.realpath(__file__))
+...
 
-    if args.output_dir is None:
-        args.output_dir = path_here
-    elif not os.path.exist(args.output_dir):
-        os.mkdir(args.output_dir)
+    if args.method == 'graph_ga':
+        Optimizer = GB_GA_Optimizer
+    elif args.method == MODEL_NAME:
+        Optimizer = MODEL_NAME_Optimizer
 
-
-    # 2. run optimizer 
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(args.output_dir, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(args.output_dir, args.config_tune)))
-
-        ## Here we directly use TDC oracles, if one need to optimize their own, replace 
-        ## oracle to your own TDC-type oracle function.
-        oracle = Oracle(name = oracle_name)
-        optimizer = MODEL_NAME_Optimizer(args=args) ## Typically one only need to change this line
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-    main()
 ```
 
-## 5) Hyperparameters
+## 4) Hyperparameters
 
 We separate hyperparameters for task-level control, defined from `argparse`, and algorithm-level control, defined from `hparam_default.yaml`. There is no clear boundary for them, but we reccomend one keep all hyperparameters in the `self._optimize` function as task-level. 
 
@@ -260,17 +219,22 @@ There are three types of runs defined in our code base:
 
 ```bash
 ## run a single test run on qed
-python main/MODEL_NAME/run.py 
+python run.py --method MODEL_NAME
 ## run 5 runs with differetn random seeds on multuple oracles
-python main/MODEL_NAME/run.py --task production --n_runs 5 --oracles qed jnk3 drd2 
+python run.py --method MODEL_NAME --task production --n_runs 5 --oracles qed jnk3 drd2 
 ## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total
-python main/MODEL_NAME/run.py --task tune --n_runs 30 --smi_file XX --other_args XX 
+python run.py --method MODEL_NAME --task tune --n_runs 30 --smi_file XX --other_args XX 
 ```
 
 One can use argparse help to check the detail description of the arguments.
 
 
+## 6) Logging metrics to wandb server
 
+The default mode for wandb logging is `offline` for the speed and memory reasons. After finishing a run, one could syncronyze teh results to the server by running:
 
+```bash
+wandb sync PATH_TO/wandb/offline-run-20220406_182133-xxxxxxxx
+```
 
-
+To watch the results in time, one could turn the mode to `online` by flag `wandb_mode`. To stop wandb logging, one could turn the mode to `disabled` by flag `wandb_mode`.
