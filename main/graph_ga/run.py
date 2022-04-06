@@ -15,7 +15,8 @@ from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
 rdBase.DisableLog('rdApp.error')
-import crossover as co, mutate as mu
+
+import main.graph_ga.crossover as co, main.graph_ga.mutate as mu
 from main.optimizer import BaseOptimizer
 
 
@@ -60,6 +61,8 @@ class GB_GA_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+
+        pool = joblib.Parallel(n_jobs=self.n_jobs)
         
         if self.smi_file is not None:
             # Exploitation run
@@ -82,7 +85,7 @@ class GB_GA_Optimizer(BaseOptimizer):
 
             # new_population
             mating_pool = make_mating_pool(population_mol, population_scores, config["population_size"])
-            offspring_mol = self.pool(delayed(reproduce)(mating_pool, config["mutation_rate"]) for _ in range(config["offspring_size"]))
+            offspring_mol = pool(delayed(reproduce)(mating_pool, config["mutation_rate"]) for _ in range(config["offspring_size"]))
 
             # add new_population
             population_mol += offspring_mol

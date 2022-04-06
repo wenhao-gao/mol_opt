@@ -83,16 +83,29 @@ class Oracle:
         # Uncomment this line if want to log top-10 moelucles figures, so as the best_mol key values.
         # temp_top10 = list(self.mol_buffer.items())[:10]
 
+        avg_top1 = np.max(scores)
+        avg_top10 = np.mean(sorted(scores, reverse=True)[:10])
+        avg_top100 = np.mean(scores)
+        avg_sa = np.mean(self.sa_scorer(smis))
+        diversity_top100 = self.diversity_evaluator(smis)
+        
+        print(f'{n_calls}/{self.max_oracle_calls} | '
+                f'avg_top1: {avg_top1:.3f} | '
+                f'avg_top10: {avg_top10:.3f} | '
+                f'avg_top100: {avg_top100:.3f} | '
+                f'avg_sa: {avg_sa:.3f} | '
+                f'div: {diversity_top100:.3f}')
+
         # try:
         wandb.log({
-            "avg_top1": np.max(scores), 
-            "avg_top10": np.mean(sorted(scores, reverse=True)[:10]), 
-            "avg_top100": np.mean(scores), 
+            "avg_top1": avg_top1, 
+            "avg_top10": avg_top10, 
+            "avg_top100": avg_top100, 
             "auc_top1": top_auc(self.mol_buffer, 1, finish, self.freq_log, self.max_oracle_calls),
             "auc_top10": top_auc(self.mol_buffer, 10, finish, self.freq_log, self.max_oracle_calls),
             "auc_top100": top_auc(self.mol_buffer, 100, finish, self.freq_log, self.max_oracle_calls),
-            "avg_sa": np.mean(self.sa_scorer(smis)),
-            "diversity_top100": self.diversity_evaluator(smis),
+            "avg_sa": avg_sa,
+            "diversity_top100": diversity_top100,
             "n_oracle": n_calls,
             # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
             #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
@@ -155,7 +168,7 @@ class BaseOptimizer:
         self.model_name = "Default"
         self.args = args
         self.n_jobs = args.n_jobs
-        self.pool = joblib.Parallel(n_jobs=self.n_jobs)
+        # self.pool = joblib.Parallel(n_jobs=self.n_jobs)
         self.smi_file = args.smi_file
         self.oracle = Oracle(max_oracle_calls = args.max_oracle_calls)
         if self.smi_file is not None:
@@ -168,9 +181,9 @@ class BaseOptimizer:
         self.diversity_evaluator = tdc.Evaluator(name = 'Diversity')
         self.filter = tdc.chem_utils.oracle.filter.MolFilter(filters = ['PAINS', 'SureChEMBL', 'Glaxo'], property_filters_flag = False)
 
-    def load_smiles_from_file(self, file_name):
-        with open(file_name) as f:
-            return self.pool(delayed(canonicalize)(s.strip()) for s in f)
+    # def load_smiles_from_file(self, file_name):
+    #     with open(file_name) as f:
+    #         return self.pool(delayed(canonicalize)(s.strip()) for s in f)
             
     def sanitize(self, mol_list):
         new_mol_list = []
@@ -252,6 +265,7 @@ class BaseOptimizer:
                 top1_pass]
 
     def reset(self):
+        del self.oracle
         self.oracle = Oracle()
 
     @property
@@ -290,7 +304,8 @@ class BaseOptimizer:
         wandb.run.name = self.model_name + "_" + oracle.name + "_" + wandb.run.id
         np.random.seed(seed)
         self._optimize(oracle, config)
-        self.log_result()
+        if self.args.log_results:
+            self.log_result()
         self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
         self.reset()
         run.finish()
@@ -303,5 +318,5 @@ class BaseOptimizer:
         seeds = seeds[:num_runs]
         for seed in seeds:
             self.optimize(oracle, config, seed, project)
-            self.reset()
+            # self.reset()
 
