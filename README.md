@@ -206,12 +206,6 @@ We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](http
 
 ## 5) Running
 
-Before running, please use the following command to add current path (parent of `main`) to python path:
-
-```bash
-export PYTHONPATH=`pwd`:$PYTHONPATH
-```
-
 There are three types of runs defined in our code base: 
 * `simple`: A single run for testing purposes for each oracle, is the defualt.
 * `production`: Multiple independent runs with various random seeds for each oracle.

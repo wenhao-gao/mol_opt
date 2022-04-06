@@ -3,9 +3,22 @@ from __future__ import print_function
 import argparse
 import yaml
 import os
+import sys
+sys.path.append(os.path.realpath(__file__))
 import numpy as np
 from tdc import Oracle
 from main.graph_ga.run import GB_GA_Optimizer
+
+
+# def disable_rdkit_logging():
+#     """
+#     Disables RDKit whiny logging.
+#     """
+#     import rdkit.rdBase as rkrb
+#     import rdkit.RDLogger as rkl
+#     logger = rkl.logger()
+#     logger.setLevel(rkl.ERROR)
+#     rkrb.DisableLog('rdApp.error')
 
 
 def main():
@@ -28,7 +41,7 @@ def main():
     args = parser.parse_args()
 
     os.environ["WANDB_MODE"] = args.wandb_mode
-    
+
     if not args.log_code:
         os.environ["WANDB_DISABLE_CODE"] = "false"
     
@@ -74,5 +87,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # disable_rdkit_logging()
     main()
 
