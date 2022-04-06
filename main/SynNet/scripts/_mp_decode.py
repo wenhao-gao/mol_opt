@@ -79,6 +79,7 @@ def func(emb):
     emb = emb.reshape((1, -1))
     print('mpdecode.func: emb.shape', emb.shape) #### [1, 4096]
     # try:
+    # print('synthetic_tree_decoder begin')
     tree, action = synthetic_tree_decoder(z_target=emb,
                                               building_blocks=building_blocks,
                                               bb_dict=bb_dict,
@@ -95,6 +96,7 @@ def func(emb):
     # except Exception as e:
     #     print("exception in synthetic_tree_decoder", e)
     #     action = -1
+    print('synthetic_tree_decoder finished')
     if action != 3:
         return None, None
     else:

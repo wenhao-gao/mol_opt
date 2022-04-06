@@ -39,11 +39,11 @@ from syn_net.utils.predict_utils import mol_fp
 from tqdm import tqdm 
 
 # define the following oracle functions from the TDC
-logp  = Oracle(name = 'LogP')
-qed   = Oracle(name = 'QED')
-jnk   = Oracle(name = 'JNK3')
-gsk   = Oracle(name = 'GSK3B')
-drd2  = Oracle(name = 'DRD2')
+# logp  = Oracle(name = 'LogP')
+# qed   = Oracle(name = 'QED')
+# jnk   = Oracle(name = 'JNK3')
+# gsk   = Oracle(name = 'GSK3B')
+# drd2  = Oracle(name = 'DRD2')
 # _7l11 = Oracle(name = '7l11_docking')
 # _drd3 = Oracle(name = 'drd3_docking')
 
@@ -71,12 +71,12 @@ def fitness(embs, _pool, obj):
             embeddings.
     """
     # print(embs.shape, 'fitness:embs.shape') #### [x, 4096]
-    results = _pool.map(decode.func, embs)
-
+    # results = _pool.map(decode.func, embs)
+    print("fitness decode finished")
     ### debug mode: without pool (parallel)
-    # results = []
-    # for emb in embs:
-    #     results.append(decode.func(emb))
+    results = []
+    for emb in embs:
+        results.append(decode.func(emb))
     ### debug mode 
 
     smiles  = [r[0] for r in results]

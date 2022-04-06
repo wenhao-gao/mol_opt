@@ -359,17 +359,21 @@ def synthetic_tree_decoder(z_target,
             terminated).
     """
     # Initialization
+    print('synthetic_tree_decoder: 0')
     tree       = SyntheticTree()
     kdtree     = BallTree(bb_emb, metric=cosine_distance)
     mol_recent = None
+    print('synthetic_tree_decoder: 1')
 
     # print("z_target", z_target.shape) ### (1,4096)
 
 
     # Start iteration
     # try:
-    for i in range(max_step):
+    for i in tqdm(range(max_step)):
         # Encode current state
+        print('synthetic_tree_decoder: for loop ', i)
+
         state = tree.get_state() # a set
         z_state = set_embedding(z_target, state, nbits=n_bits, _mol_embedding=mol_fp)  #### z_state [1,12288]
         # print("z_target, z_state", z_target.shape, z_state.shape)

@@ -1,9 +1,9 @@
 input_file: './main/SynNet/zinc.csv'
 radius: 2
 nbits: 4096
-num_population: 20
+num_population: 15
 num_offspring: 50 
-num_gen: 10
+num_gen: 5
 ncpu: 16
 mut_probability: 0.5
 num_mut_per_ele: 1
