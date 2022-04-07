@@ -88,11 +88,12 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
         else:
             print('----- not hit ------ ', len(scoring_function.mol_buffer))
 
-        # print("prior_likelihood", type(prior_likelihood), prior_likelihood.dtype)
-        # print("score", score, type(score), Variable(score).dtype)
+        print("prior_likelihood", type(prior_likelihood), ) ### 
+        print("score", score, type(score), ) ### np.array 
+        print(score.dtype) #### float64
         # print(Variable(score).shape)
         # Calculate augmented likelihood
-        augmented_likelihood = prior_likelihood + sigma * Variable(score)
+        augmented_likelihood = prior_likelihood.float() + sigma * Variable(score).float()
         loss = torch.pow((augmented_likelihood - agent_likelihood), 2)
 
         # Experience Replay

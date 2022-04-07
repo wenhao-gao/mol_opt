@@ -11,7 +11,8 @@ import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('/'.join(path_here.rstrip('/').split('/')[:-2]))
-print('/'.join(path_here.rstrip('/').split('/')[:-2]))
+print("path:", '/'.join(path_here.rstrip('/').split('/')[:-2]))
+print(sys.path)
 from main.optimizer import BaseOptimizer
 import time
 from train_agent import train_agent
@@ -114,7 +115,6 @@ def main():
                 config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
 
         oracle = Oracle(name = oracle_name)
-        # oracle = Oracle()
         optimizer = REINVENToptimizer(args=args)
 
         if args.task == "simple":
