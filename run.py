@@ -61,6 +61,33 @@ def main():
     elif args.method == 'GPBO':
         from main.GPBO.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 
+    elif args.method == 'JTVAE':
+        from main.JTVAE.run import JTVAEBOoptimizer
+        Optimizer = JTVAEBOoptimizer 
+    elif args.method == 'MARS':
+        from main.MARS.run import MARS_Optimizer 
+        Optimizer = MARS_Optimizer 
+    elif args.method == 'MIMOSA':
+        from main.MIMOSA.run import MIMOSA_Optimizer 
+        Optimizer = MIMOSA_Optimizer 
+    elif args.method == 'graph_mcts':
+        from main.graph_mcts.run import Graph_MCTS_Optimizer 
+        Optimizer = Graph_MCTS_Optimizer 
+    elif args.method == "RationaleRL":
+        from main.rationaleRL.run import RationaleRLoptimizer 
+        Optimizer = RationaleRLoptimizer 
+    elif args.method == "SELFIES_GA":
+        from main.selfies_GA.run import SELFIES_GA_optimizer 
+        Optimizer = SELFIES_GA_optimizer 
+    elif args.method == "selfies_VAE":
+        from main.selfies_vae.run import selfies_VAEBO_optimizer 
+        Optimizer = selfies_VAEBO_optimizer 
+    elif args.method == "SMILES_LSTM_HC":
+        from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer 
+        Optimizer = SMILES_LSTM_HC_Optimizer 
+    elif args.method == "smiles_vae":
+        from main.smiles_vae.run import smiles_VAEBO_optimizer 
+        Optimizer = smiles_VAEBO_optimizer 
     else:
         raise ValueError("Unrecognized method name.")
 
