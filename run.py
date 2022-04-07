@@ -23,7 +23,7 @@ from main.REINVENT.run import REINVENToptimizer
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--method', default='graph_ga')
+    parser.add_argument('method', default='graph_ga')
     parser.add_argument('--smi_file', default=None)
     parser.add_argument('--config_default', default='hparams_default.yaml')
     parser.add_argument('--config_tune', default='hparams_tune.yaml')

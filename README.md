@@ -212,12 +212,12 @@ There are three types of runs defined in our code base:
 * `tune`: A hyper-parameter tuning over the search space defined in `main/MODEL_NAME/hparam_tune.yaml` for each oracle.
 
 ```bash
-## run a single test run on qed
-python run.py --method MODEL_NAME
-## run 5 runs with differetn random seeds on multuple oracles
-python run.py --method MODEL_NAME --task production --n_runs 5 --oracles qed jnk3 drd2 
-## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total
-python run.py --method MODEL_NAME --task tune --n_runs 30 --smi_file XX --other_args XX 
+## run a single test run on qed with wandb logging online
+python run.py MODEL_NAME --wandb_mode online
+## run 5 runs with differetn random seeds on multuple oracles with wandb logging offline
+python run.py MODEL_NAME --task production --n_runs 5 --oracles qed jnk3 drd2 
+## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
+python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb_mode disabled --other_args XX 
 ```
 
 One can use argparse help to check the detail description of the arguments.
