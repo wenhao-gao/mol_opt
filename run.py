@@ -8,7 +8,7 @@ sys.path.append(os.path.realpath(__file__))
 import numpy as np
 from tdc import Oracle
 from main.graph_ga.run import GB_GA_Optimizer
-
+from main.REINVENT.run import REINVENToptimizer
 
 # def disable_rdkit_logging():
 #     """
@@ -50,6 +50,8 @@ def main():
         Optimizer = GB_GA_Optimizer
     elif args.method == 'screening':
         Optimizer = None
+    elif args.method == 'REINVENT':
+        Optimizer = REINVENToptimizer
     else:
         raise ValueError("Unrecognized method name.")
 
