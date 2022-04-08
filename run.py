@@ -43,15 +43,13 @@ def main():
     if not args.log_code:
         os.environ["WANDB_DISABLE_CODE"] = "false"
     
+    print(args.method)
     # Add method name here when adding new ones
     if args.method == 'graph_ga':
         from main.graph_ga.run import GB_GA_Optimizer
         Optimizer = GB_GA_Optimizer
     elif args.method == 'screening':
         Optimizer = None
-    elif args.method == 'REINVENT':
-        from main.REINVENT.run import REINVENToptimizer
-        Optimizer = REINVENToptimizer
     elif args.method == 'BOSS':
         from main.BOSS.run import BOSSoptimizer 
         Optimizer = BOSSoptimizer 
@@ -76,6 +74,12 @@ def main():
     elif args.method == "RationaleRL":
         from main.rationaleRL.run import RationaleRLoptimizer 
         Optimizer = RationaleRLoptimizer 
+    elif args.method == 'REINVENT':
+        from main.REINVENT.run import REINVENToptimizer
+        Optimizer = REINVENToptimizer
+    elif args.method == 'REINVENT_SELFIES':
+        from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
+        Optimizer = REINVENT_SELFIES_optimizer 
     elif args.method == "SELFIES_GA":
         from main.selfies_GA.run import SELFIES_GA_optimizer 
         Optimizer = SELFIES_GA_optimizer 

@@ -1,0 +1,5 @@
+learning_rate: 0.0005
+batch_size: 64
+n_steps: 3000
+sigma: 60
+max_n_oracles: 50
