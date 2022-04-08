@@ -86,7 +86,10 @@ def main():
     elif args.method == "selfies_VAE":
         from main.selfies_vae.run import selfies_VAEBO_optimizer 
         Optimizer = selfies_VAEBO_optimizer 
-    elif args.method == "SMILES_LSTM_HC":
+    elif args.method == 'selfies_lstm_hc':
+        from main.selfies_lstm_hc.run import SELFIES_LSTM_HC_Optimizer
+        Optimizer = SELFIES_LSTM_HC_Optimizer 
+    elif args.method == "smiles_lstm_hc":
         from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer 
         Optimizer = SMILES_LSTM_HC_Optimizer 
     elif args.method == "smiles_vae":

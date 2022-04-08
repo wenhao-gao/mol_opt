@@ -1,0 +1,9 @@
+n_epochs: 5
+mols_to_sample: 64
+keep_top: 32
+optimize_n_epochs: 2 
+max_len: 100 
+optimize_batch_size: 16 
+benchmark_num_samples: 256 
+random_start: True
+n_jobs: -1 
