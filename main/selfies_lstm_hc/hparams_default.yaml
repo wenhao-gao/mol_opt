@@ -1,9 +1,9 @@
-n_epochs: 5
-mols_to_sample: 64
-keep_top: 32
+n_epochs: 50
+mols_to_sample: 512
+keep_top: 64
 optimize_n_epochs: 2 
-max_len: 100 
-optimize_batch_size: 16 
+max_len: 500 
+optimize_batch_size: 32 
 benchmark_num_samples: 256 
 random_start: True
 n_jobs: -1 

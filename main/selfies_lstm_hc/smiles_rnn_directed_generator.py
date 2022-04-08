@@ -65,8 +65,8 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         generator = SmilesRnnMoleculeGenerator(model=model,
                                                max_len=self.max_len,
                                                device=device)
-        print('build generator')
 
+        ### start_population is smiles list 
         molecules = generator.optimise(objective=scoring_function,
                                        start_population=starting_population,
                                        n_epochs=self.n_epochs,
@@ -80,7 +80,8 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         samples = [m.smiles for m in molecules]
         if self.sample_final_model_only:
             samples.clear()
-        samples += generator.sample(max(number_molecules, self.number_final_samples))
+        selfies_list, smiles_list = generator.sample(max(number_molecules, self.number_final_samples))
+        samples += smiles_list
 
         # calculate the scores and return the best ones
         samples = canonicalize_list(samples)

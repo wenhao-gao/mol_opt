@@ -1,0 +1,1 @@
+{"input_size": 110, "hidden_size": 512, "output_size": 110, "n_layers": 3, "rnn_dropout": 0.2}

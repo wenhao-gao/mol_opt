@@ -39,7 +39,7 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
 
     self.oracle.assign_evaluator(oracle)
 
-    model_path = os.path.join(path_here, 'pretrained_model', 'model_final_2.067.pt')
+    model_path = os.path.join(path_here, 'pretrained_model', 'model_final_0.698.pt')
 
     smiles_file = os.path.join(path_here, 'zinc_500.txt')
     with open(smiles_file, 'r') as fin:
@@ -58,62 +58,14 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
                                            smi_file=smiles_file,
                                            n_jobs=config['n_jobs'])
 
-    result = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 10100,
+    result = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 20100,
                                      starting_population = start_smiles_lst)
 
 
 
-# def main():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument('--smi_file', default=None)
-#     parser.add_argument('--config_default', default='hparams_default.yaml')
-#     parser.add_argument('--config_tune', default='hparams_tune.yaml')
-#     parser.add_argument('--n_jobs', type=int, default=-1)
-#     parser.add_argument('--output_dir', type=str, default=None)
-#     parser.add_argument('--patience', type=int, default=5)
-#     parser.add_argument('--n_runs', type=int, default=5)
-#     parser.add_argument('--max_oracle_calls', type=int, default=10000)
-#     parser.add_argument('--freq_log', type=int, default=100)
-#     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-#     parser.add_argument('--oracles', nargs="+", default=["QED"])
-#     args = parser.parse_args()
-
-#     path_here = os.path.dirname(os.path.realpath(__file__))
-
-#     if args.output_dir is None:
-#         args.output_dir = os.path.join(path_here, "results")
-    
-#     if not os.path.exists(args.output_dir):
-#         os.mkdir(args.output_dir)
-    
-#     for oracle_name in args.oracles:
-
-#         try:
-#             config_default = yaml.safe_load(open(args.config_default))
-#         except:
-#             config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-#         if args.task == "tune":
-#             try:
-#                 config_tune = yaml.safe_load(open(args.config_tune))
-#             except:
-#                 config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
 
 
-#         # max_n_oracles = config['max_n_oracles']
-#         oracle = Oracle(name = oracle_name)
-#         optimizer = SMILES_LSTM_HC_Optimizer(args=args)
 
-#         if args.task == "simple":
-#             optimizer.optimize(oracle=oracle, config=config_default)
-#         elif args.task == "tune":
-#             optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-#         elif args.task == "production":
-#             optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-# if __name__ == "__main__":
-#     main() 
 
 
 

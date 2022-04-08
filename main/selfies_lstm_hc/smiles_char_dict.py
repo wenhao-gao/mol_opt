@@ -1,6 +1,7 @@
 from tdc.chem_utils import MolConvert
-converter = MolConvert(src = 'SELFIES', dst = 'SMILES')
-
+# converter = MolConvert(src = 'SELFIES', dst = 'SMILES')
+smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
+selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 import os 
 path_here = os.path.dirname(os.path.realpath(__file__))
 
@@ -53,10 +54,10 @@ class SmilesCharDictionary(object):
         Returns:
             True if all legal
         """
-        for symbol in self.forbidden_symbols:
-            if symbol in smiles:
-                print('Forbidden symbol {:<2}  in  {}'.format(symbol, smiles))
-                return False
+        # for symbol in self.forbidden_symbols:
+        #     if symbol in smiles:
+        #         print('Forbidden symbol {:<2}  in  {}'.format(symbol, smiles))
+        #         return False
         return True
 
     def encode(self, smiles: str) -> str:
@@ -90,7 +91,7 @@ class SmilesCharDictionary(object):
         temp_smiles = smiles
         # for symbol, token in self.decode_dict.items():
         #     temp_smiles = temp_smiles.replace(symbol, token)
-        temp_smiles = converter(temp_smiles)
+        # temp_smiles = converter(temp_smiles)
         return temp_smiles
 
     def get_char_num(self) -> int:

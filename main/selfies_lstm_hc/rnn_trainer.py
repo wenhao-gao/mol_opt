@@ -84,6 +84,7 @@ class SmilesRnnTrainer:
 
     def fit(self, training_data, test_data, n_epochs, batch_size, print_every,
             valid_every, num_workers=0):
+        # print("------ len(training_data) ------", len(training_data))
         training_round = _ModelTrainingRound(self, training_data, test_data, n_epochs, batch_size, print_every,
                                              valid_every, num_workers)
         return training_round.run()

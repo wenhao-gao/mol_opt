@@ -3,6 +3,11 @@ import torch
 from action_sampler import ActionSampler
 from rnn_model import SmilesRnn
 from smiles_char_dict import SmilesCharDictionary
+from tdc.chem_utils import MolConvert
+converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
+# converter = MolConvert(src = 'SELFIES', dst = 'SMILES')
+smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
+selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 
 
 class SmilesRnnSampler:
@@ -37,4 +42,19 @@ class SmilesRnnSampler:
         model.eval()
         with torch.no_grad():
             indices = sampler.sample(model, num_samples=num_to_sample)
-            return self.sd.matrix_to_smiles(indices)
+            selfies = self.sd.matrix_to_smiles(indices)
+            # smiles = selfies2smiles(selfies)
+            smiles_list, selfies_list = [], []
+            for s in selfies:
+                try:
+                    ss = selfies2smiles(s)
+                except:
+                    continue 
+                smiles_list.append(ss)
+                selfies_list.append(s) 
+
+            return selfies_list, smiles_list ### list of selfies; list of smiles 
+
+
+
+

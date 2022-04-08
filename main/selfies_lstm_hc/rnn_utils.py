@@ -13,6 +13,12 @@ from rnn_model import SmilesRnn
 from smiles_char_dict import SmilesCharDictionary
 
 
+from tdc.chem_utils import MolConvert
+converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
+# converter = MolConvert(src = 'SELFIES', dst = 'SMILES')
+smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
+selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
+
 def get_tensor_dataset(numpy_array):
     """
     Gets a numpy array of indices, convert it into a Torch tensor,
@@ -29,7 +35,7 @@ def get_tensor_dataset(numpy_array):
 
     inp = tensor[:, :-1]
     target = tensor[:, 1:]
-
+    # print("get_tensor_dataset", inp.shape, target.shape) 
     return TensorDataset(inp, target)
 
 
@@ -127,6 +133,7 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
     # filter valid smiles strings
     valid_smiles = []
     valid_mask = [False] * len(smiles_list)
+    # print('smiles_list', smiles_list)
     for i, s in enumerate(smiles_list):
         s = s.strip()
         if sd.allowed(s) and len(s) <= max_len:
@@ -135,6 +142,8 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
         else:
             if not rm_invalid:
                 valid_smiles.append('[C]')  # default placeholder
+
+    # print('valid_smiles', valid_smiles)
 
     if rm_duplicates:
         unique_smiles = remove_duplicates(valid_smiles)
@@ -148,7 +157,9 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
     sequences = np.zeros((len(unique_smiles), max_seq_len), dtype=np.int32)
 
     for i, mol in enumerate(unique_smiles):
+        # print('---- load_smiles_from_list', mol, selfies2smiles(mol))
         enc_smi = [sd.BEGIN] + sd.encode(mol) + [sd.END]
+        # print(enc_smi)
         for c in range(len(enc_smi)):
             sequences[i, c] = sd.char_idx[enc_smi[c]]
 
