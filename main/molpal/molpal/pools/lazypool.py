@@ -3,9 +3,9 @@ from typing import Iterator, Optional, Sequence
 import numpy as np
 import ray
 
-from molpal.featurizer import Featurizer, feature_matrix
-from molpal.pools.base import MoleculePool
-from molpal.utils import batches
+from main.molpal.molpal.featurizer import Featurizer, feature_matrix
+from main.molpal.molpal.pools.base import MoleculePool
+from main.molpal.molpal.utils import batches
 
 
 class LazyMoleculePool(MoleculePool):

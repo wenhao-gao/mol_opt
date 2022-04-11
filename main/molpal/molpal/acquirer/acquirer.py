@@ -9,7 +9,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, TypeVar, Union
 import numpy as np
 from tqdm import tqdm
 
-from molpal.acquirer import metrics
+from main.molpal.molpal.acquirer import metrics
 
 T = TypeVar("T")
 

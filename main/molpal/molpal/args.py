@@ -24,10 +24,12 @@ def gen_args(args: Optional[str] = None) -> Namespace:
 #       GENERAL ARGUMENTS       #
 #################################
 def add_general_args(parser: ArgumentParser) -> None:
+    parser.add_argument('method', default='molpal')
     parser.add_argument('--config', is_config_file=True,
                         help='the filepath of the configuration file')
     parser.add_argument('--output-dir', default="molpal_out",
                         help='the name of the output directory')
+    parser.add_argument('--wandb_mode', type=str, default="offline", choices=["online", "offline", "disabled"])
     parser.add_argument('--seed', type=int,
                         help='the random seed to use for initialization.')
     parser.add_argument('-v', '--verbose', action='count', default=0,

@@ -10,9 +10,9 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, DistributedSampler
 from tqdm import trange
 
-from molpal.models import mpnn
-from molpal.models.chemprop.data.data import construct_molecule_batch
-from molpal.models.chemprop.nn_utils import NoamLR
+from main.molpal.molpal.models import mpnn
+from main.molpal.molpal.models.chemprop.data.data import construct_molecule_batch
+from main.molpal.molpal.models.chemprop.nn_utils import NoamLR
 
 
 def train_epoch(

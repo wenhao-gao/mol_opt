@@ -42,6 +42,11 @@ def main():
 
     if not args.log_code:
         os.environ["WANDB_DISABLE_CODE"] = "false"
+
+    path_main = os.path.dirname(os.path.realpath(__file__))
+    path_main = os.path.join(path_main, "main", args.method)
+
+    sys.path.append(path_main)
     
     print(args.method)
     # Add method name here when adding new ones
@@ -49,7 +54,11 @@ def main():
         from main.graph_ga.run import GB_GA_Optimizer
         Optimizer = GB_GA_Optimizer
     elif args.method == 'screening':
-        Optimizer = None
+        from main.screening.run import Exhaustive_Optimizer 
+        Optimizer = Exhaustive_Optimizer
+    elif args.method == 'molpal':
+        from main.molpal.run import MolPAL_Optimizer 
+        Optimizer = MolPAL_Optimizer
     elif args.method == 'BOSS':
         from main.BOSS.run import BOSSoptimizer 
         Optimizer = BOSSoptimizer 
@@ -97,9 +106,6 @@ def main():
         Optimizer = smiles_VAEBO_optimizer 
     else:
         raise ValueError("Unrecognized method name.")
-
-    path_main = os.path.dirname(os.path.realpath(__file__))
-    path_main = os.path.join(path_main, "main", args.method)
 
     if args.output_dir is None:
         args.output_dir = os.path.join(path_main, "results")

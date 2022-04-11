@@ -6,7 +6,7 @@ from typing import Callable, Iterable, Optional, Sequence, Set, Tuple, TypeVar
 import numpy as np
 from tqdm import tqdm
 
-from molpal.utils import batches
+from main.molpal.molpal.utils import batches
 
 T = TypeVar('T')
 T_feat = TypeVar('T_feat')

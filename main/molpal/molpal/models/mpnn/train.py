@@ -6,8 +6,8 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from tqdm import tqdm
 
-from molpal.models.chemprop.data import MoleculeDataLoader
-from molpal.models.chemprop.nn_utils import NoamLR
+from main.molpal.molpal.models.chemprop.data import MoleculeDataLoader
+from main.molpal.molpal.models.chemprop.nn_utils import NoamLR
 
 def train(model: nn.Module, data_loader: MoleculeDataLoader,
           loss_func: Callable, optimizer: Optimizer,

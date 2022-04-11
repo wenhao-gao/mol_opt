@@ -2,7 +2,7 @@ from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
-from molpal.models import Model
+from main.molpal.molpal.models import Model
 
 class RandomModel(Model):
     """A baseline model that returns values at random

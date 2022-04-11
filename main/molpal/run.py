@@ -1,3 +1,11 @@
+"""
+Note you may encounter permission error in ray if you don't have access to the tmp directory.
+One can solve this by runnning:
+1. export TMPDIR="$HOME/tmp" (or other directory to store temp files)
+2. If the dir doesn't exist, mkdir path_to_tmp
+One can check your tmpdir by running:
+python -c "import tempfile; print(tempfile.gettempdir())"
+"""
 from __future__ import print_function
 
 import argparse
@@ -9,8 +17,8 @@ import signal
 import sys
 
 from main.optimizer import BaseOptimizer
-from molpal import args as molpal_args
-from molpal import Explorer
+from main.molpal.molpal import args as molpal_args
+from main.molpal.molpal import Explorer
 
 def sigterm_handler(signum, frame):
     sys.exit(0)
@@ -47,7 +55,8 @@ class MolPAL_Optimizer(BaseOptimizer):
                     _redis_password=os.environ['redis_password']
                 )
             else:
-                ray.init(address='auto')
+                ray.init()
+                # ray.init(address='auto')
         except ConnectionError:
             ray.init()
         except PermissionError:
