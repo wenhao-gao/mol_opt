@@ -131,10 +131,10 @@ def read_dataset_encoding(disc_enc_type):
     disc_enc_type (string): 'smiles' or 'selfies'
     '''
     if disc_enc_type == 'smiles' or disc_enc_type == 'properties_rdkit':
-        smiles_reference = read_dataset(filename='./main/selfies_GA/datasets/zinc_dearom.txt')
+        smiles_reference = read_dataset(filename='./main/selfies_ga/datasets/zinc_dearom.txt')
         return smiles_reference
     elif disc_enc_type == 'selfies':
-        selfies_reference = read_dataset(filename='./main/selfies_GA/datasets/SELFIES_zinc.txt')
+        selfies_reference = read_dataset(filename='./main/selfies_ga/datasets/SELFIES_zinc.txt')
         return selfies_reference
     
     

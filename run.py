@@ -89,8 +89,8 @@ def main():
     elif args.method == 'REINVENT_SELFIES':
         from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
         Optimizer = REINVENT_SELFIES_optimizer 
-    elif args.method == "SELFIES_GA":
-        from main.selfies_GA.run import SELFIES_GA_optimizer 
+    elif args.method == "selfies_ga":
+        from main.selfies_ga.run import SELFIES_GA_optimizer 
         Optimizer = SELFIES_GA_optimizer 
     elif args.method == "selfies_VAE":
         from main.selfies_vae.run import selfies_VAEBO_optimizer 
