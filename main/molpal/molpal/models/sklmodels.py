@@ -12,8 +12,8 @@ from ray.util.joblib import register_ray
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor, kernels
 
-from molpal.featurizer import feature_matrix
-from molpal.models.base import Model
+from main.molpal.molpal.featurizer import feature_matrix
+from main.molpal.molpal.models.base import Model
 
 T = TypeVar('T')
 

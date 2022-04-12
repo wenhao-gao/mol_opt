@@ -5,7 +5,7 @@ from typing import Dict, Iterable, Optional
 
 import numpy as np
 
-from molpal.objectives.base import Objective
+from main.molpal.molpal.objectives.base import Objective
 
 import pyscreener as ps
 

@@ -1,6 +1,6 @@
 from typing import Type
 
-from molpal.objectives.base import Objective
+from main.molpal.molpal.objectives.base import Objective
 
 def objective(objective, objective_config: str, **kwargs) -> Type[Objective]:
     """Objective factory function"""

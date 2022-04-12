@@ -2,7 +2,7 @@ import torch
 
 from action_sampler import ActionSampler
 from rnn_model import SmilesRnn
-from smiles_char_dict import SmilesCharDictionary
+from selfies_char_dict import SelfiesCharDictionary
 from tdc.chem_utils import MolConvert
 converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
 # converter = MolConvert(src = 'SELFIES', dst = 'SMILES')
@@ -23,7 +23,7 @@ class SmilesRnnSampler:
         """
         self.device = device
         self.batch_size = batch_size
-        self.sd = SmilesCharDictionary()
+        self.sd = SelfiesCharDictionary()
 
     def sample(self, model: SmilesRnn, num_to_sample: int, max_seq_len=100):
         """

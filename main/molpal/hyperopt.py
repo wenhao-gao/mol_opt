@@ -5,8 +5,8 @@ from timeit import default_timer as time
 import optuna
 from optuna.trial import Trial
 
-from molpal.args import gen_args
-from molpal.explorer import Explorer, IncompatibilityError
+from main.molpal.molpal.args import gen_args
+from main.molpal.molpal.explorer import Explorer, IncompatibilityError
 
 def objective(trial: Trial):
     args = gen_args()

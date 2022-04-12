@@ -4,7 +4,7 @@ from typing import Callable, List
 
 from torch import nn
 
-from molpal.models.mpnn.predict import predict
+from main.molpal.molpal.models.mpnn.predict import predict
 from ..chemprop.data import MoleculeDataLoader, StandardScaler
 
 def evaluate_predictions(

@@ -15,15 +15,15 @@ from ray.util.sgd.v2 import Trainer
 import torch
 from tqdm import tqdm
 
-from molpal.models.chemprop.data.data import (
+from main.molpal.molpal.models.chemprop.data.data import (
     MoleculeDatapoint, MoleculeDataset, MoleculeDataLoader
 )
-from molpal.models.chemprop.data.scaler import StandardScaler
-from molpal.models.chemprop.data.utils import split_data
+from main.molpal.molpal.models.chemprop.data.scaler import StandardScaler
+from main.molpal.molpal.models.chemprop.data.utils import split_data
 
-from molpal.models.base import Model
-from molpal.models import mpnn
-from molpal.utils import batches
+from main.molpal.molpal.models.base import Model
+from main.molpal.molpal.models import mpnn
+from main.molpal.molpal.utils import batches
 
 logging.getLogger('lightning').setLevel(logging.FATAL)
 warnings.filterwarnings(

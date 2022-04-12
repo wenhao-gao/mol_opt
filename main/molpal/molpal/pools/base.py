@@ -13,9 +13,9 @@ import ray
 from rdkit import Chem, RDLogger
 from tqdm import tqdm
 
-from molpal.featurizer import Featurizer
-from molpal.pools import cluster, fingerprints
-from molpal.utils import batches
+from main.molpal.molpal.featurizer import Featurizer
+from main.molpal.molpal.pools import cluster, fingerprints
+from main.molpal.molpal.utils import batches
 
 RDLogger.DisableLog("rdApp.*")
 

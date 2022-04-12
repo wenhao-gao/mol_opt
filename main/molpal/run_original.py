@@ -2,7 +2,7 @@ import signal
 import sys
 from timeit import default_timer as time
 
-from molpal import args, Explorer
+from main.molpal.molpal import args, Explorer
 
 def sigterm_handler(signum, frame):
     sys.exit(0)

@@ -18,8 +18,8 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import keras
 
-from molpal.featurizer import Featurizer, feature_matrix
-from molpal.models.base import Model
+from main.molpal.molpal.featurizer import Featurizer, feature_matrix
+from main.molpal.molpal.models.base import Model
 
 T = TypeVar('T')
 T_feat = TypeVar('T_feat')

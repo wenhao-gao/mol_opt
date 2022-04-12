@@ -25,6 +25,7 @@ def main():
     parser.add_argument('--smi_file', default=None)
     parser.add_argument('--config_default', default='hparams_default.yaml')
     parser.add_argument('--config_tune', default='hparams_tune.yaml')
+    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics', default=None)
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
@@ -42,16 +43,43 @@ def main():
 
     if not args.log_code:
         os.environ["WANDB_DISABLE_CODE"] = "false"
+
+    path_main = os.path.dirname(os.path.realpath(__file__))
+    path_main = os.path.join(path_main, "main", args.method)
+
+    sys.path.append(path_main)
     
     print(args.method)
     # Add method name here when adding new ones
-    if args.method == 'graph_ga':
+    if args.method == 'screening':
+        from main.screening.run import Exhaustive_Optimizer 
+        Optimizer = Exhaustive_Optimizer
+    elif args.method == 'molpal':
+        from main.molpal.run import MolPAL_Optimizer 
+        Optimizer = MolPAL_Optimizer
+    elif args.method == 'graph_ga':
         from main.graph_ga.run import GB_GA_Optimizer
         Optimizer = GB_GA_Optimizer
-    elif args.method == 'screening':
-        Optimizer = None
-    elif args.method == 'BOSS':
-        from main.BOSS.run import BOSSoptimizer 
+    elif args.method == 'smiles_ga':
+        from main.smiles_ga.run import SMILES_GA_Optimizer
+        Optimizer = SMILES_GA_Optimizer
+    elif args.method == "selfies_ga":
+        from main.selfies_ga.run import SELFIES_GA_optimizer 
+        Optimizer = SELFIES_GA_optimizer 
+    elif args.method == 'graph_mcts':
+        from main.graph_mcts.run import Graph_MCTS_Optimizer 
+        Optimizer = Graph_MCTS_Optimizer 
+    elif args.method == "smiles_lstm_hc":
+        from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer 
+        Optimizer = SMILES_LSTM_HC_Optimizer 
+    elif args.method == 'selfies_lstm_hc':
+        from main.selfies_lstm_hc.run import SELFIES_LSTM_HC_Optimizer
+        Optimizer = SELFIES_LSTM_HC_Optimizer 
+    elif args.method == 'dog_gen':
+        from main.dog_gen.run import DoG_Gen_Optimizer
+        Optimizer = DoG_Gen_Optimizer 
+    elif args.method == 'boss':
+        from main.boss.run import BOSSoptimizer 
         Optimizer = BOSSoptimizer 
     elif args.method == 'DST':
         from main.DST.run import DSToptimizer
@@ -68,9 +96,6 @@ def main():
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 
-    elif args.method == 'graph_mcts':
-        from main.graph_mcts.run import Graph_MCTS_Optimizer 
-        Optimizer = Graph_MCTS_Optimizer 
     elif args.method == "RationaleRL":
         from main.rationaleRL.run import RationaleRLoptimizer 
         Optimizer = RationaleRLoptimizer 
@@ -80,32 +105,23 @@ def main():
     elif args.method == 'REINVENT_SELFIES':
         from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
         Optimizer = REINVENT_SELFIES_optimizer 
-    elif args.method == "SELFIES_GA":
-        from main.selfies_GA.run import SELFIES_GA_optimizer 
-        Optimizer = SELFIES_GA_optimizer 
     elif args.method == "selfies_VAE":
         from main.selfies_vae.run import selfies_VAEBO_optimizer 
         Optimizer = selfies_VAEBO_optimizer 
-    elif args.method == 'selfies_lstm_hc':
-        from main.selfies_lstm_hc.run import SELFIES_LSTM_HC_Optimizer
-        Optimizer = SELFIES_LSTM_HC_Optimizer 
-    elif args.method == "smiles_lstm_hc":
-        from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer 
-        Optimizer = SMILES_LSTM_HC_Optimizer 
     elif args.method == "smiles_vae":
         from main.smiles_vae.run import smiles_VAEBO_optimizer 
         Optimizer = smiles_VAEBO_optimizer 
     else:
         raise ValueError("Unrecognized method name.")
 
-    path_main = os.path.dirname(os.path.realpath(__file__))
-    path_main = os.path.join(path_main, "main", args.method)
-
     if args.output_dir is None:
         args.output_dir = os.path.join(path_main, "results")
     
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
+
+    if args.pickle_directory is None:
+        args.pickle_directory = path_main
 
     for oracle_name in args.oracles:
 

@@ -7,8 +7,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm 
-from guacamol.scoring_function import ScoringFunction
-from guacamol.utils.chemistry import canonicalize_list
+# from guacamol.scoring_function import ScoringFunction
+from main.utils.chem import canonicalize_list
 
 from rnn_model import SmilesRnn
 from rnn_sampler import SmilesRnnSampler
@@ -155,7 +155,7 @@ class SmilesRnnMoleculeGenerator:
                                    max_seq_len=self.max_len)
 
     # TODO refactor, still has lots of duplication
-    def pretrain_on_initial_population(self, scoring_function: ScoringFunction,
+    def pretrain_on_initial_population(self, scoring_function,
                                        start_population, pretrain_epochs) -> List[OptResult]:
         """
         Takes an objective and tries to optimise it

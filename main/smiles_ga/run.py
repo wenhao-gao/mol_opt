@@ -7,6 +7,7 @@ from typing import List, Optional
 import nltk
 import yaml
 import numpy as np
+import joblib
 from joblib import delayed
 from rdkit import Chem, rdBase
 rdBase.DisableLog('rdApp.error')
@@ -115,6 +116,8 @@ class SMILES_GA_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+
+        pool = joblib.Parallel(n_jobs=self.n_jobs)
         
         if self.smi_file is not None:
             # Exploitation run
@@ -144,7 +147,7 @@ class SMILES_GA_Optimizer(BaseOptimizer):
 
             # evolve genes
             joblist = (delayed(mutate)(g) for g in genes_to_mutate)
-            new_population = self.pool(joblist)
+            new_population = pool(joblist)
 
             # join and dedup
             population += new_population

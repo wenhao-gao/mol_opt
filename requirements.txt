@@ -16,7 +16,7 @@ pexpect==4.8.0
 PyTDC==0.3.6
 PyYAML==6.0
 requests==2.27.1
-scikit_learn==1.0.2
+scikit_learn==0.21.3
 scipy==1.7.3
 selfies==2.0.0
 setuptools==58.0.4
@@ -28,4 +28,7 @@ theano==1.0.5
 torch==1.10.2
 tqdm==4.63.0
 wandb
-
+ray
+ray[tune]
+ConfigArgParse
+pytorch-lightning

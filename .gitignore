@@ -135,7 +135,7 @@ oracle
 slurm*
 result*.yaml
 *.out
-
+production_*.sh
 
 
 

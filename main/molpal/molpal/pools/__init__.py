@@ -1,5 +1,5 @@
-from molpal.pools.base import MoleculePool, EagerMoleculePool
-from molpal.pools.lazypool import LazyMoleculePool
+from main.molpal.molpal.pools.base import MoleculePool, EagerMoleculePool
+from main.molpal.molpal.pools.lazypool import LazyMoleculePool
 
 def pool(pool: str, *args, **kwargs):
     try:

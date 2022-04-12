@@ -1,3 +1,0 @@
-max_oracle_calls: 500
-initial_points_count_single_batch: 20
-batch_size: 25
