@@ -16,11 +16,11 @@ sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
 
-from boss.code.parameters.candidate_parameter import CandidateStringParameter
-from boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
-from boss.code.emukit_models.emukit_bow_model import BOW_model
-from boss.code.emukit_models.emukit_linear_model import linear_model
-from boss.code.emukit_models.emukit_ssk_model import SSK_model
+from main.boss.boss.code.parameters.candidate_parameter import CandidateStringParameter
+from main.boss.boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
+from main.boss.boss.code.emukit_models.emukit_bow_model import BOW_model
+from main.boss.boss.code.emukit_models.emukit_linear_model import linear_model
+from main.boss.boss.code.emukit_models.emukit_ssk_model import SSK_model
 
 
 

@@ -78,8 +78,8 @@ def main():
     elif args.method == 'dog_gen':
         from main.dog_gen.run import DoG_Gen_Optimizer
         Optimizer = DoG_Gen_Optimizer 
-    elif args.method == 'BOSS':
-        from main.BOSS.run import BOSSoptimizer 
+    elif args.method == 'boss':
+        from main.boss.run import BOSSoptimizer 
         Optimizer = BOSSoptimizer 
     elif args.method == 'DST':
         from main.DST.run import DSToptimizer
