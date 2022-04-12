@@ -129,13 +129,13 @@ dmypy.json
 .pyre/
 
 wandb
-# data/*
+data/*
 oracle
 *.slurm
 slurm*
 result*.yaml
 *.out
-
+production_*.sh
 
 
 
