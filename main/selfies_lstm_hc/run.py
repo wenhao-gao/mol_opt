@@ -58,7 +58,7 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
                                            smi_file=smiles_file,
                                            n_jobs=config['n_jobs'])
 
-    result = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 20100,
+    result, self.oracle = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 20100,
                                      starting_population = start_smiles_lst)
 
 

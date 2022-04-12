@@ -32,7 +32,7 @@ def main():
     parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
+    parser.add_argument('--oracles', nargs="+", default=["JNK3"])
     parser.add_argument('--log_results', action='store_true')
     parser.add_argument('--log_code', action='store_true')
     parser.add_argument('--wandb_mode', type=str, default="offline", choices=["online", "offline", "disabled"])

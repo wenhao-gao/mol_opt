@@ -74,6 +74,7 @@ class SmilesCharDictionary(object):
         # temp_smiles = smiles
         # for symbol, token in self.encode_dict.items():
         #     temp_smiles = temp_smiles.replace(symbol, token)
+        smiles = ''.join(smiles.split())
         words = smiles.strip().strip('[]').split('][')
         temp_smiles = ['['+word+']' for word in words]
         return temp_smiles

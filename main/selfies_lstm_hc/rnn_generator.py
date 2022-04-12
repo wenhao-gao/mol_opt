@@ -123,7 +123,7 @@ class SmilesRnnMoleculeGenerator:
             # payload = list(canonicalized_samples.difference(seen))
             payload = list(canonicalized_samples)
             payload.sort()  # necessary for reproducibility between different runs
-            payload_selfies = [smile2selfi[smile] for smile in payload]
+            payload_selfies = [smile2selfi[smile] for smile in payload if smile in smile2selfi]
 
             seen.update(canonicalized_samples)
 
@@ -190,7 +190,7 @@ class SmilesRnnMoleculeGenerator:
             top4 = '\n'.join(f'\t{result.score:.3f}: {result.smiles}' for result in results[:4])
             logger.info(f'Top 4:\n{top4}')
 
-        return sorted(results, reverse=True)
+        return sorted(results, reverse=True), objective
 
     def sample(self, num_mols) -> List[str]:
         """ :return: a list of molecules """
