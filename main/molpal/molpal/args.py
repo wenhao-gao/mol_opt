@@ -36,7 +36,6 @@ def add_general_args(parser: ArgumentParser) -> None:
                         help='the level of output this program should print')
     parser.add_argument('-nc', '--ncpu', '--cpus', default=1, type=int, 
                         help='the number of cores to available to each GPU for dataloading purposes. If performing docking, this is also the number of cores multithreaded docking programs will utilize.')
-    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics', default=None)
     parser.add_argument('--write-intermediate', 
                         action='store_true', default=False,
                         help='whether to write a summary file with all of the explored inputs and their associated scores after each round of exploration')
@@ -52,6 +51,20 @@ def add_general_args(parser: ArgumentParser) -> None:
                         help='the path to a file containing the scores from a previous run of molpal to load in as preliminary dataset.')
     parser.add_argument('--scores-csvs', nargs='+',
                         help='Either (1) A list of filepaths containing the outputs from a previous exploration or (2) a pickle file containing this list. Will load these files in the order in which they are passed to mimic the intermediate state of a previous exploration. Specifying a single will be interpreted as passing a pickle file. If seeking to mimic the state after only one round of exploration, use the --previous-scores argument instead and leave this option empty.')
+    parser.add_argument('--log_results', action='store_true')
+    parser.add_argument('--log_code', action='store_true')
+    parser.add_argument('--smi_file', default=None)
+    parser.add_argument('--config_default', default='hparams_default.yaml')
+    parser.add_argument('--config_tune', default='hparams_tune.yaml')
+    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics', default=None)
+    parser.add_argument('--n_jobs', type=int, default=-1)
+    parser.add_argument('--output_dir', type=str, default=None)
+    parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--freq_log', type=int, default=100)
+    parser.add_argument('--n_runs', type=int, default=5)
+    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
+    parser.add_argument('--oracles', nargs="+", default=["QED"])
 
 #####################################
 #       ENCODER ARGUMENTS           #
