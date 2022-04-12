@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 wandb
-data/*
+# data/*
 oracle
 *.slurm
 slurm*
