@@ -36,7 +36,7 @@ def add_general_args(parser: ArgumentParser) -> None:
                         help='the level of output this program should print')
     parser.add_argument('-nc', '--ncpu', '--cpus', default=1, type=int, 
                         help='the number of cores to available to each GPU for dataloading purposes. If performing docking, this is also the number of cores multithreaded docking programs will utilize.')
-
+    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics', default=None)
     parser.add_argument('--write-intermediate', 
                         action='store_true', default=False,
                         help='whether to write a summary file with all of the explored inputs and their associated scores after each round of exploration')

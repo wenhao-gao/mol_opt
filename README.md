@@ -31,8 +31,8 @@ conda activate molopt
 
 |                    | `runable` | `compatible` | `hparam` | `test` | `clean` |
 |--------------------|-----------|--------------|----------|--------|---------|
-| **Screening**      | ✅        | ✅           | ✅       |        |         |
-| **Mol PAL**        | ✅        | ✅           |          |        |         |
+| **Screening**      | ✅        | ✅           | -        |        |         |
+| **Mol PAL**        | ✅        | ✅           | -        |        |         |
 | **Graph Ga**       | ✅        | ✅           | ✅       |        |         |
 | **SMILES GA**      | ✅        | ✅           | ✅       |        |         |
 | **SELFIES GA**     | ✅        | ✅           |          |        |         |

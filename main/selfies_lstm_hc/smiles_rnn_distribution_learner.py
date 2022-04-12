@@ -7,7 +7,7 @@ from guacamol.distribution_matching_generator import DistributionMatchingGenerat
 from rnn_model import SmilesRnn
 from rnn_trainer import SmilesRnnTrainer
 from rnn_utils import get_tensor_dataset, load_smiles_from_list, set_random_seed
-from smiles_char_dict import SmilesCharDictionary
+from selfies_char_dict import SelfiesCharDictionary
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -44,7 +44,7 @@ class SmilesRnnDistributionLearner:
         train_set = get_tensor_dataset(train_seqs)
         test_set = get_tensor_dataset(valid_seqs)
 
-        sd = SmilesCharDictionary()
+        sd = SelfiesCharDictionary()
         n_characters = sd.get_char_num()
 
         # build network

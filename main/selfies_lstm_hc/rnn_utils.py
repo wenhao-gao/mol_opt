@@ -10,7 +10,7 @@ from guacamol.utils.data import remove_duplicates
 from torch.utils.data import TensorDataset
 
 from rnn_model import SmilesRnn
-from smiles_char_dict import SmilesCharDictionary
+from selfies_char_dict import SelfiesCharDictionary
 
 
 from tdc.chem_utils import MolConvert
@@ -128,7 +128,7 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
         sequences:list a numpy array of SMILES character indices
         valid_mask: list of len(smiles_list) - a boolean mask vector indicating if each index maps to a valid smiles
     """
-    sd = SmilesCharDictionary()
+    sd = SelfiesCharDictionary()
 
     # filter valid smiles strings
     valid_smiles = []
@@ -178,7 +178,7 @@ def rnn_start_token_vector(batch_size, device='cpu'):
     Returns:
         a tensor (batch_size x 1) containing the start token
     """
-    sd = SmilesCharDictionary()
+    sd = SelfiesCharDictionary()
     return torch.LongTensor(batch_size, 1).fill_(sd.begin_idx).to(device)
 
 

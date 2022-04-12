@@ -19,8 +19,6 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 from tdc.chem_utils import MolConvert
-converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
-# converter = MolConvert(src = 'SELFIES', dst = 'SMILES')
 smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 

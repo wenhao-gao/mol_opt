@@ -6,7 +6,7 @@ from datetime import timedelta
 import numpy as np
 import torch
 
-from guacamol.utils.data import remove_duplicates
+from main.utils.chem import remove_duplicates
 from torch.utils.data import TensorDataset
 
 from rnn_model import SmilesRnn
