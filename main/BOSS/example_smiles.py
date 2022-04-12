@@ -10,6 +10,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
+import sys
+path_here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(path_here)
+
 from boss.code.parameters.candidate_parameter import CandidateStringParameter
 from boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
 from boss.code.emukit_models.emukit_bow_model import BOW_model

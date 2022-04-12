@@ -38,19 +38,6 @@ class BOSSoptimizer(BaseOptimizer):
             results = self.oracle(x)
             return - np.array(results).reshape(-1,1)
 
-
-        # get 250,000 candidate molecules
-        # file = gzip.GzipFile(os.path.join(path_here, "./example_data/SMILES/SMILES.gzip"), 'rb')
-        # data = file.read()
-        # smiles_full = pickle.loads(data)
-        # file.close()
-        # print(smiles_full[:10], targets_full[:10])
-        # for tutorial only keep strings <40 length (for quick SSK)
-        # smiles=[]
-        # for i in range(0,len(smiles_full)):
-        #     if len(smiles_full[i])<40:
-        #         smiles.append(smiles_full[i])
-        # smiles=np.array(smiles)
         with open(os.path.join(path_here, "smiles.txt"), 'r') as fin:
             lines = fin.readlines()
         all_smiles_lst = [line.strip() for line in lines] 
@@ -65,13 +52,6 @@ class BOSSoptimizer(BaseOptimizer):
             #seperate all character with blank space
             targets = np.array(ss)
             smiles_lst = np.array([" ".join(list(smile)) for smile in smiles_lst]).reshape(-1,1)
-            # print("length of initial data", len(smiles)) 
-            # define an objective function (to be minimized) and space 
-            # def objective(x):
-            #     # return score of the molecules
-            #     # *-1 so we can minimize
-            #     return -targets[np.where(smiles==x)[0][0]]
-            # objective=np.vectorize(objective)
 
             # define search space
             space = ParameterSpace([CandidateStringParameter("string", smiles_lst)])
@@ -81,7 +61,6 @@ class BOSSoptimizer(BaseOptimizer):
             random_design = RandomDesign(space)
             X_init = random_design.get_samples(config['initial_points_count_single_batch'])
             Y_init = objective(X_init)
-
 
             # build BO loop
             # fit SSK model
@@ -115,7 +94,6 @@ class BOSSoptimizer(BaseOptimizer):
             generated_smiles = bayesopt_loop_ssk.loop_state.X
             generated_smiles = generated_smiles.tolist()
             generated_smiles = [''.join(i[0].split()) for i in generated_smiles]
-            # print(len(generated_smiles))
             # print(len(self.oracle)) 
             values = self.oracle(generated_smiles)
 
