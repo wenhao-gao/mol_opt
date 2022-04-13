@@ -57,6 +57,7 @@ class GPBO_optimizer(BaseOptimizer):
         # Load dataset   args.dataset: DATASET_PATH
         dataset = pd.read_csv(config['dataset'], sep="\t", header=0)
 
+        # Get function to be optimized
         opt_func, df_processed = get_cached_objective_and_dataframe(
             oracle = self.oracle, 
             dataset=dataset,

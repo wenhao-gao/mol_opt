@@ -94,24 +94,6 @@ def gp_bo_loop(
 ):
     logger.info("Starting GP BO")
 
-    # Create the cached function
-    # if not isinstance(scoring_function, CachedFunction):
-    #     scoring_function = CachedFunction(scoring_function, transform=y_transform)
-    # start_cache = dict(scoring_function.cache)
-    # start_cache_size = len(start_cache)
-    # logger.debug(f"Starting cache made, has size {start_cache_size}")
-    # logger.info(
-    #     f"Top {n_top_log} known starting scores:\n"
-    #     + ", ".join(
-    #         f"#{i+1}={v:.3f}"
-    #         for i, v in enumerate(
-    #             heapq.nlargest(
-    #                 n_top_log, scoring_function(list(start_cache.keys()), batch=True)
-    #             )
-    #         )
-    #     )
-    # )
-
     # Set up which SMILES the GP should be trained on
     # If not given, it is assumed that the GP is trained on all known smiles
     start_cache = scoring_function.mol_buffer 
