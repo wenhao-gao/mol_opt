@@ -49,7 +49,6 @@ def get_cached_objective_and_dataframe(
     items_to_calculate = dict()
     items_to_calculate['QED'] = oracle
 
-
     # Get processed dataset for necessary targets
     targets_to_process = set(items_to_calculate.keys())
     if evaluate_cheap_functions:
@@ -81,6 +80,7 @@ def get_cached_objective_and_dataframe(
     )
 
     return cached_objective, dataset_processed
+
 
 
 

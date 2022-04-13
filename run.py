@@ -79,38 +79,44 @@ def main():
         from main.dog_gen.run import DoG_Gen_Optimizer
         Optimizer = DoG_Gen_Optimizer 
     elif args.method == 'boss':
-        from main.boss.run import BOSSoptimizer 
-        Optimizer = BOSSoptimizer 
-    elif args.method == 'DST':
-        from main.DST.run import DSToptimizer
-        Optimizer = DSToptimizer 
+        from main.boss.run import BOSS_Optimizer 
+        Optimizer = BOSS_Optimizer 
+    elif args.method == 'boss_selfies':
+        from main.boss_selfies.run import BOSS_Selfies_Optimizer 
+        Optimizer = BOSS_Selfies_Optimizer 
     elif args.method == 'GPBO':
         from main.GPBO.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 
-    elif args.method == 'JTVAE':
-        from main.JTVAE.run import JTVAEBOoptimizer
-        Optimizer = JTVAEBOoptimizer 
-    elif args.method == 'MARS':
-        from main.MARS.run import MARS_Optimizer 
-        Optimizer = MARS_Optimizer 
-    elif args.method == 'MIMOSA':
-        from main.MIMOSA.run import MIMOSA_Optimizer 
-        Optimizer = MIMOSA_Optimizer 
-    elif args.method == "RationaleRL":
-        from main.rationaleRL.run import RationaleRLoptimizer 
-        Optimizer = RationaleRLoptimizer 
-    elif args.method == 'REINVENT':
-        from main.REINVENT.run import REINVENToptimizer
-        Optimizer = REINVENToptimizer
-    elif args.method == 'REINVENT_SELFIES':
-        from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
-        Optimizer = REINVENT_SELFIES_optimizer 
     elif args.method == "selfies_VAE":
         from main.selfies_vae.run import selfies_VAEBO_optimizer 
         Optimizer = selfies_VAEBO_optimizer 
     elif args.method == "smiles_vae":
         from main.smiles_vae.run import smiles_VAEBO_optimizer 
         Optimizer = smiles_VAEBO_optimizer 
+    elif args.method == 'JTVAE':
+        from main.JTVAE.run import JTVAEBOoptimizer
+        Optimizer = JTVAEBOoptimizer 
+    elif args.method == 'dog_ae':
+        from main.dog_ae.run import DoG_AE_Optimizer
+        Optimizer = DoG_AE_Optimizer 
+    elif args.method == 'DST':
+        from main.DST.run import DSToptimizer
+        Optimizer = DSToptimizer 
+    elif args.method == 'MARS':
+        from main.MARS.run import MARS_Optimizer 
+        Optimizer = MARS_Optimizer 
+    elif args.method == 'MIMOSA':
+        from main.MIMOSA.run import MIMOSA_Optimizer 
+        Optimizer = MIMOSA_Optimizer 
+    elif args.method == 'REINVENT':
+        from main.REINVENT.run import REINVENToptimizer
+        Optimizer = REINVENToptimizer
+    elif args.method == 'REINVENT_SELFIES':
+        from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
+        Optimizer = REINVENT_SELFIES_optimizer 
+    elif args.method == "RationaleRL":
+        from main.rationaleRL.run import RationaleRLoptimizer 
+        Optimizer = RationaleRLoptimizer 
     else:
         raise ValueError("Unrecognized method name.")
 
