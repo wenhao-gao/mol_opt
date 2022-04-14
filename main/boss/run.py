@@ -55,7 +55,7 @@ class BOSSoptimizer(BaseOptimizer):
             lines = fin.readlines()
         all_smiles_lst = [line.strip() for line in lines] 
         batch_size = config['batch_size'] 
-        num_of_trials = int(config['max_oracle_calls'] / config['batch_size'])
+        num_of_trials = int(self.oracle.max_oracle_calls / config['batch_size']) * 10 
 
 
         for ii in range(num_of_trials):
@@ -119,6 +119,9 @@ class BOSSoptimizer(BaseOptimizer):
             print(len(self.oracle)) 
             values = self.oracle(generated_smiles)
             print(len(self.oracle)) 
+            if self.finish:
+                print('max oracle hit, abort ...... ')
+                break 
 
 
 
