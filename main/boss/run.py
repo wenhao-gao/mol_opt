@@ -13,11 +13,11 @@ from tdc import Oracle
 import sys, argparse, yaml   
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
-from main.boss.code.parameters.candidate_parameter import CandidateStringParameter
-from main.boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
-from main.boss.code.emukit_models.emukit_bow_model import BOW_model
-from main.boss.code.emukit_models.emukit_linear_model import linear_model
-from main.boss.code.emukit_models.emukit_ssk_model import SSK_model
+from boss.code.parameters.candidate_parameter import CandidateStringParameter
+from boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
+from boss.code.emukit_models.emukit_bow_model import BOW_model
+from boss.code.emukit_models.emukit_linear_model import linear_model
+from boss.code.emukit_models.emukit_ssk_model import SSK_model
 
 from main.optimizer import BaseOptimizer
 
@@ -39,12 +39,6 @@ class BOSS_Optimizer(BaseOptimizer):
 
         all_smiles_lst = self.all_smiles
 
-        while True:
-
-            if self.finish:
-                break
-
-<<<<<<< HEAD
         # get 250,000 candidate molecules
         # file = gzip.GzipFile(os.path.join(path_here, "./example_data/SMILES/SMILES.gzip"), 'rb')
         # data = file.read()
@@ -57,14 +51,11 @@ class BOSS_Optimizer(BaseOptimizer):
         #     if len(smiles_full[i])<40:
         #         smiles.append(smiles_full[i])
         # smiles=np.array(smiles)
-        with open(os.path.join(path_here, "smiles.txt"), 'r') as fin:
-            lines = fin.readlines()
-        all_smiles_lst = [line.strip() for line in lines] 
         batch_size = config['batch_size'] 
         num_of_trials = int(self.oracle.max_oracle_calls / config['batch_size']) * 10 
 
-
-        for ii in range(num_of_trials):
+        # for ii in range(num_of_trials):
+        while True:
             shuffle(all_smiles_lst)
             smiles_lst = all_smiles_lst[:config['initial_points_count_single_batch']]
             ss = self.oracle(smiles_lst)
