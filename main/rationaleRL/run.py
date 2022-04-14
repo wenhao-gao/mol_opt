@@ -36,8 +36,6 @@ def remove_order(s):
     return s
 
 
-
-
 from properties import get_scoring_function
 qed_sa_func = lambda x: x[0] >= 0.5 and x[1] >= 0.5 and x[2] >= 0.6 and x[3] <= 4.0
 normal_func = lambda x: min(x) >= 0.5
@@ -88,8 +86,8 @@ class RationaleRLoptimizer(BaseOptimizer):
         atom_vocab = common_atom_vocab
         config['atom_vocab'] = common_atom_vocab 
 
-        prop_funcs = [get_scoring_function(prop) for prop in 'qed,sa'.split(',')]
-        scoring_function = lambda x : list( zip(*[func(x) for func in prop_funcs]) ) #### oracle 
+        # prop_funcs = [get_scoring_function(prop) for prop in 'qed,sa'.split(',')]
+        # scoring_function = lambda x : list( zip(*[func(x) for func in prop_funcs]) ) #### oracle 
 
         with open(os.path.join(path_here, "data/rationales.txt")) as f:
             rationales = [line.split()[1] for line in f]
