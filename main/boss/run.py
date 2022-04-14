@@ -111,7 +111,7 @@ class BOSS_Optimizer(BaseOptimizer):
             generated_smiles = generated_smiles.tolist()
             generated_smiles = [''.join(i[0].split()) for i in generated_smiles]
             values = self.oracle(generated_smiles)
-            print(len(self.oracle)) 
+            print('used oracle number is:', len(self.oracle)) 
             if self.finish:
                 print('max oracle hit, abort ...... ')
                 break 
