@@ -13,24 +13,23 @@ from tdc import Oracle
 import sys, argparse, yaml   
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
-sys.path.append('.')
+from main.boss.code.parameters.candidate_parameter import CandidateStringParameter
+from main.boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
+from main.boss.code.emukit_models.emukit_bow_model import BOW_model
+from main.boss.code.emukit_models.emukit_linear_model import linear_model
+from main.boss.code.emukit_models.emukit_ssk_model import SSK_model
+
 from main.optimizer import BaseOptimizer
 
-from boss.code.parameters.candidate_parameter import CandidateStringParameter
-from boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
-from boss.code.emukit_models.emukit_bow_model import BOW_model
-from boss.code.emukit_models.emukit_linear_model import linear_model
-from boss.code.emukit_models.emukit_ssk_model import SSK_model
 
-
-
-class BOSSoptimizer(BaseOptimizer):
+class BOSS_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
         self.model_name = "boss"
 
     def _optimize(self, oracle, config):
+
         self.oracle.assign_evaluator(oracle)
 
         def objective(x):
@@ -38,7 +37,14 @@ class BOSSoptimizer(BaseOptimizer):
             results = self.oracle(x)
             return - np.array(results).reshape(-1,1)
 
+        all_smiles_lst = self.all_smiles
 
+        while True:
+
+            if self.finish:
+                break
+
+<<<<<<< HEAD
         # get 250,000 candidate molecules
         # file = gzip.GzipFile(os.path.join(path_here, "./example_data/SMILES/SMILES.gzip"), 'rb')
         # data = file.read()
@@ -65,23 +71,14 @@ class BOSSoptimizer(BaseOptimizer):
             #seperate all character with blank space
             targets = np.array(ss)
             smiles_lst = np.array([" ".join(list(smile)) for smile in smiles_lst]).reshape(-1,1)
-            # print("length of initial data", len(smiles)) 
-            # define an objective function (to be minimized) and space 
-            # def objective(x):
-            #     # return score of the molecules
-            #     # *-1 so we can minimize
-            #     return -targets[np.where(smiles==x)[0][0]]
-            # objective=np.vectorize(objective)
 
             # define search space
             space = ParameterSpace([CandidateStringParameter("string", smiles_lst)])
 
             # collect initial design (uniform sample)
-            np.random.seed(1234)
             random_design = RandomDesign(space)
             X_init = random_design.get_samples(config['initial_points_count_single_batch'])
             Y_init = objective(X_init)
-
 
             # build BO loop
             # fit SSK model
@@ -108,15 +105,11 @@ class BOSSoptimizer(BaseOptimizer):
 
             # also see performance of random search 
             #(starting from the initialization used by the other approaches)
-            # np.random.seed(1234)
-            # Y_random=np.vstack([Y_init,objective(random_design.get_samples(35))])
 
             # obj = bayesopt_loop_ssk.loop_state.Y 
             generated_smiles = bayesopt_loop_ssk.loop_state.X
             generated_smiles = generated_smiles.tolist()
             generated_smiles = [''.join(i[0].split()) for i in generated_smiles]
-            print(len(generated_smiles))
-            print(len(self.oracle)) 
             values = self.oracle(generated_smiles)
             print(len(self.oracle)) 
             if self.finish:
@@ -176,10 +169,5 @@ def main():
 
 if __name__ == "__main__":
     main() 
-
-
-
-
-
 
 
