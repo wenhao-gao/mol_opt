@@ -110,7 +110,7 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
 
     # result = optimizer.generate_optimized_molecules(self.oracle, number_molecules = 20100,
     #                                  starting_population = start_smiles_lst)
->>>>>>> bbab772b978f46c31f79a8fa49f9d5629b7e7599
+# >>>>>>> bbab772b978f46c31f79a8fa49f9d5629b7e7599
 
 
 
