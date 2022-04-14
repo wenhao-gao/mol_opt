@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=10000)
+    parser.add_argument('--max_oracle_calls', type=int, default=500)
     parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
@@ -114,7 +114,7 @@ def main():
     elif args.method == 'REINVENT_SELFIES':
         from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
         Optimizer = REINVENT_SELFIES_optimizer 
-    elif args.method == "RationaleRL":
+    elif args.method == "rationaleRL":
         from main.rationaleRL.run import RationaleRLoptimizer 
         Optimizer = RationaleRLoptimizer 
     else:
