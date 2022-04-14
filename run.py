@@ -36,10 +36,10 @@ def main():
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     parser.add_argument('--log_results', action='store_true')
     parser.add_argument('--log_code', action='store_true')
-    parser.add_argument('--wandb_mode', type=str, default="offline", choices=["online", "offline", "disabled"])
+    parser.add_argument('--wandb', type=str, default="offline", choices=["online", "offline", "disabled"])
     args = parser.parse_args()
 
-    os.environ["WANDB_MODE"] = args.wandb_mode
+    os.environ["WANDB_MODE"] = args.wandb
 
     if not args.log_code:
         os.environ["WANDB_DISABLE_CODE"] = "false"
