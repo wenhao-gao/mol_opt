@@ -1,1 +1,0 @@
-Scripts for AI for science experiments.

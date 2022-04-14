@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["JNK3"])
+    parser.add_argument('--oracles', nargs="+", default=["QED"])
     parser.add_argument('--log_results', action='store_true')
     parser.add_argument('--log_code', action='store_true')
     parser.add_argument('--wandb_mode', type=str, default="offline", choices=["online", "offline", "disabled"])
@@ -84,8 +84,8 @@ def main():
     elif args.method == 'boss_selfies':
         from main.boss_selfies.run import BOSS_Selfies_Optimizer 
         Optimizer = BOSS_Selfies_Optimizer 
-    elif args.method == 'GPBO':
-        from main.GPBO.run import GPBO_optimizer
+    elif args.method == 'gpbo':
+        from main.gpbo.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 
     elif args.method == "selfies_VAE":
         from main.selfies_vae.run import selfies_VAEBO_optimizer 

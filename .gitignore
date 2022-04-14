@@ -128,6 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+*/__pycache__/*
 wandb
 data/*
 oracle
@@ -136,7 +137,7 @@ slurm*
 result*.yaml
 *.out
 production_*.sh
-
+*.ipynb
 
 
 
@@ -165,7 +166,6 @@ main/MARS/data/kinase.tsv
 # MIMOSA
 # main/MIMOSA/data/
 main/MIMOSA/results/
-main/MIMOSA/__pycache__/
 
 # REINVENT
 main/REINVENT/data

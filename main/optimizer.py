@@ -13,7 +13,6 @@ from main.utils.chem import *
 
 
 def top_auc(buffer, top_n, finish, freq_log, max_oracle_calls):
-    # import ipdb; ipdb.set_trace()
     sum = 0
     prev = 0
     called = 0
@@ -34,12 +33,17 @@ def top_auc(buffer, top_n, finish, freq_log, max_oracle_calls):
 
 
 class Oracle:
-    def __init__(self, mol_buffer={}, freq_log=100, max_oracle_calls=10000):
+    def __init__(self, args=None, mol_buffer={}):
         self.name = None
         self.evaluator = None
+        if args is None:
+            self.max_oracle_calls = 10000
+            self.freq_log = 100
+        else:
+            self.args = args
+            self.max_oracle_calls = args.max_oracle_calls
+            self.freq_log = args.freq_log
         self.mol_buffer = mol_buffer
-        self.freq_log = freq_log
-        self.max_oracle_calls = max_oracle_calls
         self.sa_scorer = tdc.Oracle(name = 'SA')
         self.diversity_evaluator = tdc.Evaluator(name = 'Diversity')
         self.last_log = 0
@@ -147,14 +151,15 @@ class Oracle:
             for smi in smiles_lst:
                 score_list.append(self.score_smi(smi))
                 if len(self.mol_buffer) % self.freq_log == 0 and len(self.mol_buffer) > self.last_log:
+                    self.sort_buffer()
                     self.log_intermediate()
                     self.last_log = len(self.mol_buffer)
         else:  ### a string of SMILES 
             score_list = self.score_smi(smiles_lst)
             if len(self.mol_buffer) % self.freq_log == 0 and len(self.mol_buffer) > self.last_log:
+                self.sort_buffer()
                 self.log_intermediate()
                 self.last_log = len(self.mol_buffer)
-        self.sort_buffer()
         return score_list
 
     @property
@@ -170,7 +175,7 @@ class BaseOptimizer:
         self.n_jobs = args.n_jobs
         # self.pool = joblib.Parallel(n_jobs=self.n_jobs)
         self.smi_file = args.smi_file
-        self.oracle = Oracle(max_oracle_calls = args.max_oracle_calls)
+        self.oracle = Oracle(args=self.args)
         if self.smi_file is not None:
             self.all_smiles = self.load_smiles_from_file(self.smi_file)
         else:
@@ -266,7 +271,7 @@ class BaseOptimizer:
 
     def reset(self):
         del self.oracle
-        self.oracle = Oracle()
+        self.oracle = Oracle(args=self.args)
 
     @property
     def mol_buffer(self):
@@ -307,7 +312,7 @@ class BaseOptimizer:
         if self.args.log_results:
             self.log_result()
         self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
-        self.reset()
+        # self.reset()
         run.finish()
 
     def production(self, oracle, config, num_runs=5, project="production"):
@@ -318,5 +323,5 @@ class BaseOptimizer:
         seeds = seeds[:num_runs]
         for seed in seeds:
             self.optimize(oracle, config, seed, project)
-            # self.reset()
+            self.reset()
 
