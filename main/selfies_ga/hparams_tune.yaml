@@ -12,7 +12,4 @@ parameters:
     distribution: int_uniform
     min: 0
     max: 20
-  patience:
-    value: 5
-  max_generations:
-    value: 1000
+
