@@ -13,11 +13,11 @@ from tdc import Oracle
 import sys, argparse, yaml   
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
-from boss.code.parameters.candidate_parameter import CandidateStringParameter
-from boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
-from boss.code.emukit_models.emukit_bow_model import BOW_model
-from boss.code.emukit_models.emukit_linear_model import linear_model
-from boss.code.emukit_models.emukit_ssk_model import SSK_model
+from main.boss.code.parameters.candidate_parameter import CandidateStringParameter
+from main.boss.code.optimizers.StringGeneticAlgorithmAcquisitionOptimizer import StringGeneticProgrammingOptimizer
+from main.boss.code.emukit_models.emukit_bow_model import BOW_model
+from main.boss.code.emukit_models.emukit_linear_model import linear_model
+from main.boss.code.emukit_models.emukit_ssk_model import SSK_model
 
 from main.optimizer import BaseOptimizer
 
@@ -39,23 +39,16 @@ class BOSS_Optimizer(BaseOptimizer):
 
         all_smiles_lst = self.all_smiles
 
-        # get 250,000 candidate molecules
-        # file = gzip.GzipFile(os.path.join(path_here, "./example_data/SMILES/SMILES.gzip"), 'rb')
-        # data = file.read()
-        # smiles_full = pickle.loads(data)
-        # file.close()
-        # print(smiles_full[:10], targets_full[:10])
-        # for tutorial only keep strings <40 length (for quick SSK)
-        # smiles=[]
-        # for i in range(0,len(smiles_full)):
-        #     if len(smiles_full[i])<40:
-        #         smiles.append(smiles_full[i])
-        # smiles=np.array(smiles)
-        batch_size = config['batch_size'] 
-        num_of_trials = int(self.oracle.max_oracle_calls / config['batch_size']) * 10 
+        patience = 0
 
-        # for ii in range(num_of_trials):
         while True:
+
+            if len(self.oracle) > 50:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:50]]
+            else:
+                old_scores = 0
+            
             shuffle(all_smiles_lst)
             smiles_lst = all_smiles_lst[:config['initial_points_count_single_batch']]
             ss = self.oracle(smiles_lst)
@@ -102,63 +95,21 @@ class BOSS_Optimizer(BaseOptimizer):
             generated_smiles = generated_smiles.tolist()
             generated_smiles = [''.join(i[0].split()) for i in generated_smiles]
             values = self.oracle(generated_smiles)
-            print('used oracle number is:', len(self.oracle)) 
+
+            # early stopping
+            if len(self.oracle) > 50:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:50]]
+                if population_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        break
+                else:
+                    patience = 0
+            
             if self.finish:
                 print('max oracle hit, abort ...... ')
                 break 
-
-
-
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
-
-    path_here = os.path.dirname(os.path.realpath(__file__))
-
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
-
-        oracle = Oracle(name = oracle_name)
-        optimizer = BOSSoptimizer(args=args)
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-
-if __name__ == "__main__":
-    main() 
 
 
