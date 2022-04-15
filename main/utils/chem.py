@@ -52,10 +52,13 @@ def canonicalize(smiles: str, include_stereocenters=True) -> Optional[str]:
         Canonicalized SMILES string, None if the molecule is invalid.
     """
 
-    mol = Chem.MolFromSmiles(smiles)
+    if len(smiles) > 0:
+        mol = Chem.MolFromSmiles(smiles)
 
-    if mol is not None:
-        return Chem.MolToSmiles(mol, isomericSmiles=include_stereocenters)
+        if mol is not None:
+            return Chem.MolToSmiles(mol, isomericSmiles=include_stereocenters)
+        else:
+            return None
     else:
         return None
 

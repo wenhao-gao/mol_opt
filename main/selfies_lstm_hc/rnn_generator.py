@@ -13,7 +13,7 @@ from guacamol.utils.chemistry import canonicalize_list
 from rnn_model import SmilesRnn
 from rnn_sampler import SmilesRnnSampler
 from rnn_trainer import SmilesRnnTrainer
-from rnn_utils import get_tensor_dataset, load_smiles_from_list
+from rnn_utils import get_tensor_dataset, load_selfies_from_list
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -161,8 +161,8 @@ class SmilesRnnMoleculeGenerator:
             #         assert word in vocab_list 
             #########################
 
-            train_seqs, _ = load_smiles_from_list(sub_train, max_len=self.max_len)
-            valid_seqs, _ = load_smiles_from_list(sub_test, max_len=self.max_len)
+            train_seqs, _ = load_selfies_from_list(sub_train, max_len=self.max_len)
+            valid_seqs, _ = load_selfies_from_list(sub_test, max_len=self.max_len)
 
             train_set = get_tensor_dataset(train_seqs)
             valid_set = get_tensor_dataset(valid_seqs)
@@ -232,7 +232,7 @@ class SmilesRnnMoleculeGenerator:
         ##############################
 
 
-        train_seqs, _ = load_smiles_from_list(training, max_len=self.max_len)
+        train_seqs, _ = load_selfies_from_list(training, max_len=self.max_len)
         train_set = get_tensor_dataset(train_seqs)
 
         batch_size = min(int(len(training)), 32)
