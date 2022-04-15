@@ -1,2 +1,2 @@
-initial_points_count_single_batch: 100
-batch_size: 200
+initial_points_count_single_batch: 15
+batch_size: 50

@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm 
-# from guacamol.scoring_function import ScoringFunction
 from main.utils.chem import canonicalize_list
 
 from rnn_model import SmilesRnn
@@ -74,6 +73,7 @@ class SmilesRnnMoleculeGenerator:
         :return: Candidate molecules
         """
 
+        # Pretrain 
         int_results = self.pretrain_on_initial_population(objective, start_population,
                                                           pretrain_epochs=pretrain_n_epochs)
 
@@ -87,6 +87,7 @@ class SmilesRnnMoleculeGenerator:
 
         for epoch in tqdm(range(1, 1 + n_epochs)):
 
+            # Sample
             t0 = time.time()
             samples = self.sampler.sample(self.model, mols_to_sample, max_seq_len=self.max_len)
             t1 = time.time()
@@ -97,7 +98,6 @@ class SmilesRnnMoleculeGenerator:
 
             seen.update(canonicalized_samples)
 
-            # scores = objective.score_list(payload)
             scores = objective(payload)
             if objective.finish: 
                 break 
