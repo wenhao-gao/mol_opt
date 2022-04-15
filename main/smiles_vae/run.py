@@ -20,16 +20,18 @@ from botorch.optim import optimize_acqf
 from tdc.generation import MolGen
 from random import shuffle, choice  
 
-class smiles_VAEBO_optimizer(BaseOptimizer):
+class SMILES_VAEBO_optimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
 		super().__init__(args)
-		self.model_name = "smiles_VAE"
+		self.model_name = "smiles_vae_bo"
 
 	def _optimize(self, oracle, config):
+
 		self.oracle.assign_evaluator(oracle)
 
 		## 0. load vae model & get training data
+		# import ipdb; ipdb.set_trace()
 		vae_model = torch.load(config['save_model'])
 		data = MolGen(name = 'ZINC')
 		smiles_lst = data.get_data()['smiles'].tolist() 
