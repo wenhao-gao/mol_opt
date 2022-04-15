@@ -57,6 +57,7 @@ def main():
     elif args.method == 'molpal':
         from main.molpal.run import MolPAL_Optimizer 
         Optimizer = MolPAL_Optimizer
+
     elif args.method == 'graph_ga':
         from main.graph_ga.run import GB_GA_Optimizer
         Optimizer = GB_GA_Optimizer
@@ -66,9 +67,11 @@ def main():
     elif args.method == "selfies_ga":
         from main.selfies_ga.run import SELFIES_GA_optimizer 
         Optimizer = SELFIES_GA_optimizer 
+
     elif args.method == 'graph_mcts':
         from main.graph_mcts.run import Graph_MCTS_Optimizer 
         Optimizer = Graph_MCTS_Optimizer 
+
     elif args.method == "smiles_lstm_hc":
         from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer 
         Optimizer = SMILES_LSTM_HC_Optimizer 
@@ -78,15 +81,14 @@ def main():
     elif args.method == 'dog_gen':
         from main.dog_gen.run import DoG_Gen_Optimizer
         Optimizer = DoG_Gen_Optimizer 
+
     elif args.method == 'boss':
         from main.boss.run import BOSS_Optimizer 
         Optimizer = BOSS_Optimizer 
-    elif args.method == 'boss_selfies':
-        from main.boss_selfies.run import BOSS_Selfies_Optimizer 
-        Optimizer = BOSS_Selfies_Optimizer 
     elif args.method == 'gpbo':
         from main.gpbo.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 
+
     elif args.method == "selfies_VAE":
         from main.selfies_vae.run import selfies_VAEBO_optimizer 
         Optimizer = selfies_VAEBO_optimizer 
@@ -99,15 +101,18 @@ def main():
     elif args.method == 'dog_ae':
         from main.dog_ae.run import DoG_AE_Optimizer
         Optimizer = DoG_AE_Optimizer 
+
     elif args.method == 'DST':
         from main.DST.run import DSToptimizer
         Optimizer = DSToptimizer 
+
     elif args.method == 'MARS':
         from main.MARS.run import MARS_Optimizer 
         Optimizer = MARS_Optimizer 
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 
+        
     elif args.method == 'REINVENT':
         from main.REINVENT.run import REINVENToptimizer
         Optimizer = REINVENToptimizer

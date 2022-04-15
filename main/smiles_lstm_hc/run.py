@@ -1,4 +1,5 @@
 import os, pickle, torch, random, argparse
+from functools import total_ordering
 from pathlib import Path
 import yaml
 import numpy as np 
@@ -9,114 +10,105 @@ path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-from rnn_generator import SmilesRnnMoleculeGenerator
-from rnn_utils import load_rnn_model
+from main.utils.chem import canonicalize_list
 
-'''
-default 
-    # n_epochs = 20
-    # mols_to_sample = 1024
-    # keep_top = 512 
-    # optimize_n_epochs = 2 
-    # max_len = 100 
-    # optimize_batch_size = 256 
-    # benchmark_num_samples = 4096 
-'''
+from rnn_generator import SmilesRnnMoleculeGenerator
+from rnn_utils import load_rnn_model, get_tensor_dataset, load_smiles_from_list
+
+
+@total_ordering
+class OptResult:
+    def __init__(self, smiles: str, score: float) -> None:
+        self.smiles = smiles
+        self.score = score
+
+    def __eq__(self, other):
+        return (self.score, self.smiles) == (other.score, other.smiles)
+
+    def __lt__(self, other):
+        return (self.score, self.smiles) < (other.score, other.smiles)
+
 
 class SMILES_LSTM_HC_Optimizer(BaseOptimizer):
 
-  def __init__(self, args=None):
-    super().__init__(args)
-    self.model_name = "smiles_lstm_hc"
+    def __init__(self, args=None):
+        super().__init__(args)
+        self.model_name = "smiles_lstm_hc"
 
-  def _optimize(self, oracle, config):
+    def _optimize(self, oracle, config):
 
-    self.oracle.assign_evaluator(oracle)
+        self.oracle.assign_evaluator(oracle)
+        
+        if self.smi_file is not None:
+            # Exploitation run
+            starting_population = self.all_smiles[:config['population_size']]
+        else:
+            # Exploration run
+            starting_population = np.random.choice(self.all_smiles, config['population_size'])
 
-    pretrained_model_path = os.path.join(path_here, 'pretrained_model', 'model_final_0.473.pt')
+        pretrained_model_path = os.path.join(path_here, 'pretrained_model', 'model_final_0.473.pt')
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model_def = Path(pretrained_model_path).with_suffix('.json')
+        sample_final_model_only = False
 
-    population_size = 500
+        print('build generator')
+        model = load_rnn_model(model_def, pretrained_model_path, device, copy_to_cpu=True)
+        generator = SmilesRnnMoleculeGenerator(model=model,
+                                                max_len=config['max_len'],
+                                                device=device)
+        
+        int_results = generator.pretrain_on_initial_population(self.oracle, starting_population,
+                                                          pretrain_epochs=config['pretrain_n_epochs'])
 
-    if self.smi_file is not None:
-        # Exploitation run
-        starting_population = self.all_smiles[:population_size]
-    else:
-        # Exploration run
-        starting_population = np.random.choice(self.all_smiles, population_size)
+        results: List[OptResult] = []
+        seen: Set[str] = set()
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_def = Path(pretrained_model_path).with_suffix('.json')
-    sample_final_model_only = False
+        for k in int_results:
+            if k.smiles not in seen:
+                results.append(k)
+                seen.add(k.smiles)
 
-    model = load_rnn_model(model_def, pretrained_model_path, device, copy_to_cpu=True)
+        while True:
 
-    generator = SmilesRnnMoleculeGenerator(model=model,
-                                            max_len=config['max_len'],
-                                            device=device)
-    print('build generator')
+            samples = generator.sampler.sample(generator.model, config['mols_to_sample'], max_seq_len=generator.max_len)
 
-    molecules = generator.optimise(objective=self.oracle,
-                                    start_population=starting_population,
-                                    n_epochs=config['n_epochs'],
-                                    mols_to_sample=config['mols_to_sample'],
-                                    keep_top=config['keep_top'],
-                                    optimize_batch_size=config['optimize_batch_size'],
-                                    optimize_n_epochs=config['optimize_n_epochs'],
-                                    pretrain_n_epochs=0)
+            print(f"Sampling new molecules ...")
+            canonicalized_samples = set(canonicalize_list(samples, include_stereocenters=True))
+            payload = list(canonicalized_samples.difference(seen))
+            payload.sort()  # necessary for reproducibility between different runs
+            seen.update(canonicalized_samples)
+            scores = self.oracle(payload)
+            
+            int_results = [OptResult(smiles=smiles, score=score) for smiles, score in zip(payload, scores)]
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=10000)
-    parser.add_argument('--freq_log', type=int, default=100)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
+            results.extend(sorted(int_results, reverse=True)[0:config['keep_top']])
+            results.sort(reverse=True)
+            subset = [i.smiles for i in results][0:config['keep_top']]
 
-    path_here = os.path.dirname(os.path.realpath(__file__))
+            np.random.shuffle(subset)
 
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
+            sub_train = subset[0:int(3 * len(subset) / 4)]
+            sub_test = subset[int(3 * len(subset) / 4):]
 
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
+            train_seqs, _ = load_smiles_from_list(sub_train, max_len=generator.max_len)
+            valid_seqs, _ = load_smiles_from_list(sub_test, max_len=generator.max_len)
 
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
+            train_set = get_tensor_dataset(train_seqs)
+            valid_set = get_tensor_dataset(valid_seqs)
 
+            opt_batch_size = min(len(sub_train), config['optimize_batch_size'])
 
-        # max_n_oracles = config['max_n_oracles']
-        oracle = Oracle(name = oracle_name)
-        optimizer = SMILES_LSTM_HC_Optimizer(args=args)
+            print_every = int(len(sub_train) / opt_batch_size)
 
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-    main() 
-
-
-
+            print(f"Tuning LSTM ...")
+            if config['optimize_n_epochs'] > 0:
+                generator.trainer.fit(train_set, valid_set,
+                                 n_epochs=config['optimize_n_epochs'],
+                                 batch_size=opt_batch_size,
+                                 print_every=print_every,
+                                 valid_every=print_every)
+                
+            if self.finish:
+                break
 
 
