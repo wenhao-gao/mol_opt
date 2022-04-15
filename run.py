@@ -109,12 +109,12 @@ def main():
     elif args.method == 'MARS':
         from main.MARS.run import MARS_Optimizer 
         Optimizer = MARS_Optimizer 
+    elif args.method == 'MolGAN':
+        from main.MolGAN.run import MolGAN_Optimizer 
+        Optimizer = MolGAN_Optimizer 
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 
-    elif args.method == 'ORGAN':
-        from main.ORGAN.run import ORGAN_Optimizer 
-        Optimizer = ORGAN_Optimizer 
     elif args.method == 'REINVENT':
         from main.REINVENT.run import REINVENToptimizer
         Optimizer = REINVENToptimizer
