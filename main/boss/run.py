@@ -100,7 +100,7 @@ class BOSS_Optimizer(BaseOptimizer):
             if len(self.oracle) > 50:
                 self.sort_buffer()
                 new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:50]]
-                if population_scores == old_scores:
+                if new_scores == old_scores:
                     patience += 1
                     if patience >= self.args.patience:
                         self.log_intermediate(finish=True)
