@@ -2,6 +2,8 @@ import json
 import os
 import joblib
 import yaml
+import random
+import torch
 import numpy as np
 from joblib import delayed
 from rdkit import Chem
@@ -294,6 +296,8 @@ class BaseOptimizer:
                 auc_top10s = []
                 for seed in seeds:
                     np.random.seed(seed)
+                    torch.manual_seed(seed)
+                    random.seed(seed)
                     config = wandb.config
                     self._optimize(oracle, config)
                     auc_top10s.append(top_auc(self.oracle.mol_buffer, 10, True, self.oracle.freq_log, self.oracle.max_oracle_calls))
@@ -308,6 +312,8 @@ class BaseOptimizer:
         run = wandb.init(project=project, config=config, reinit=True, entity="mol_opt")
         wandb.run.name = self.model_name + "_" + oracle.name + "_" + wandb.run.id
         np.random.seed(seed)
+        torch.manual_seed(seed)
+        random.seed(seed)
         self._optimize(oracle, config)
         if self.args.log_results:
             self.log_result()

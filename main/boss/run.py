@@ -83,7 +83,7 @@ class BOSS_Optimizer(BaseOptimizer):
             bayesopt_loop_ssk.iteration_end_event.append(summary)
 
 
-            # run BO loop for 35 steps 
+            # run BO loop
             stopping_condition = FixedIterationsStoppingCondition(i_max = config['batch_size'] - config['initial_points_count_single_batch']) 
             bayesopt_loop_ssk.run_loop(objective, stopping_condition)
 
@@ -111,5 +111,3 @@ class BOSS_Optimizer(BaseOptimizer):
             if self.finish:
                 print('max oracle hit, abort ...... ')
                 break 
-
-
