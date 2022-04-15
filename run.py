@@ -112,7 +112,9 @@ def main():
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 
-        
+    elif args.method == 'ORGAN':
+        from main.ORGAN.run import ORGAN_Optimizer 
+        Optimizer = ORGAN_Optimizer 
     elif args.method == 'REINVENT':
         from main.REINVENT.run import REINVENToptimizer
         Optimizer = REINVENToptimizer
