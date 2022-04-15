@@ -105,18 +105,18 @@ def load_smiles_from_file(smiles_path, rm_invalid=True, rm_duplicates=True, max_
         valid_mask: list of len(smiles_list) - a boolean mask vector indicating if each index maps to a valid smiles
     """
     smiles_list = open(smiles_path).readlines()
-    return load_smiles_from_list(smiles_list, rm_invalid=rm_invalid, rm_duplicates=rm_duplicates, max_len=max_len)
+    return load_selfies_from_list(smiles_list, rm_invalid=rm_invalid, rm_duplicates=rm_duplicates, max_len=max_len)
 
 
-def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_len=500):
+def load_selfies_from_list(selfies_list, rm_invalid=True, rm_duplicates=True, max_len=500):
     """
-    Given a list of SMILES strings, provides a zero padded NumPy array
+    Given a list of SELFIES strings, provides a zero padded NumPy array
     with their index representation. Sequences longer than `max_len` are
     discarded. The final array will have dimension (all_valid_smiles, max_len+2)
     as a beginning and end of sequence tokens are added to each string.
 
     Args:
-        smiles_list: a list of SMILES strings
+        smiles_list: a list of SELFIES strings
         rm_invalid: bool if True remove invalid smiles from final output. Note that if True the length of the output
           does not
           equal the size of the input  `smiles_list`. Default True
@@ -132,9 +132,8 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
 
     # filter valid smiles strings
     valid_smiles = []
-    valid_mask = [False] * len(smiles_list)
-    # print('smiles_list', smiles_list)
-    for i, s in enumerate(smiles_list):
+    valid_mask = [False] * len(selfies_list)
+    for i, s in enumerate(selfies_list):
         s = s.strip()
         if sd.allowed(s) and len(s) <= max_len:
             valid_smiles.append(s)
@@ -142,8 +141,6 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
         else:
             if not rm_invalid:
                 valid_smiles.append('[C]')  # default placeholder
-
-    # print('valid_smiles', valid_smiles)
 
     if rm_duplicates:
         unique_smiles = remove_duplicates(valid_smiles)
@@ -157,7 +154,6 @@ def load_smiles_from_list(smiles_list, rm_invalid=True, rm_duplicates=True, max_
     sequences = np.zeros((len(unique_smiles), max_seq_len), dtype=np.int32)
 
     for i, mol in enumerate(unique_smiles):
-        # print('---- load_smiles_from_list', mol, selfies2smiles(mol))
         enc_smi = [sd.BEGIN] + sd.encode(mol) + [sd.END]
         # print(enc_smi)
         for c in range(len(enc_smi)):

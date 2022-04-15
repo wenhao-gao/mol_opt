@@ -5,6 +5,6 @@ metric:
   name: avg_auc
 parameters:
   initial_points_count_single_batch: 
-    values: [10, 15, 20, 25, 30]
+    values: [10, 15, 20]
   batch_size: 
-    value: 50
+    value: 25

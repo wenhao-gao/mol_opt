@@ -70,9 +70,15 @@ class SMILES_LSTM_HC_Optimizer(BaseOptimizer):
 
         while True:
 
-            samples = generator.sampler.sample(generator.model, config['mols_to_sample'], max_seq_len=generator.max_len)
+            if len(self.oracle) > 50:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:50]]
+            else:
+                old_scores = 0
 
             print(f"Sampling new molecules ...")
+            samples = generator.sampler.sample(generator.model, config['mols_to_sample'], max_seq_len=generator.max_len)
+
             canonicalized_samples = set(canonicalize_list(samples, include_stereocenters=True))
             payload = list(canonicalized_samples.difference(seen))
             payload.sort()  # necessary for reproducibility between different runs
@@ -108,6 +114,18 @@ class SMILES_LSTM_HC_Optimizer(BaseOptimizer):
                                  print_every=print_every,
                                  valid_every=print_every)
                 
+            # early stopping
+            if len(self.oracle) > 50:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:50]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        break
+                else:
+                    patience = 0
+
             if self.finish:
                 break
 
