@@ -93,8 +93,8 @@ def main():
         from main.selfies_vae.run import selfies_VAEBO_optimizer 
         Optimizer = selfies_VAEBO_optimizer 
     elif args.method == "smiles_vae":
-        from main.smiles_vae.run import smiles_VAEBO_optimizer 
-        Optimizer = smiles_VAEBO_optimizer 
+        from main.smiles_vae.run import SMILES_VAEBO_optimizer 
+        Optimizer = SMILES_VAEBO_optimizer 
     elif args.method == 'JTVAE':
         from main.JTVAE.run import JTVAEBOoptimizer
         Optimizer = JTVAEBOoptimizer 
@@ -137,6 +137,8 @@ def main():
         args.pickle_directory = path_main
 
     for oracle_name in args.oracles:
+
+        print(f'Optimizing oracle function: {oracle_name}')
 
         try:
             config_default = yaml.safe_load(open(args.config_default))
