@@ -89,9 +89,9 @@ def main():
         from main.gpbo.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 
 
-    elif args.method == "selfies_VAE":
-        from main.selfies_vae.run import selfies_VAEBO_optimizer 
-        Optimizer = selfies_VAEBO_optimizer 
+    elif args.method == "selfies_vae":
+        from main.selfies_vae.run import SELFIES_VAEBO_optimizer 
+        Optimizer = SELFIES_VAEBO_optimizer 
     elif args.method == "smiles_vae":
         from main.smiles_vae.run import SMILES_VAEBO_optimizer 
         Optimizer = SMILES_VAEBO_optimizer 
