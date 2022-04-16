@@ -1,4 +1,4 @@
-name: vae
+name: smiles_vae
 method: grid
 metric:
   goal: maximize
