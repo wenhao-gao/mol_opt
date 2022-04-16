@@ -36,7 +36,7 @@ def main():
     parser.add_argument('--oracles', nargs="+", default=["QED"])
     parser.add_argument('--log_results', action='store_true')
     parser.add_argument('--log_code', action='store_true')
-    parser.add_argument('--wandb', type=str, default="offline", choices=["online", "offline", "disabled"])
+    parser.add_argument('--wandb', type=str, default="disabled", choices=["online", "offline", "disabled"])
     args = parser.parse_args()
 
     os.environ["WANDB_MODE"] = args.wandb
@@ -89,9 +89,9 @@ def main():
         from main.gpbo.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 
 
-    elif args.method == "selfies_VAE":
-        from main.selfies_vae.run import selfies_VAEBO_optimizer 
-        Optimizer = selfies_VAEBO_optimizer 
+    elif args.method == "selfies_vae":
+        from main.selfies_vae.run import SELFIES_VAEBO_optimizer 
+        Optimizer = SELFIES_VAEBO_optimizer 
     elif args.method == "smiles_vae":
         from main.smiles_vae.run import SMILES_VAEBO_optimizer 
         Optimizer = SMILES_VAEBO_optimizer 
