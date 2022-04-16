@@ -1,3 +1,2 @@
-iter_num: 200 
 save_model: './main/smiles_vae/checkpoint/smiles_vae_model_080.pt'
 train_num: 100
