@@ -12,4 +12,3 @@ CUDA_VISIBLE_DEVICES= nohup python -u main/${METHOD}/run.py \
     --task production \
     --n_runs 5 \
     --oracles ${OBJ} &> ${METHOD}_${OBJ}.out&
-

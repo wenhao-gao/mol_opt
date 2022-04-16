@@ -1,9 +1,8 @@
-import os, pickle, torch, random, argparse
-import numpy as np 
-from tqdm import tqdm 
+import os, torch
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
+sys.path.append(".")
 from main.optimizer import BaseOptimizer
 
 from botorch.models import SingleTaskGP

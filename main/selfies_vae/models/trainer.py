@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from torch.utils.data import DataLoader
-from utils.smiles_data_utils import set_torch_seed_to_all_gens
+from utils.selfies_data_utils import set_torch_seed_to_all_gens
 
 
 class Trainer(ABC):
