@@ -4,7 +4,7 @@ export PYTHONPATH=`pwd`
 
 ulimit -n 4096
 
-METHOD='graph_ga'
+METHOD='DST'
 OBJ='zaleplon_mpo'
 # OBJ='ranolazine_mpo'
 
