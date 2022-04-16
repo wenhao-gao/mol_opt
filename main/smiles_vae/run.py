@@ -4,7 +4,6 @@ from random import shuffle, choice
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
-from ipdb import set_trace
 from main.optimizer import BaseOptimizer
 
 from botorch.models import SingleTaskGP
@@ -64,7 +63,6 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 				z, acq_value = optimize_acqf(
 					UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
 				)
-				# set_trace()
 
 				new_smiles = vae_model.decoder_z(z)
 				new_score = self.oracle(new_smiles)
