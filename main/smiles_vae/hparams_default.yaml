@@ -1,2 +1,4 @@
 save_model: './main/smiles_vae/checkpoint/smiles_vae_model_080.pt'
+save_model_jt_vae: 'main/JTVAE/fast_molvae/vae_model/model.iter-5000'
 train_num: 100
+bo_batch: 10

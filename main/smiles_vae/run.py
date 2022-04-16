@@ -4,7 +4,7 @@ from random import shuffle, choice
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
-# sys.path.append('.')
+from ipdb import set_trace
 from main.optimizer import BaseOptimizer
 
 from botorch.models import SingleTaskGP
@@ -25,7 +25,6 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 		self.oracle.assign_evaluator(oracle)
 
 		## 0. load vae model & get training data
-		# import ipdb; ipdb.set_trace()
 		vae_model = torch.load(config['save_model'])
 		smiles_lst = self.all_smiles
 		shuffle(smiles_lst)
@@ -35,11 +34,9 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 		for smiles in train_smiles_lst:
 			x = vae_model.string2tensor(smiles)
 			x = x.unsqueeze(0)
-			z, _ = vae_model.forward_encoder(x) ### z: (1,d)
-			# reconstruct_smiles = vae_model.decoder_z(z)
+			z, _ = vae_model.forward_encoder(x) 
 			train_X.append(z)
 		train_X = torch.cat(train_X, dim=0)
-		# train_X = torch.FloatTensor(train_X)
 		train_X = train_X.detach()
 		train_Y = torch.FloatTensor(y).view(-1,1)
 
@@ -54,7 +51,6 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 				old_scores = 0
 
 			# 1. Fit a Gaussian Process model to data
-			# print(torch.min(train_Y), torch.max(train_Y))
 			gp = SingleTaskGP(train_X, train_Y)
 			mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 			fit_gpytorch_model(mll)
@@ -63,25 +59,26 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 			UCB = UpperConfidenceBound(gp, beta=0.1) 
 
 			# 3. Optimize the acquisition function 
-			bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
-			z, acq_value = optimize_acqf(
-				UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
-			)
-			# print(candidate.shape, acq_value.shape)
+			for _ in range(config['bo_batch']):
+				bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
+				z, acq_value = optimize_acqf(
+					UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+				)
+				# set_trace()
 
-			new_smiles = vae_model.decoder_z(z)
-			new_score = self.oracle(new_smiles)
-			if new_score == 0:
-				new_smiles = choice(smiles_lst)
-				new_score = self.oracle(new_smiles)				
+				new_smiles = vae_model.decoder_z(z)
+				new_score = self.oracle(new_smiles)
+				if new_score == 0:
+					new_smiles = choice(smiles_lst)
+					new_score = self.oracle(new_smiles)				
 
-			new_score = torch.FloatTensor([new_score]).view(-1,1)
+				new_score = torch.FloatTensor([new_score]).view(-1,1)
 
-			train_X = torch.cat([train_X, z], dim = 0)
-			train_Y = torch.cat([train_Y, new_score], dim = 0)
-			if train_X.shape[0] > 100:
-				train_X = train_X[-config['train_num']:]
-				train_Y = train_Y[-config['train_num']:]
+				train_X = torch.cat([train_X, z], dim = 0)
+				train_Y = torch.cat([train_Y, new_score], dim = 0)
+				if train_X.shape[0] > 100:
+					train_X = train_X[-config['train_num']:]
+					train_Y = train_Y[-config['train_num']:]
 
 			# early stopping
 			if len(self.oracle) > 100:
@@ -89,7 +86,7 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 				new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
 				if new_scores == old_scores:
 					patience += 1
-					if patience >= self.args.patience:
+					if patience >= self.args.patience * 100:
 						self.log_intermediate(finish=True)
 						print('convergence criteria met, abort ...... ')
 						break
