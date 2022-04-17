@@ -1,4 +1,4 @@
-name: graph_ga
+name: gflownet
 method: random
 metric:
   goal: maximize

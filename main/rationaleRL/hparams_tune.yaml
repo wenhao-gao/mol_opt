@@ -1,4 +1,4 @@
-name: DST
+name: rationaleRL
 method: random
 metric:
   goal: maximize
