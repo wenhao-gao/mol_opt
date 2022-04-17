@@ -1,6 +1,5 @@
-population_size: 50
-max_generations: 50
-max_n_oracles: 10000
-lamb: 2
-topk: 5
-epsilon: 0.7
+epochs: 5
+z_dim: 8
+save_every: 1
+batch_dim: 128
+dropout: 0

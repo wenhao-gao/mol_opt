@@ -28,20 +28,15 @@ from optimizers.gan import GraphGANOptimizer
 from rdkit import Chem
 
 
-batch_dim = 128
-la = 1
-dropout = 0
-n_critic = 5
-metric = 'validity,sas'
-n_samples = 5000
-z_dim = 8
-epochs = 2
-save_every = 1 # May lead to errors if left as None
+# batch_dim = 128
+# dropout = 0
+# n_critic = 5
+# metric = 'validity,sas'
+# z_dim = 8
+# epochs = 2
+# save_every = 1 # May lead to errors if left as None
 
-data = SparseMolecularDataset()
-data.load(os.path.join(path_here, 'data/gdb9_9nodes.sparsedataset'))
 
-steps = (len(data) // batch_dim)
 
 
 class MolGAN_Optimizer(BaseOptimizer):
@@ -52,6 +47,13 @@ class MolGAN_Optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
+
+        data = SparseMolecularDataset()
+        data.load(os.path.join(path_here, 'data/gdb9_9nodes.sparsedataset'))
+        steps = (len(data) // config['batch_dim'])
+        n_samples = 5000
+        la = 1
+
 
         def reward(mols):
             smiles_list = [Chem.MolToSmiles(mol) if mol is not None else 'CCC' for mol in mols] 
@@ -89,7 +91,7 @@ class MolGAN_Optimizer(BaseOptimizer):
                                  model.rewardR: rewardR,
                                  model.rewardF: rewardF,
                                  model.training: True,
-                                 model.dropout_rate: dropout,
+                                 model.dropout_rate: config['dropout'],
                                  optimizer.la: la if epoch > 0 else 1.0}
 
                 else:
@@ -97,14 +99,14 @@ class MolGAN_Optimizer(BaseOptimizer):
                                  model.nodes_labels: x,
                                  model.embeddings: embeddings,
                                  model.training: True,
-                                 model.dropout_rate: dropout,
+                                 model.dropout_rate: config['dropout'],
                                  optimizer.la: la if epoch > 0 else 1.0}
             else:
                 feed_dict = {model.edges_labels: a,
                              model.nodes_labels: x,
                              model.embeddings: embeddings,
                              model.training: True,
-                             model.dropout_rate: dropout,
+                             model.dropout_rate: config['dropout'],
                              optimizer.la: 1.0}
 
             return feed_dict
@@ -166,10 +168,6 @@ class MolGAN_Optimizer(BaseOptimizer):
             return feed_dict
 
 
-
-
-
-
         def _eval_update(i, epochs, min_epochs, model, optimizer, batch_dim, eval_batch):
             mols = samples(data, model, session, model.sample_z(n_samples), sample=True)
             m0, m1 = all_scores(mols, data, norm=True)
@@ -186,7 +184,7 @@ class MolGAN_Optimizer(BaseOptimizer):
             return m0
 
 
-        model = GraphGANModel(data.vertexes, data.bond_num_types, data.atom_num_types, z_dim,
+        model = GraphGANModel(data.vertexes, data.bond_num_types, data.atom_num_types, config['z_dim'],
                               decoder_units=(128, 256, 512), discriminator_units=((128, 64), 128, (128, 64)),
                               decoder=decoder_adj, discriminator=encoder_rgcn,
                               soft_gumbel_softmax=False, hard_gumbel_softmax=False, batch_discriminator=False)
@@ -198,8 +196,8 @@ class MolGAN_Optimizer(BaseOptimizer):
 
 
 
-        trainer.train(batch_dim=batch_dim,
-                      epochs=epochs,
+        trainer.train(batch_dim=config['batch_dim'],
+                      epochs=config['epochs'],
                       steps=steps,
                       train_fetch_dict=train_fetch_dict,
                       train_feed_dict=train_feed_dict,
@@ -207,7 +205,7 @@ class MolGAN_Optimizer(BaseOptimizer):
                       eval_feed_dict=eval_feed_dict,
                       test_fetch_dict=test_fetch_dict,
                       test_feed_dict=test_feed_dict,
-                      save_every=save_every,
+                      save_every=config['save_every'],
                       directory='save', # here users need to first create and then specify a folder where to save the model
                       _eval_update=_eval_update,
                       _test_update=_test_update)
