@@ -29,11 +29,11 @@ def main():
     parser.add_argument('--n_jobs', type=int, default=-1)
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
+    parser.add_argument('--max_oracle_calls', type=int, default=10000)
     parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
+    parser.add_argument('--oracles', nargs="+", default=["QED"]) ### 
     parser.add_argument('--log_results', action='store_true')
     parser.add_argument('--log_code', action='store_true')
     parser.add_argument('--wandb', type=str, default="disabled", choices=["online", "offline", "disabled"])
@@ -112,9 +112,15 @@ def main():
     elif args.method == 'MolGAN':
         from main.MolGAN.run import MolGAN_Optimizer 
         Optimizer = MolGAN_Optimizer 
+    elif args.method == 'MolDQN':
+        from main.MolDQN.run import MolDQNoptimizer
+        Optimizer = MolDQNoptimizer 
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 
+    elif args.method == 'Pasithea':
+        from main.Pasithea.run import Pasithea_optimizer
+        Optimizer = Pasithea_optimizer 
     elif args.method == 'REINVENT':
         from main.REINVENT.run import REINVENToptimizer
         Optimizer = REINVENToptimizer
