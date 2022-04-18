@@ -164,7 +164,7 @@ def preprocess(num_mol, file_name, oracle):
 
     smiles_list = read_smiles(file_name)
     shuffle(smiles_list)
-    process_num = int(max_oracle_num * 0.3)
+    process_num = int(max_oracle_num * 0.03)
     smiles_list = smiles_list[:process_num]
 
     selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len \

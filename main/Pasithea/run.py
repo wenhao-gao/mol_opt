@@ -589,6 +589,7 @@ class Pasithea_optimizer(BaseOptimizer):
               model, train_time, upperbound_dr, data_dream,
               prop_dream, prop, lr_train, lr_dream, num_train,
               num_dream, dreaming_parameters)
+        print('-----', len(self.oracle))
 
 
 
