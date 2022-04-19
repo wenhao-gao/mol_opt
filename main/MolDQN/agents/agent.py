@@ -191,6 +191,7 @@ class DQN(object):
 
             oracle_num = self.env.called_oracle_number()
             if self.oracle.finish:
+                print('max oracle hit... abort!')
                 return
 
             # Save checkpoint

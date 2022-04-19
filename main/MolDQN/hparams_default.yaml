@@ -9,7 +9,7 @@ allowed_ring_sizes: [5, 6]
 fingerprint_radius: 2
 fingerprint_length: 1024
 discount_factor: 0.9
-num_episodes: 20
+num_episodes: 200000
 replay_buffer_size: 500
 batch_size: 32
 double_q: True
