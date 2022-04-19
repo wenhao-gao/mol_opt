@@ -502,7 +502,7 @@ class Pasithea_optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "dst"
+        self.model_name = "pasithea"
 
     def _optimize(self, oracle, config):
 
