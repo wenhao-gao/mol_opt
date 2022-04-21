@@ -20,5 +20,3 @@ parameters:
     distribution: uniform
     min: 1
     max: 5
-  n_search: 
-    value: 10000
