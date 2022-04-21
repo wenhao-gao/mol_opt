@@ -4,4 +4,4 @@ optimize_batch_size: 256
 pretrain_n_epochs: 0
 mols_to_sample: 1024
 keep_top: 512
-max_len: 100 
+max_len: 1000 

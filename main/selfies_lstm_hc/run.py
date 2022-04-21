@@ -125,6 +125,7 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
             print_every = int(len(sub_train) / opt_batch_size)
 
             print(f"Tuning LSTM ...")
+            import ipdb; ipdb.set_trace()
             if config['optimize_n_epochs'] > 0:
                 generator.trainer.fit(train_set, valid_set,
                                  n_epochs=config['optimize_n_epochs'],
