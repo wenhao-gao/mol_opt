@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-model="graph_mcts"
+model="selfies_ga"
 
 nohup python -u run.py ${model} \
     --n_jobs 16 --task tune --n_runs 30 --wandb online \

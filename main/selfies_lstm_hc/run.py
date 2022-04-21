@@ -95,6 +95,8 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
             selfi2smile = {selfie:smile for selfie, smile in zip(selfies, smiles)}
             smile2selfi = {smile:selfie for selfie, smile in zip(selfies, smiles)}
 
+            # import ipdb; ipdb.set_trace()
+
             canonicalized_samples = set(canonicalize_list(smiles, include_stereocenters=True))
             payload = list(canonicalized_samples)
             payload.sort()  # necessary for reproducibility between different runs

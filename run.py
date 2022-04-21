@@ -143,19 +143,11 @@ def main():
             except:
                 config_default = yaml.safe_load(open(os.path.join(path_main, args.config_default)))
 
-            # if args.task == "tune":
-            #     try:
-            #         config_tune = yaml.safe_load(open(args.config_tune))
-            #     except:
-            #         config_tune = yaml.safe_load(open(os.path.join(path_main, args.config_tune)))
-
             oracle = Oracle(name = oracle_name)
             optimizer = Optimizer(args=args)
 
             if args.task == "simple":
                 optimizer.optimize(oracle=oracle, config=config_default)
-            # elif args.task == "tune":
-            #     optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
             elif args.task == "production":
                 optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
             else:
