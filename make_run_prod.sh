@@ -1,7 +1,8 @@
 #!/bin/bash
 
-methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
-         'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo')
+# methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
+#          'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo')
+methods=('smiles_vae' 'selfies_vae')
 
 for method in "${methods[@]}"
 do
@@ -16,7 +17,7 @@ oracle_array=('drd2' 'qed' 'jnk3' 'gsk3b' 'celecoxib_rediscovery' \\
 
 for oralce in "\${oracle_array[@]}"
 do
-python -u run.py ${method} --task production --n_runs 5 --n_jobs 8 --max_oracle_calls 10000 --oracles \${oralce}
+python -u run.py ${method} --task production --n_runs 5 --n_jobs 8 --wandb offline --max_oracle_calls 10000 --oracles \${oralce}
 done" > production_$method.sh
 
 #     if [[ ${method} = 'molpal' ]]
