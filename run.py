@@ -7,9 +7,10 @@ import sys
 sys.path.append(os.path.realpath(__file__))
 import numpy as np
 from tdc import Oracle
-
+from time import time 
 
 def main():
+    start_time = time() 
     parser = argparse.ArgumentParser()
     parser.add_argument('method', default='graph_ga')
     parser.add_argument('--smi_file', default=None)
@@ -174,6 +175,9 @@ def main():
 
     else:
         raise ValueError('Unrecognized task name, task should be in one of simple, tune and production.')
+    end_time = time()
+    hours = (end_time - start_time) / 3600.0
+    print('---- The whole process takes %.2f hours ----' % (hours))
 
 
 if __name__ == "__main__":
