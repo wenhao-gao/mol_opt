@@ -261,6 +261,8 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
         while True:
 
             # UCB Tree Search
+            if self.finish:
+                break
             tmp_seed = int(time())
             np.random.seed(tmp_seed)
             best_state = None
@@ -274,65 +276,11 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
 
             for _ in range(int(config["num_sims"])):
                 front = tree_policy(root_node, exploration_coefficient=config["exploration_coefficient"])
-                if self.oracle.finish:
+                if self.finish:
                     break
                 for child in front.children:
                     reward, best_state = default_policy(child.state, best_state)
                     backup(child, reward)
-                    if self.oracle.finish:
+                    if self.finish:
                         break
 
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--pickle_directory', help='Directory containing pickle files with the distribution statistics', default=None)
-    parser.add_argument('--n_jobs', type=int, default=16)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=10000)
-    parser.add_argument('--freq_log', type=int, default=100)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
-
-    path_here = os.path.dirname(os.path.realpath(__file__))
-
-    if args.pickle_directory is None:
-        args.pickle_directory = path_here
-    
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
-
-        oracle = Oracle(name = oracle_name)
-        optimizer = Graph_MCTS_Optimizer(args=args)
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-    main()

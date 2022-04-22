@@ -1,6 +1,7 @@
 import os, pickle, torch
 import numpy as np 
 from random import shuffle, choice  
+from tdc.chem_utils.oracle.oracle import smiles_to_rdkit_mol
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
@@ -60,12 +61,18 @@ class SMILES_VAEBO_optimizer(BaseOptimizer):
 			# 3. Optimize the acquisition function 
 			for _ in range(config['bo_batch']):
 				bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
-				z, acq_value = optimize_acqf(
+				z, _ = optimize_acqf(
 					UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
 				)
 
 				new_smiles = vae_model.decoder_z(z)
-				new_score = self.oracle(new_smiles)
+				mol = smiles_to_rdkit_mol(new_smiles)
+				
+				if mol is None:
+					new_score = 0
+				else:
+					new_score = self.oracle(new_smiles)
+
 				if new_score == 0:
 					new_smiles = choice(smiles_lst)
 					new_score = self.oracle(new_smiles)				
