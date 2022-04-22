@@ -18,8 +18,8 @@ parameters:
     max: 3000
   bo_batch_size:
     distribution: int_uniform
-    min: 20
-    max: 100
+    min: 500
+    max: 1500
   ga_max_generations:
     distribution: int_uniform
     min: 25
