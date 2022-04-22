@@ -22,6 +22,7 @@ with open(os.path.join(path_here,'Voc'), 'r') as fin:
     word_list = fin.readlines() 
 vocab_list = [word.strip() for word in word_list]
 
+import selfies as sf 
 
 @total_ordering
 class OptResult:
@@ -91,13 +92,16 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
                 old_scores = 0
 
             print(f"Sampling new molecules ...")
-            selfies, smiles = generator.sampler.sample(generator.model, config['mols_to_sample'], max_seq_len=generator.max_len)
-            selfi2smile = {selfie:smile for selfie, smile in zip(selfies, smiles)}
-            smile2selfi = {smile:selfie for selfie, smile in zip(selfies, smiles)}
+            selfies_list, smiles_list = generator.sampler.sample(generator.model, config['mols_to_sample'], max_seq_len=generator.max_len)
+            # smiles_list = canonicalize_list(smiles_list, include_stereocenters=True)
+            # selfies_list = [sf.encoder(smi) for smi in smiles_list]
+
+            selfi2smile = {selfie:smile for selfie, smile in zip(selfies_list, smiles_list)}
+            smile2selfi = {smile:selfie for selfie, smile in zip(selfies_list, smiles_list)}
 
             # import ipdb; ipdb.set_trace()
 
-            canonicalized_samples = set(canonicalize_list(smiles, include_stereocenters=True))
+            canonicalized_samples = set(canonicalize_list(smiles_list, include_stereocenters=True))
             payload = list(canonicalized_samples)
             payload.sort()  # necessary for reproducibility between different runs
             payload_selfies = [smile2selfi[smile] for smile in payload if smile in smile2selfi]
