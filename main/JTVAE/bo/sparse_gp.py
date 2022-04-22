@@ -240,14 +240,14 @@ class SparseGP:
                 current_energy = process_minibatch_adam(minibatch_data_means, minibatch_data_vars, minibatch_targets)
                 elapsed_time = time.time() - start
 
-                print('Epoch: {}, Mini-batch: {} of {} - Energy: {} Time: {}'.format(j, i, n_batches, current_energy, elapsed_time))
+                # print('Epoch: {}, Mini-batch: {} of {} - Energy: {} Time: {}'.format(j, i, n_batches, current_energy, elapsed_time))
                 sys.stdout.flush()
 
             pred, uncert = self.predict(input_means_test, input_vars_test)
             test_error = np.sqrt(np.mean((pred - test_targets)**2))
             test_ll = np.mean(sps.norm.logpdf(pred - test_targets, scale = np.sqrt(uncert)))
 
-            print('Test error: {} Test ll: {}'.format(test_error, test_ll))
+            # print('Test error: {} Test ll: {}'.format(test_error, test_ll))
             sys.stdout.flush()
         
             pred = np.zeros((0, 1))
@@ -262,7 +262,7 @@ class SparseGP:
             training_error = np.sqrt(np.mean((pred - training_targets)**2))
             training_ll = np.mean(sps.norm.logpdf(pred - training_targets, scale = np.sqrt(uncert)))
      
-            print('Train error: {} Train ll: {}'.format(training_error, training_ll))
+            # print('Train error: {} Train ll: {}'.format(training_error, training_ll))
             sys.stdout.flush()
 
     def get_incumbent(self, grid, lower, upper):
@@ -293,7 +293,7 @@ class SparseGP:
 
         self.setForPrediction()
 
-        grid_size = 10000
+        grid_size = 100
         grid = casting(lower + np.random.rand(grid_size, self.d_input) * (upper - lower))
 
         incumbent = self.get_incumbent(grid, lower, upper)
@@ -318,7 +318,7 @@ class SparseGP:
             randomness_numpy = casting(0 * np.random.randn(X_numpy.shape[ 0 ], n_samples).astype(theano.config.floatX))
             X.set_value(X_numpy)
             randomness.set_value(randomness_numpy)
-            print(i, X_numpy)
+            # print(i, X_numpy)
 
         m, v = self.predict(X_numpy, 0 * X_numpy)
     
