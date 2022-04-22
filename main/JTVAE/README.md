@@ -39,6 +39,11 @@ python vae_train.py --train moses-processed --vocab ../data/moses/vocab.txt --sa
 
 Users can start from BO for efficiency. 
 
+```bash
+source activate molopt 
+```
+
+
 ```bash 
 cd JTVAE/bo
 export PYTHONPATH=/project/molecular_data/graphnn/mol_opt/main/JTVAE/ 
@@ -51,8 +56,7 @@ python preprocess.py
 
 ```bash 
 mkdir results
-python bo.py --vocab ../data/moses/vocab.txt --save_dir results --data ../data/moses/train_validity_5k.txt \
---hidden 450 --latent 56 --model ../fast_molvae/vae_model/model.iter-5000
+python bo.py --vocab ../data/moses/vocab.txt --save_dir results --data ../data/moses/train_validity_5k.txt --hidden 450 --latent 56 --model ../fast_molvae/vae_model/model.iter-5000
 ```
 
 

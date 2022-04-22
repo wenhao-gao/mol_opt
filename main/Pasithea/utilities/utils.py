@@ -34,19 +34,25 @@ def closefig():
     plt.clf()
     plt.close()
 
+class A:
+    def __init__(self):
+        A.device = torch.device('cpu:0') 
+
+
 def use_gpu():
     """Connects training to gpu resources via args."""
 
     # if the system supports CUDA, utilize it for faster computation.
-    parser = argparse.ArgumentParser(description='Set device')
-    parser.add_argument('--disable-cuda', action='store_false',
-                        help='Disable CUDA')
-    args = parser.parse_args()
-    args.device = None
+    # parser = argparse.ArgumentParser(description='Set device')
+    # # parser.add_argument('--disable-cuda', action='store_false',
+    # #                     help='Disable CUDA')
+    # parser.add_argument('method', default='graph_ga')
+    # args = parser.parse_args()
+    # args.device = None
+    # if torch.cuda.is_available():
+    #     args.device = torch.device('cuda:0')
+    # else:
 
-    if not args.disable_cuda and torch.cuda.is_available():
-        args.device = torch.device('cuda:0')
-    else:
-        args.device = torch.device('cpu:0')
-
+    # args.device = torch.device('cpu:0')
+    args = A() ##### i simplify it, so other parser would not cause error. cpu is enough for pasithea. 
     return args

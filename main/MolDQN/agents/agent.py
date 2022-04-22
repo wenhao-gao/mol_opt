@@ -191,7 +191,10 @@ class DQN(object):
 
             oracle_num = self.env.called_oracle_number()
             if self.oracle.finish:
-                return
+                print('max oracle hit... abort!')
+                return 
+            else:
+                print('--- costed oracle number:', len(self.oracle))
 
             # Save checkpoint
             if episode % self.save_frequency == 0:
@@ -216,6 +219,10 @@ class DQN(object):
 
         episode_start_time = time.time()
         epsilon = self.exploration.value(episode)
+        if epsilon > 0.6:
+            epsilon = 0.6 
+        if epsilon < 0.4:
+            epsilon = 0.4 
 
         state_mol, state_step = self.env.reset()
         head = np.random.randint(self.num_bootstrap_heads)
@@ -515,6 +522,8 @@ class DQN(object):
         :return: One of the next state
         """
 
+        #### with prob 1-epsilon: Q-net
+        #### with prob epsilon: random 
         if random.random() > epsilon:
 
             steps_left = self.max_steps_per_episode - self.env.num_steps_taken
@@ -533,6 +542,7 @@ class DQN(object):
             action = observation[q_value.argmax().item()]
 
         else:
+            #### random 
             action_space_n = len(observation)
             rand_num = random.randrange(action_space_n)
             action = observation[rand_num]

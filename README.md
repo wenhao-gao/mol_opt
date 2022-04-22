@@ -213,11 +213,11 @@ There are three types of runs defined in our code base:
 
 ```bash
 ## run a single test run on qed with wandb logging online
-python run.py MODEL_NAME --wandb_mode online
+python run.py MODEL_NAME --wandb online
 ## run 5 runs with differetn random seeds on multuple oracles with wandb logging offline
 python run.py MODEL_NAME --task production --n_runs 5 --oracles qed jnk3 drd2 
 ## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
-python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb_mode disabled --other_args XX 
+python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
 ```
 
 One can use argparse help to check the detail description of the arguments.
@@ -231,4 +231,4 @@ The default mode for wandb logging is `offline` for the speed and memory reasons
 wandb sync PATH_TO/wandb/offline-run-20220406_182133-xxxxxxxx
 ```
 
-To watch the results in time, one could turn the mode to `online` by flag `wandb_mode`. To stop wandb logging, one could turn the mode to `disabled` by flag `wandb_mode`.
+To watch the results in time, one could turn the mode to `online` by flag `wandb`. To stop wandb logging, one could turn the mode to `disabled` by flag `wandb`.

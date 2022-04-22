@@ -153,11 +153,27 @@ def load_selfies_from_list(selfies_list, rm_invalid=True, rm_duplicates=True, ma
     # allocate the zero matrix to be filled
     sequences = np.zeros((len(unique_smiles), max_seq_len), dtype=np.int32)
 
+    #### [C] default feature vector for outlier 
+    mol = '[C]' 
+    enc_smi = [sd.BEGIN] + sd.encode(mol) + [sd.END]
+    default_feature = np.zeros((1, max_seq_len), dtype=np.int32)
+    for c in range(len(enc_smi)):
+        default_feature[0,c] = sd.char_idx[enc_smi[c]]
+
+
     for i, mol in enumerate(unique_smiles):
         enc_smi = [sd.BEGIN] + sd.encode(mol) + [sd.END]
-        # print(enc_smi)
+        # print(mol, enc_smi)
+        flag = True 
         for c in range(len(enc_smi)):
-            sequences[i, c] = sd.char_idx[enc_smi[c]]
+            if enc_smi[c] in sd.char_idx: 
+                sequences[i,c] = sd.char_idx[enc_smi[c]]
+            else:
+                flag = False  
+                break  
+            # sequences[i, c] = sd.char_idx[enc_smi[c]]
+        if not flag:
+            sequences[i,:] = default_feature
 
     return sequences, valid_mask
 

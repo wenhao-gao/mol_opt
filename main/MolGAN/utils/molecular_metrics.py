@@ -7,9 +7,13 @@ from rdkit.Chem import Crippen
 
 import math
 import numpy as np
+import os 
+path_here = os.path.dirname(os.path.realpath(__file__))
+main_path = os.sep.join(path_here.split(os.sep)[:-1])
+# sys.path.append(path_here)
 
-NP_model = pickle.load(gzip.open('data/NP_score.pkl.gz'))
-SA_model = {i[j]: float(i[0]) for i in pickle.load(gzip.open('data/SA_score.pkl.gz')) for j in range(1, len(i))}
+NP_model = pickle.load(gzip.open(os.path.join(main_path, 'data/NP_score.pkl.gz')))
+SA_model = {i[j]: float(i[0]) for i in pickle.load(gzip.open(os.path.join(main_path, 'data/SA_score.pkl.gz'))) for j in range(1, len(i))}
 
 
 class MolecularMetrics(object):

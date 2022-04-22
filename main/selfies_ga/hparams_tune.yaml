@@ -1,15 +1,11 @@
 name: selfies_ga
-method: bayes
+method: grid
 metric:
   goal: maximize
   name: avg_auc
 parameters:
   generation_size: 
-    distribution: int_uniform
-    min: 300
-    max: 700
+    values: [100, 300, 500, 700]
   beta: 
-    distribution: int_uniform
-    min: 0
-    max: 20
+    values: [0, 1, 2, 5, 10, 20]
 

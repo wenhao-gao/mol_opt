@@ -286,23 +286,27 @@ class BaseOptimizer:
     def _optimize(self, oracle, config):
         raise NotImplementedError
             
-    def hparam_tune(self, oracle, hparam_space, hparam_default, count=5, num_runs=3, project="tune"):
+    def hparam_tune(self, oracles, hparam_space, hparam_default, count=5, num_runs=3, project="tune"):
         seeds = [0, 1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
         seeds = seeds[:num_runs]
-        hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
+        hparam_space["name"] = hparam_space["name"]
+        # hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
         
         def _func():
             with wandb.init(config=hparam_default) as run:
-                auc_top10s = []
-                for seed in seeds:
-                    np.random.seed(seed)
-                    torch.manual_seed(seed)
-                    random.seed(seed)
-                    config = wandb.config
-                    self._optimize(oracle, config)
-                    auc_top10s.append(top_auc(self.oracle.mol_buffer, 10, True, self.oracle.freq_log, self.oracle.max_oracle_calls))
-                    self.reset()
-                wandb.log({"avg_auc": np.mean(auc_top10s)})
+                avg_auc = 0
+                for oracle in oracles:
+                    auc_top10s = []
+                    for seed in seeds:
+                        np.random.seed(seed)
+                        torch.manual_seed(seed)
+                        random.seed(seed)
+                        config = wandb.config
+                        self._optimize(oracle, config)
+                        auc_top10s.append(top_auc(self.oracle.mol_buffer, 10, True, self.oracle.freq_log, self.oracle.max_oracle_calls))
+                        self.reset()
+                    avg_auc += np.mean(auc_top10s)
+                wandb.log({"avg_auc": avg_auc})
             
         sweep_id = wandb.sweep(hparam_space)
         # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)

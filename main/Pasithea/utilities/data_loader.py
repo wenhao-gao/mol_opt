@@ -8,7 +8,7 @@ import pandas as pd
 import os
 from utilities import utils
 from utilities import mol_utils
-
+from random import shuffle 
 
 def get_largest_selfie_len(smiles_list):
     """Returns the length of the largest SELFIES string from a list of SMILES."""
@@ -137,7 +137,7 @@ def get_selfie_and_smiles_encodings(smiles_list, nrows=-1):
     """
 
     if nrows > -1:
-        smiles_list = np.random.choice(smiles_list, nrows, replace=False)
+        smiles_list = np.random.choice(smiles_list, nrows, )
     print('--> Translating SMILES to SELFIES...')
     selfies_list = list(map(sf.encoder, smiles_list))
 
@@ -155,23 +155,28 @@ def read_smiles(filename):
     return smiles_list
 
 
-def preprocess(num_mol, file_name):
+def preprocess(num_mol, file_name, oracle):
     """Takes a random subset of num_mol SMILES from a given dataset;
     converts each SMILES to the SELFIES equivalent and one-hot encoding;
     encodes other string information."""
 
+    max_oracle_num = oracle.max_oracle_calls
+
     smiles_list = read_smiles(file_name)
+    shuffle(smiles_list)
+    process_num = int(max_oracle_num * 0.03)
+    smiles_list = smiles_list[:process_num]
+
     selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len \
         = get_selfie_and_smiles_info(smiles_list, file_name)
     selfies_list, smiles_list = \
         get_selfie_and_smiles_encodings(smiles_list, num_mol)
 
     print('Finished acquiring data.\n')
-    print('Calculating logP of all molecules...')
-    prop_vals = mol_utils.logP_from_molecule(smiles_list)
-
+    # prop_vals = mol_utils.logP_from_molecule(smiles_list)
+    # print(smiles_list[:5], type(smiles_list))
+    prop_vals = oracle(smiles_list.tolist())
     prop_vals = np.array(prop_vals)
-    print('Finished calculating logP of all molecules.\n')
 
     print('Representation: SELFIES')
     alphabet = selfies_alphabet

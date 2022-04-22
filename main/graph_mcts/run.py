@@ -258,7 +258,7 @@ class Graph_MCTS_Optimizer(BaseOptimizer):
         stats = get_stats_from_pickle(self.args.pickle_directory)
 
         # evolution: go go go!!
-        for generation in range(config["n_search"]):
+        while True:
 
             # UCB Tree Search
             tmp_seed = int(time())

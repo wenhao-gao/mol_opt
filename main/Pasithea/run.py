@@ -283,6 +283,7 @@ def dream_model(oracle, model, prop, largest_molecule_len, alphabet, upperbound,
         smi = sf.decoder(mol_utils.indices_to_selfies(ind, alphabet))
         smiles_of_mol.append(smi)
     prop_of_mol = oracle(smiles_of_mol)
+    print(' ----- oracle', len(oracle))
     # prop_of_mol, smiles_of_mol=lst_of_logP(gathered_indices, alphabet)
 
     #initiailize list of intermediate property values and molecules
@@ -394,7 +395,8 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
     interm = []
     transforms = []
     t= time.process_time()
-    for i in range(num_dream):
+    print('num of dream', num_dream)
+    for i in tqdm(range(num_dream)):
         print('Molecule #'+str(i))
 
         # convert one-hot encoding to SMILES molecule
@@ -407,6 +409,7 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
             smi = sf.decoder(mol_utils.indices_to_selfies(ind, alphabet))
             smiles_of_mol.append(smi)
         prop_of_mol = oracle(smiles_of_mol)
+        print('------- oracle', len(oracle))
         # prop_of_mol,smiles_of_mol=mol_utils.lst_of_logP(gathered_mols, alphabet)
 
         mol1 = smiles_of_mol[0]
@@ -445,6 +448,9 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
         transforms.append(transform)
         interm_tuple = ([mol1_prop]+track_prop, [mol1]+track_mol)
         interm.append(interm_tuple)
+
+        if oracle.finish:
+            break 
 
     # dream_time = time.process_time()-t
 
@@ -496,7 +502,7 @@ class Pasithea_optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "dst"
+        self.model_name = "pasithea"
 
     def _optimize(self, oracle, config):
 
@@ -504,7 +510,7 @@ class Pasithea_optimizer(BaseOptimizer):
         settings = config 
         # import hyperparameter and training settings from yaml
         print('Start reading data file...')
-        settings=yaml.load(open(os.path.join(path_here,"settings.yml"), "r"))
+        # settings=yaml.load(open(os.path.join(path_here,"settings.yml"), "r"))
         test = settings['test_model']
         plot = settings['plot_transform']
         mols = settings['mols']
@@ -513,6 +519,7 @@ class Pasithea_optimizer(BaseOptimizer):
         lr_train=float(lr_train)
         lr_dream=settings['lr_dream']
         lr_dream=float(lr_dream)
+
         batch_size=settings['training']['batch_size']
         num_epochs = settings['training']['num_epochs']
         model_parameters = settings['model']
@@ -533,23 +540,25 @@ class Pasithea_optimizer(BaseOptimizer):
         num_train = settings['data']['num_train']
         num_dream = settings['data']['num_dream']
 
+
         num_mol = num_train
 
         if num_dream > num_train:
             num_mol = num_dream
 
-        directory = change_str('dream_results/{}_{}/{}/{}' \
-                               .format(data_parameters_str,
+        directory = change_str('dream_results/{}_{}/{}/{}'.format(data_parameters_str,
                                        training_parameters_str,
                                        upperbound_tr,
                                        lr_train))
+
         make_dir(directory)
 
         args = use_gpu()
 
         # data-preprocessing
         data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
-            data_loader.preprocess(num_mol, file_name)
+            data_loader.preprocess(num_mol, file_name, self.oracle)
+
 
         # add stochasticity to data
         x = [i for i in range(len(data))]  # random shuffle input
@@ -569,8 +578,7 @@ class Pasithea_optimizer(BaseOptimizer):
                       prop_vals_test, lr_train, num_epochs, batch_size)
         train_time = time.process_time()-t
 
-        directory += change_str('/{}_{}'.format(upperbound_dr,
-                                                dreaming_parameters_str))
+        directory += change_str('/{}_{}'.format(upperbound_dr, dreaming_parameters_str))
         make_dir(directory)
         directory += change_str('/{}'.format(lr_dream))
         make_dir(directory)
@@ -581,59 +589,7 @@ class Pasithea_optimizer(BaseOptimizer):
               model, train_time, upperbound_dr, data_dream,
               prop_dream, prop, lr_train, lr_dream, num_train,
               num_dream, dreaming_parameters)
-
-
-
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
-
-    path_here = os.path.dirname(os.path.realpath(__file__))
-
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
-
-        oracle = Oracle(name = oracle_name)
-        optimizer = Pasithea_optimizer(args=args)
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-    main() 
+        print('-----', len(self.oracle))
 
 
 

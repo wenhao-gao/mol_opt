@@ -20,6 +20,8 @@ import main.graph_ga.crossover as co, main.graph_ga.mutate as mu
 from main.optimizer import BaseOptimizer
 
 
+MINIMUM = 1e-10
+
 def make_mating_pool(population_mol: List[Mol], population_scores, offspring_size: int):
     """
     Given a population of RDKit Mol and their scores, sample a list of the same size
@@ -31,6 +33,7 @@ def make_mating_pool(population_mol: List[Mol], population_scores, offspring_siz
     Returns: a list of RDKit Mol (probably not unique)
     """
     # scores -> probs 
+    population_scores = [s + MINIMUM for s in population_scores]
     sum_scores = sum(population_scores)
     population_probs = [p / sum_scores for p in population_scores]
     mating_pool = np.random.choice(population_mol, p=population_probs, size=offspring_size, replace=True)
@@ -81,8 +84,6 @@ class GB_GA_Optimizer(BaseOptimizer):
 
         for _ in range(config["max_generations"]):
 
-            # import ipdb; ipdb.set_trace()
-
             # new_population
             mating_pool = make_mating_pool(population_mol, population_scores, config["population_size"])
             offspring_mol = pool(delayed(reproduce)(mating_pool, config["mutation_rate"]) for _ in range(config["offspring_size"]))
@@ -102,7 +103,7 @@ class GB_GA_Optimizer(BaseOptimizer):
             # early stopping
             if population_scores == old_scores:
                 patience += 1
-                if patience >= config["patience"]:
+                if patience >= self.args.patience:
                     self.log_intermediate(finish=True)
                     break
             else:
@@ -110,55 +111,4 @@ class GB_GA_Optimizer(BaseOptimizer):
                 
             if self.finish:
                 break
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=10000)
-    parser.add_argument('--freq_log', type=int, default=100)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
-
-    path_here = os.path.dirname(os.path.realpath(__file__))
-
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
-
-        oracle = Oracle(name = oracle_name)
-        optimizer = GB_GA_Optimizer(args=args)
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-    main()
 
