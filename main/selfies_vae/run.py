@@ -12,6 +12,7 @@ from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 from random import shuffle, choice  
 from tdc.chem_utils import MolConvert
+from tdc.chem_utils.oracle.oracle import smiles_to_rdkit_mol
 converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
 inverter = MolConvert(src='SELFIES', dst = 'SMILES')
 
@@ -73,8 +74,11 @@ class SELFIES_VAEBO_optimizer(BaseOptimizer):
 
 				new_selfies = vae_model.decoder_z(z)
 				new_smiles = inverter(new_selfies)
-				# print('generate smiles', new_smiles)
-				new_score = self.oracle(new_smiles)
+				mol = smiles_to_rdkit_mol(new_smiles)
+				if mol is None:
+					new_score = 0
+				else:
+					new_score = self.oracle(new_smiles)
 				if new_score == 0:
 					new_smiles = choice(smiles_lst)
 					new_score = self.oracle(new_smiles)
