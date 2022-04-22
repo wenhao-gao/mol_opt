@@ -3,7 +3,9 @@ smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 import os 
 path_here = os.path.dirname(os.path.realpath(__file__))
-
+with open(os.path.join(path_here,'Voc'), 'r') as fin:
+    word_list = fin.readlines() 
+vocab_list = [word.strip() for word in word_list]
 
 class SelfiesCharDictionary(object):
     """
@@ -14,6 +16,7 @@ class SelfiesCharDictionary(object):
     """
 
     PAD = ' '
+    # PAD = ''
     BEGIN = 'Q'
     END = '\n'
 
@@ -23,8 +26,9 @@ class SelfiesCharDictionary(object):
         with open(os.path.join(path_here,'Voc'), 'r') as fin:
             word_list = fin.readlines() 
         word_list = [word.strip() for word in word_list]
-        word_list = [self.PAD, self.BEGIN, self.END,] + word_list 
-        self.char_idx = {word:idx for idx,word in enumerate(word_list)}
+        self.vocab_list = [word.strip() for word in word_list] 
+        self.word_list = [self.PAD, self.BEGIN, self.END,] + word_list 
+        self.char_idx = {word:idx for idx,word in enumerate(self.word_list)}
 
         self.idx_char = {v: k for k, v in self.char_idx.items()}
 
@@ -111,15 +115,31 @@ class SelfiesCharDictionary(object):
         for row in array:
             predicted_chars = []
 
-            for j in row:
+            for j_idx, j in enumerate(row):
+                if j.item()==self.pad_idx:
+                    continue 
+                if j.item()==self.begin_idx and j_idx>0:
+                    continue
                 next_char = self.idx_char[j.item()]
                 if next_char == self.END:
                     break
                 predicted_chars.append(next_char)
-
+                
+            predicted_chars = [i for i in predicted_chars if i!=' ']
             smi = ''.join(predicted_chars)
             smi = self.decode(smi)
             smiles_strings.append(smi)
+
+
+            #### debug 
+            words = smi.strip().strip('[]').split('][')
+            words = ['['+word+']' for word in words]
+            for ii, word in enumerate(words):
+                if word not in vocab_list:
+                    print(word, predicted_chars[ii])
+
+                assert word in vocab_list 
+
 
         return smiles_strings
 

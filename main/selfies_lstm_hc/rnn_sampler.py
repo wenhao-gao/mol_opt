@@ -9,6 +9,11 @@ converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
 smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 
+import os 
+path_here = os.path.dirname(os.path.realpath(__file__))
+with open(os.path.join(path_here,'Voc'), 'r') as fin:
+    word_list = fin.readlines() 
+vocab_list = [word.strip() for word in word_list]
 
 class SmilesRnnSampler:
     """

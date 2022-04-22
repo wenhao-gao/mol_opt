@@ -18,6 +18,7 @@ from tdc.chem_utils import MolConvert
 smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 
+path_here = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(path_here,'Voc'), 'r') as fin:
     word_list = fin.readlines() 
 vocab_list = [word.strip() for word in word_list]
@@ -95,9 +96,16 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
             selfies_list, smiles_list = generator.sampler.sample(generator.model, config['mols_to_sample'], max_seq_len=generator.max_len)
             # smiles_list = canonicalize_list(smiles_list, include_stereocenters=True)
             # selfies_list = [sf.encoder(smi) for smi in smiles_list]
+            # for selfies in selfies_list:
+            #     words = selfies.strip().strip('[]').split('][')
+            #     words = ['['+word+']' for word in words]
+            #     for word in words:
+            #         assert word in vocab_list 
+
 
             selfi2smile = {selfie:smile for selfie, smile in zip(selfies_list, smiles_list)}
             smile2selfi = {smile:selfie for selfie, smile in zip(selfies_list, smiles_list)}
+
 
             # import ipdb; ipdb.set_trace()
 
@@ -107,7 +115,15 @@ class SELFIES_LSTM_HC_Optimizer(BaseOptimizer):
             payload_selfies = [smile2selfi[smile] for smile in payload if smile in smile2selfi]
             seen.update(canonicalized_samples)
             scores = self.oracle(payload)
-            
+
+            # for selfies in payload_selfies:
+            #     words = selfies.strip().strip('[]').split('][')
+            #     words = ['['+word+']' for word in words]
+            #     for word in words:
+            #         assert word in vocab_list 
+
+
+
             int_results = [OptResult(smiles=smiles, selfies = selfie, score=score) for smiles, selfie, score in zip(payload, payload_selfies, scores)]
 
             results.extend(sorted(int_results, reverse=True)[0:config['keep_top']])

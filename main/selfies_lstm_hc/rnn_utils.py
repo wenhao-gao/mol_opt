@@ -19,6 +19,10 @@ converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
 smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
 
+
+
+
+
 def get_tensor_dataset(numpy_array):
     """
     Gets a numpy array of indices, convert it into a Torch tensor,
