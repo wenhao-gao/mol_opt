@@ -68,7 +68,7 @@ class SELFIES_VAEBO_optimizer(BaseOptimizer):
 			# 3. Optimize the acquisition function 
 			for _ in range(config['bo_batch']):
 				bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
-				z, acq_value = optimize_acqf(
+				z, _ = optimize_acqf(
 					UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
 				)
 
