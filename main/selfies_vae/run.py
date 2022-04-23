@@ -70,18 +70,19 @@ class SELFIES_VAEBO_optimizer(BaseOptimizer):
 				bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
 				z, _ = optimize_acqf(
 					UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
-				)
-
+				)  ##### 
+				# print(z, z.shape)  [1, 128]
 				new_selfies = vae_model.decoder_z(z)
 				new_smiles = inverter(new_selfies)
-				mol = smiles_to_rdkit_mol(new_smiles)
-				if mol is None:
-					new_score = 0
-				else:
-					new_score = self.oracle(new_smiles)
-				if new_score == 0:
+				# print(new_smiles)
+				if new_smiles is None or smiles_to_rdkit_mol(new_smiles) is None:
 					new_smiles = choice(smiles_lst)
 					new_score = self.oracle(new_smiles)
+				else:
+					new_score = self.oracle(new_smiles)
+					if new_score == 0:
+						new_smiles = choice(smiles_lst)
+						new_score = self.oracle(new_smiles)
 
 				new_score = torch.FloatTensor([new_score]).view(-1,1)
 
