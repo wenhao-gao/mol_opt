@@ -137,7 +137,7 @@ class SMILES_GA_Optimizer(BaseOptimizer):
         population = [(population_smi[i], population_genes[i]) for i in range(len(population_smi))]
 
         patience = 0
-        for _ in range(config["max_generations"]):
+        while True:
 
             old_scores = population_scores
             # select random genes
