@@ -7,6 +7,6 @@ parameters:
   population_size:
     values: [50, 100]
   optimize_n_epochs:
-    value: [1, 2, 5, 10]
+    values: [1, 2, 5, 10]
   optimize_batch_size:
     values: [128, 256, 512]
