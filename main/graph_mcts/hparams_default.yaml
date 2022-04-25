@@ -1,5 +1,5 @@
 init_smiles: CC
 max_atoms: 60
-max_children: 10
-num_sims: 8
-exploration_coefficient: 1.2
+max_children: 5
+num_sims: 22
+exploration_coefficient: 4.3

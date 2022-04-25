@@ -1,5 +1,5 @@
-population_size: 50
-offspring_size: 100
-mutation_rate: 0.02
+population_size: 120
+offspring_size: 70
+mutation_rate: 0.067
 patience: 5
 max_generations: 1000
