@@ -5,7 +5,6 @@ hidden_size: 450
 latent_size: 56
 depthT: 20
 depthG: 3
-save_dir: 
 random_seed: 1
 train_num: 100
 bo_batch: 10

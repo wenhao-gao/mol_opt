@@ -40,17 +40,12 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 
-"""
-python bo.py --vocab ../data/moses/vocab.txt --save_dir results --data ../data/moses/train_validity_5k.txt --hidden 450 \
-             --latent 56 --model ../fast_molvae/vae_model/model.iter-5000 
-"""
 
-
-class JTVAEBOoptimizer(BaseOptimizer):
+class JTVAE_BO_optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "JTVAE_BO"
+        self.model_name = "jt_vae_bo"
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
@@ -173,127 +168,3 @@ class JTVAEBOoptimizer(BaseOptimizer):
             if self.finish:
                 print('max oracle hit, abort ...... ')
                 break 
-
-
-
-
-
-    # def _optimize(self, oracle, config):
-    #     """
-    #     old version of jtvae that use old BO.  
-    #     """
-    #     self.oracle.assign_evaluator(oracle)
-    #     train_size = 100
-
-    #     vocab = [x.strip("\r\n ") for x in open(config['vocab_path'])] 
-    #     vocab = Vocab(vocab)
-
-    #     random_seed = int(config['random_seed'])
-    #     np.random.seed(random_seed)
-
-    #     ###### old version: load train data
-    #     # with open(config['data_path']) as f:
-    #     #     smiles = f.readlines()
-    #     # smiles = [s.strip() for s in smiles]
-    #     # shuffle(smiles)
-    #     # smiles = smiles[:train_size]
-
-    #     ###### new version: load train data
-    #     smiles_lst = self.all_smiles
-    #     shuffle(smiles_lst)
-    #     smiles = smiles_lst[:config['train_num']]
-
-
-    #     batch_size = 100
-    #     hidden_size = int(config['hidden_size'])
-    #     latent_size = int(config['latent_size'])
-    #     depthT = int(config['depthT'])
-    #     depthG = int(config['depthG'])
-
-    #     model = JTNNVAE(vocab, hidden_size, latent_size, depthT, depthG)
-    #     model.load_state_dict(torch.load(config['model_path']))
-    #     model = model.cuda()
-
-
-    #     print('generate latent variable')
-    #     latent_points = []
-    #     for i in tqdm(range(0, len(smiles), batch_size)):
-    #         batch = smiles[i:i+batch_size]
-    #         mol_vec = model.encode_latent_mean(batch)
-    #         latent_points.append(mol_vec.data.cpu().numpy())
-
-    #     # output  X: "N X d" latent embedding;  y: label "N X 1"
-    #     X = np.vstack(latent_points) 
-    #     y = np.array([-self.oracle(s) for s in smiles]).reshape((-1,1)) 
-
-    #     #### permutation & split 
-    #     n = X.shape[0]
-    #     permutation = np.random.choice(n, n, replace = False)
-    #     X_train = X[ permutation, : ][ 0 : np.int(np.round(0.9 * n)), : ]
-    #     X_test = X[ permutation, : ][ np.int(np.round(0.9 * n)) :, : ]
-    #     y_train = y[ permutation ][ 0 : np.int(np.round(0.9 * n)) ]
-    #     y_test = y[ permutation ][ np.int(np.round(0.9 * n)) : ]
-
-    #     X_train = X_train[:200]
-    #     X_test = X_test[:50]
-    #     y_train = y_train[:200]
-    #     y_test = y_test[:50]
-
-
-    #     M,K = 50, 25
-    #     print('fit GP')
-    #     for iteration in tqdm(range(config['max_iter'])):
-    #         np.random.seed(iteration * random_seed) 
-    #         sgp = SparseGP(X_train, 0 * X_train, y_train, M)
-    #         print('train sparse GP')
-    #         sgp.train_via_ADAM(X_train, 0 * X_train, y_train, X_test, X_test * 0, y_test, minibatch_size = 10 * M, max_iterations = 10, learning_rate = 0.001)
-    #         # print('finish train sparse GP')
-
-    #         pred, uncert = sgp.predict(X_test, 0 * X_test)
-    #         error = np.sqrt(np.mean((pred - y_test)**2))
-    #         testll = np.mean(sps.norm.logpdf(pred - y_test, scale = np.sqrt(uncert)))
-    #         # print('Test RMSE: ', error)
-    #         # print('Test ll: ', testll)
-
-    #         pred, uncert = sgp.predict(X_train, 0 * X_train)
-    #         error = np.sqrt(np.mean((pred - y_train)**2))
-    #         trainll = np.mean(sps.norm.logpdf(pred - y_train, scale = np.sqrt(uncert)))
-    #         # print('Train RMSE: ', error)
-    #         # print('Train ll: ', trainll)
-
-    #         # We pick the next K inputs
-    #         # print(np.min(X_train,0)[:10], np.max(X_train, 0)[:10])
-    #         print('batched_greedy_ei')
-    #         next_inputs = sgp.batched_greedy_ei(K, np.min(X_train, 0), np.max(X_train, 0))
-    #         # print('end batched_greedy_ei')
-    #         valid_smiles = []
-    #         new_features = []
-    #         for i in range(K):
-    #             all_vec = next_inputs[i].reshape((1,-1))
-    #             tree_vec,mol_vec = np.hsplit(all_vec, 2)
-    #             tree_vec = create_var(torch.from_numpy(tree_vec).float())
-    #             mol_vec = create_var(torch.from_numpy(mol_vec).float())
-    #             s = model.decode(tree_vec, mol_vec, prob_decode=False)
-    #             if s is not None: 
-    #                 valid_smiles.append(s)
-    #                 new_features.append(all_vec)
-
-    #         print(len(valid_smiles), "molecules are found")
-    #         valid_smiles = valid_smiles[:50]
-    #         new_features = next_inputs[:50]
-    #         new_features = np.vstack(new_features)
-
-    #         scores = [-self.oracle(s) for s in valid_smiles]
-    #         # print(valid_smiles, scores)
-
-    #         if len(new_features) > 0:
-    #             X_train = np.concatenate([ X_train, new_features ], 0)
-    #             y_train = np.concatenate([ y_train, np.array(scores)[ :, None ] ], 0)
-    #         X_train = X_train[-50:]
-    #         y_train = y_train[-50:]
-    #         if self.oracle.finish: 
-    #             print("max oracle hits, exit")
-    #             break 
-
-
-
