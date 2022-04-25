@@ -1,10 +1,8 @@
-max_iter: 50
-vocab_path: 'main/JTVAE/vocab.txt'
-model_path: 'main/JTVAE/fast_molvae/vae_model/model.iter-5000'
+vocab_path: 'main/jt_vae/vocab.txt'
+model_path: 'main/jt_vae/fast_molvae/vae_model/model.iter-5000'
 hidden_size: 450
 latent_size: 56
 depthT: 20
 depthG: 3
-random_seed: 1
 train_num: 100
 bo_batch: 10

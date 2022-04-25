@@ -87,13 +87,16 @@ def main():
     elif args.method == "smiles_vae":
         from main.smiles_vae.run import SMILES_VAEBO_optimizer 
         Optimizer = SMILES_VAEBO_optimizer 
-    elif args.method == 'JTVAE':
-        from main.JTVAE.run import JTVAEBOoptimizer
-        Optimizer = JTVAEBOoptimizer 
+    elif args.method == 'jt_vae':
+        from main.jt_vae.run import JTVAE_BO_optimizer
+        Optimizer = JTVAE_BO_optimizer 
     elif args.method == 'dog_ae':
         from main.dog_ae.run import DoG_AE_Optimizer
         Optimizer = DoG_AE_Optimizer 
 
+    elif args.method == 'Pasithea':
+        from main.Pasithea.run import Pasithea_optimizer
+        Optimizer = Pasithea_optimizer 
     elif args.method == 'DST':
         from main.DST.run import DSToptimizer
         Optimizer = DSToptimizer 
@@ -110,9 +113,6 @@ def main():
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 
-    elif args.method == 'Pasithea':
-        from main.Pasithea.run import Pasithea_optimizer
-        Optimizer = Pasithea_optimizer 
     elif args.method == 'REINVENT':
         from main.REINVENT.run import REINVENToptimizer
         Optimizer = REINVENToptimizer

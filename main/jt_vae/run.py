@@ -2,24 +2,16 @@ import os, pickle, torch, random, argparse
 import yaml
 import numpy as np 
 from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
 
-
-
-# import torch
 import torch.nn as nn
 from torch.autograd import Variable
-# from optparse import OptionParser
 
+from tdc.chem_utils.oracle.oracle import smiles_to_rdkit_mol
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import Descriptors
@@ -124,31 +116,28 @@ class JTVAE_BO_optimizer(BaseOptimizer):
                 z, acq_value = optimize_acqf(
                     UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
                 )
-                #### z: shape [20, d]
+                #### z: shape [1, d]
 
-                ######## old version (smiles-vae): decode
-                # new_smiles = vae_model.decoder_z(z)
-                ######## old version (smiles-vae): decode
-                ######## new version (jtvae): decode
-                new_smiles = []
+                ######## decode
                 for i in range(z.shape[0]):
                     _z = z[i].view(1,-1)
                     tree_vec, mol_vec = torch.hsplit(_z, 2)
-                    s = model.decode(tree_vec, mol_vec, prob_decode=False)
-                    new_smiles.append(s)
-                ######## new version (jtvae): decode
+                    new_smiles = model.decode(tree_vec, mol_vec, prob_decode=False)
 
-
-                new_score = self.oracle(new_smiles)
-                if new_score == 0:
+                if new_smiles is None or smiles_to_rdkit_mol(new_smiles) is None:
                     new_smiles = choice(smiles_lst)
-                    new_score = self.oracle(new_smiles)             
+                    new_score = self.oracle(new_smiles)
+                else:
+                    new_score = self.oracle(new_smiles)
+                    if new_score == 0:
+                        new_smiles = choice(smiles_lst)
+                        new_score = self.oracle(new_smiles)
 
                 new_score = torch.FloatTensor([new_score]).view(-1,1)
 
                 train_X = torch.cat([train_X, z], dim = 0)
                 train_Y = torch.cat([train_Y, new_score], dim = 0)
-                if train_X.shape[0] > 100:
+                if train_X.shape[0] > config['train_num']:
                     train_X = train_X[-config['train_num']:]
                     train_Y = train_Y[-config['train_num']:]
 
