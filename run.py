@@ -107,9 +107,9 @@ def main():
     elif args.method == 'MolGAN':
         from main.MolGAN.run import MolGAN_Optimizer 
         Optimizer = MolGAN_Optimizer 
-    elif args.method == 'MolDQN':
-        from main.MolDQN.run import MolDQNoptimizer
-        Optimizer = MolDQNoptimizer 
+    elif args.method == 'moldqn':
+        from main.moldqn.run import MolDQN_Optimizer
+        Optimizer = MolDQN_Optimizer 
     elif args.method == 'MIMOSA':
         from main.MIMOSA.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer 

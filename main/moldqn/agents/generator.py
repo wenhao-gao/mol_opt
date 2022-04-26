@@ -1,5 +1,3 @@
-# from guacamol.goal_directed_generator import GoalDirectedGenerator
-# from guacamol.scoring_function import ScoringFunction
 from typing import List, Optional
 from agents.agent import DQN
 

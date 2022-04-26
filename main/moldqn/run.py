@@ -2,23 +2,18 @@ import os, pickle, torch, random, argparse
 import yaml
 import numpy as np 
 from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
 from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from tdc import Oracle
 from utils.parsing import parse_args
-# from agents.generator import DQNDirectedGenerator
 from agents.agent import DQN 
 
-class MolDQNoptimizer(BaseOptimizer):
+class MolDQN_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)

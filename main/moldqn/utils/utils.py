@@ -33,14 +33,7 @@ from rdkit.Chem import AllChem
 from rdkit import DataStructs
 from rdkit.Chem import Descriptors
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from SA_Score import sascorer
-
-
-# import sys
-# sys.path.append('/Users/gaowh/MIT/synth_gen/scs_test')
-# from scscore.standalone_model_numpy import SCScorer
-# scscorer = SCScorer()
-# scscorer.restore()
+# from SA_Score import sascorer
 
 
 def makedirs(path: str, isfile: bool = False):
@@ -125,43 +118,43 @@ def get_largest_ring_size(molecule):
     return cycle_length
 
 
-def penalized_logp(molecule):
-    """Calculates the penalized logP of a molecule.
-    Refactored from
-    https://github.com/wengong-jin/icml18-jtnn/blob/master/bo/run_bo.py
-    See Junction Tree Variational Autoencoder for Molecular Graph Generation
-    https://arxiv.org/pdf/1802.04364.pdf
-    Section 3.2
-    Penalized logP is defined as:
-    y(m) = logP(m) - SA(m) - cycle(m)
-    y(m) is the penalized logP,
-    logP(m) is the logP of a molecule,
-    SA(m) is the synthetic accessibility score,
-    cycle(m) is the largest ring size minus by six in the molecule.
-    Args:
-    molecule: Chem.Mol. A molecule.
-    Returns:
-    Float. The penalized logP value.
-    """
-    log_p = Descriptors.MolLogP(molecule)
-    sas_score = sascorer.calculateScore(molecule)
-    largest_ring_size = get_largest_ring_size(molecule)
-    cycle_score = max(largest_ring_size - 6, 0)
-    return log_p - sas_score - cycle_score
+# def penalized_logp(molecule):
+#     """Calculates the penalized logP of a molecule.
+#     Refactored from
+#     https://github.com/wengong-jin/icml18-jtnn/blob/master/bo/run_bo.py
+#     See Junction Tree Variational Autoencoder for Molecular Graph Generation
+#     https://arxiv.org/pdf/1802.04364.pdf
+#     Section 3.2
+#     Penalized logP is defined as:
+#     y(m) = logP(m) - SA(m) - cycle(m)
+#     y(m) is the penalized logP,
+#     logP(m) is the logP of a molecule,
+#     SA(m) is the synthetic accessibility score,
+#     cycle(m) is the largest ring size minus by six in the molecule.
+#     Args:
+#     molecule: Chem.Mol. A molecule.
+#     Returns:
+#     Float. The penalized logP value.
+#     """
+#     log_p = Descriptors.MolLogP(molecule)
+#     sas_score = sascorer.calculateScore(molecule)
+#     largest_ring_size = get_largest_ring_size(molecule)
+#     cycle_score = max(largest_ring_size - 6, 0)
+#     return log_p - sas_score - cycle_score
 
 
-def get_sa_score(molecule):
-    """
-    Get the SA score of the molecule
-    :param molecules:
-    :return:
-    """
-    if isinstance(molecule, str):
-        molecule = Chem.MolFromSmiles(molecule)
+# def get_sa_score(molecule):
+#     """
+#     Get the SA score of the molecule
+#     :param molecules:
+#     :return:
+#     """
+#     if isinstance(molecule, str):
+#         molecule = Chem.MolFromSmiles(molecule)
 
-    assert molecule is not None
+#     assert molecule is not None
 
-    return sascorer.calculateScore(molecule)
+#     return sascorer.calculateScore(molecule)
 
 
 # def get_sc_score(molecule):
