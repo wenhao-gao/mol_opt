@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-model="moldqn"
+model="jt_vae"
 
 nohup python -u run.py ${model} \
     --n_jobs 16 --task tune --n_runs 50 --wandb online \

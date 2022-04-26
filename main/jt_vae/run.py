@@ -76,7 +76,7 @@ class JTVAE_BO_optimizer(BaseOptimizer):
                 old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
             else:
                 old_scores = 0
-
+            
             # 1. Fit a Gaussian Process model to data
             gp = SingleTaskGP(train_X, train_Y)
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
@@ -117,7 +117,7 @@ class JTVAE_BO_optimizer(BaseOptimizer):
                     train_Y = train_Y[-config['train_num']:]
 
             # early stopping
-            if len(self.oracle) > 2000:
+            if len(self.oracle) > 800:
                 self.sort_buffer()
                 new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
                 if new_scores == old_scores:
