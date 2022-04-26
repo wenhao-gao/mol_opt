@@ -19,7 +19,7 @@ class MolDQN_Optimizer(BaseOptimizer):
 
         agent = DQN(
             oracle=self.oracle,
-            q_fn = config['q_function'], 
+            q_fn = 'mlp', 
             n_max_oracle_call=self.args.max_oracle_calls,
             args=config,
         )

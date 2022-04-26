@@ -50,14 +50,14 @@ class DQN(object):
         self.batch_size = self.args['batch_size']
         self.gamma = self.args['gamma']
         # Replay buffer option
-        self.prioritized = self.args['prioritized']
+        self.prioritized = True
         self.replay_buffer_size = self.args['replay_buffer_size']
         self.prioritized_alpha = self.args['prioritized_alpha']
         self.prioritized_beta = self.args['prioritized_beta']
         self.prioritized_epsilon = self.args['prioritized_epsilon']
         self.distribution = self.args['distribution']
         # Double DQN option
-        self.double = self.args['double_q']
+        self.double = True
         self.update_frequency = self.args['update_frequency']
         # Bootstrap option
         self.num_bootstrap_heads = self.args['num_bootstrap_heads']
@@ -71,13 +71,13 @@ class DQN(object):
         self.learning_rate_decay_steps = self.args['learning_rate_decay_steps']
         self.grad_clipping = self.args['grad_clipping']
         self.learning_rate = self.args['learning_rate'] 
-        self.allowed_ring_sizes = self.args['allowed_ring_sizes']
-        self.allow_bonds_between_rings = self.args['allow_bonds_between_rings']
-        self.allow_no_modification = self.args['allow_no_modification']
-        self.allow_removal = self.args['allow_removal']
+        self.allowed_ring_sizes = [5, 6]
+        self.allow_bonds_between_rings = False
+        self.allow_no_modification = True
+        self.allow_removal = True
         self.init_mol = self.args['init_mol']
         self.discount_factor = self.args['discount_factor']
-        self.atom_types = self.args['atom_types']
+        self.atom_types = ["C", "O", "N"]
 
         self.env = envs.Molecule(
                 atom_types=set(self.atom_types), 
