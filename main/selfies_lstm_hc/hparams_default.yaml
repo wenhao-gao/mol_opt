@@ -1,5 +1,5 @@
-population_size: 50
-optimize_n_epochs: 2
+population_size: 100
+optimize_n_epochs: 10
 optimize_batch_size: 256
 pretrain_n_epochs: 0
 mols_to_sample: 1024
