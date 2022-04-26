@@ -1,27 +1,14 @@
-import os, pickle, torch, random, argparse
-import yaml
-import numpy as np 
-from tqdm import tqdm 
+import os, torch
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
 
-import torch.nn as nn
-from torch.autograd import Variable
-
 from tdc.chem_utils.oracle.oracle import smiles_to_rdkit_mol
 import rdkit
-from rdkit import Chem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import MolFromSmiles, MolToSmiles
-from rdkit.Chem import rdmolops
-import scipy.stats as sps
 from random import shuffle, choice
-import networkx as nx
 from fast_jtnn import *
-from sparse_gp import SparseGP
 
 lg = rdkit.RDLogger.logger() 
 lg.setLevel(rdkit.RDLogger.CRITICAL)
@@ -43,6 +30,7 @@ class JTVAE_BO_optimizer(BaseOptimizer):
         self.oracle.assign_evaluator(oracle)
 
         ## 0. load vae model 
+        print('Loading traiend model ...')
         vocab = [x.strip("\r\n ") for x in open(config['vocab_path'])] 
         vocab = Vocab(vocab)
         hidden_size = int(config['hidden_size'])
@@ -52,23 +40,10 @@ class JTVAE_BO_optimizer(BaseOptimizer):
         model = JTNNVAE(vocab, hidden_size, latent_size, depthT, depthG)
         model.load_state_dict(torch.load(config['model_path']))
         vae_model = model.cuda()
-        # vae_model = torch.load(config['save_model'])
-
-
-
-        ''' original version
-        
-        latent_points = []
-        for i in tqdm(range(0, len(smiles), batch_size)):
-            batch = smiles[i:i+batch_size]
-            mol_vec = model.encode_latent_mean(batch)
-            latent_points.append(mol_vec.data.cpu().numpy()) 
-        # output  X: "N X d" latent embedding;  y: label "N X 1"
-        X = np.vstack(latent_points) 
-        y = np.array([-self.oracle(s) for s in smiles]).reshape((-1,1)) 
-        ''' 
+        print('Finish loading!')
 
         ## 0.1 training data 
+        print('Fit initial GP model.')
         smiles_lst = self.all_smiles
         shuffle(smiles_lst)
         train_smiles_lst = smiles_lst[:config['train_num']]
@@ -113,7 +88,7 @@ class JTVAE_BO_optimizer(BaseOptimizer):
             # 3. Optimize the acquisition function 
             for _ in range(config['bo_batch']):
                 bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
-                z, acq_value = optimize_acqf(
+                z, _ = optimize_acqf(
                     UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
                 )
                 #### z: shape [1, d]
@@ -142,12 +117,12 @@ class JTVAE_BO_optimizer(BaseOptimizer):
                     train_Y = train_Y[-config['train_num']:]
 
             # early stopping
-            if len(self.oracle) > 100:
+            if len(self.oracle) > 2000:
                 self.sort_buffer()
                 new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
                 if new_scores == old_scores:
                     patience += 1
-                    if patience >= self.args.patience * 100:
+                    if patience >= self.args.patience * 5:
                         self.log_intermediate(finish=True)
                         print('convergence criteria met, abort ...... ')
                         break
