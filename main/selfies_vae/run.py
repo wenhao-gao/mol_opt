@@ -88,7 +88,7 @@ class SELFIES_VAEBO_optimizer(BaseOptimizer):
 
 				train_X = torch.cat([train_X, z], dim = 0)
 				train_Y = torch.cat([train_Y, new_score], dim = 0)
-				if train_X.shape[0] > 100:
+				if train_X.shape[0] > config['train_num']:
 					train_X = train_X[-config['train_num']:]
 					train_Y = train_Y[-config['train_num']:]
 
