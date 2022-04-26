@@ -2,10 +2,10 @@ import copy
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import random
-import json
+# import json
 import time
 import numpy as np
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 from collections import OrderedDict
 
 import torch
@@ -14,7 +14,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from utils.utils import LinearSchedule, PiecewiseSchedule, ReplayBuffer, PrioritizedReplayBuffer
-from utils.utils import get_sa_score, sa_gaussian_wrapper, sc_gaussian_wrapper, smi_wrapper
+# from utils.utils import get_sa_score, sa_gaussian_wrapper, sc_gaussian_wrapper, smi_wrapper
 # from utils.utils import get_sa_score, get_sc_score, sa_gaussian_wrapper, sc_gaussian_wrapper, smi_wrapper
 # from environments import synth_env as envs
 from environments import environments as envs
@@ -150,7 +150,9 @@ class DQN(object):
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         self.log_path = os.path.join(model_path, self.task)
-        self.writer = SummaryWriter(self.log_path)
+        if not os.path.exists(self.log_path):
+            os.makedirs(self.log_path)
+        # self.writer = SummaryWriter(self.log_path)
 
         # Logging attribute
         self.tracker = Storage(keep=keep)
@@ -243,11 +245,11 @@ class DQN(object):
                 # Keep track the result
                 # if reward > self.tracker.lowest:
                 # self.tracker.insert((state_mol, reward_scaled, reward, sa_score))
-                self.writer.add_text('SMILES reward', state_mol + ' Reward: ' + str(reward), episode)
+                # self.writer.add_text('SMILES reward', state_mol + ' Reward: ' + str(reward), episode)
 
                 # Log result
                 # self.writer.add_scalar('scaled_reward', reward_scaled, episode)
-                self.writer.add_scalar('reward', reward, episode)
+                # self.writer.add_scalar('reward', reward, episode)
                 # self.writer.add_scalar('sa', sa_score, episode)
 
             # Training the network
@@ -263,7 +265,7 @@ class DQN(object):
 
                 # Log result
                 print('Current TD error: %.4f' % np.mean(np.abs(td_error)))
-                self.writer.add_scalar('td_error', td_error, episode)
+                # self.writer.add_scalar('td_error', td_error, episode)
 
                 # Update the target network
                 if self.double and (episode % self.update_frequency == 0):

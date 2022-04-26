@@ -18,7 +18,7 @@ from rdkit.Chem import Descriptors
 from rdkit.Chem import QED
 from six.moves import range
 from six.moves import zip
-from SA_Score import sascorer
+# from SA_Score import sascorer
 
 from utils import utils
 
@@ -525,37 +525,37 @@ class OptLogPMolecule(Molecule):
         return 1 / (1 + np.exp(- 0.3 * utils.penalized_logp(molecule)))
 
 
-class TargetSASMolecule(Molecule):
-    """Target SAS reward Molecule."""
+# class TargetSASMolecule(Molecule):
+#     """Target SAS reward Molecule."""
 
-    def __init__(self, discount_factor, target_sas, loss_type, **kwargs):
-        """Initializes the class.
-        Args:
-            discount_factor: Float. The discount factor. We only care about the
-                molecule at the end of modification. In order to prevent a myopic
-                decision, we discount the reward at each step by a factor of
-                discount_factor ** num_steps_left, this encourages exploration with
-                emphasis on long term rewards.
-            target_sas: Float. Target synthetic accessibility value.
-            loss_type: String. 'l2' for l2 loss, 'l1' for l1 loss.
-            **kwargs: The keyword arguments passed to the base class.
-        """
-        super(TargetSASMolecule, self).__init__(**kwargs)
-        self.discount_factor = discount_factor
-        self.target_sas = target_sas
-        if loss_type == 'l1':
-            self.loss_fn = abs
-        elif loss_type == 'l2':
-            self.loss_fn = lambda x: x**2
-        else:
-            raise ValueError('loss_type must by "l1" or "l2"')
+#     def __init__(self, discount_factor, target_sas, loss_type, **kwargs):
+#         """Initializes the class.
+#         Args:
+#             discount_factor: Float. The discount factor. We only care about the
+#                 molecule at the end of modification. In order to prevent a myopic
+#                 decision, we discount the reward at each step by a factor of
+#                 discount_factor ** num_steps_left, this encourages exploration with
+#                 emphasis on long term rewards.
+#             target_sas: Float. Target synthetic accessibility value.
+#             loss_type: String. 'l2' for l2 loss, 'l1' for l1 loss.
+#             **kwargs: The keyword arguments passed to the base class.
+#         """
+#         super(TargetSASMolecule, self).__init__(**kwargs)
+#         self.discount_factor = discount_factor
+#         self.target_sas = target_sas
+#         if loss_type == 'l1':
+#             self.loss_fn = abs
+#         elif loss_type == 'l2':
+#             self.loss_fn = lambda x: x**2
+#         else:
+#             raise ValueError('loss_type must by "l1" or "l2"')
 
-    def _reward(self):
-        molecule = Chem.MolFromSmiles(self._state)
-        if molecule is None:
-            return -self.loss_fn(self.target_sas)
-        sas = sascorer.calculateScore(molecule)
-        return -self.loss_fn(sas - self.target_sas) * (self.discount_factor**(self.max_steps - self.num_steps_taken))
+#     def _reward(self):
+#         molecule = Chem.MolFromSmiles(self._state)
+#         if molecule is None:
+#             return -self.loss_fn(self.target_sas)
+#         sas = sascorer.calculateScore(molecule)
+#         return -self.loss_fn(sas - self.target_sas) * (self.discount_factor**(self.max_steps - self.num_steps_taken))
 
 
 class TargetSimilarityQED(Molecule):
