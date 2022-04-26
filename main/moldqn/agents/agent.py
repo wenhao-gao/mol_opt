@@ -203,11 +203,6 @@ class DQN(object):
                 model_name = 'dqn_checkpoint_' + str(episode) + '.pth'
                 torch.save(self.q_fn.state_dict(), os.path.join(self.log_path, model_name))
 
-        # with open(self.gen_file, 'w') as f:
-        #     json.dump(self.tracker.content, f)
-
-        # return self.tracker.content
-
     def _episode(self,
                  episode,
                  global_step):
@@ -221,10 +216,6 @@ class DQN(object):
 
         episode_start_time = time.time()
         epsilon = self.exploration.value(episode)
-        if epsilon > 0.6:
-            epsilon = 0.6 
-        if epsilon < 0.4:
-            epsilon = 0.4 
 
         state_mol, state_step = self.env.reset()
         head = np.random.randint(self.num_bootstrap_heads)
