@@ -24,7 +24,7 @@ save_frequency: 200
 max_num_checkpoints: 10
 q_function: "mlp"
 distribution: False
-noisy: False
+noisy: True
 dense_layers: [512]
 activation: "ReLU"
 optimizer: "Adam"
