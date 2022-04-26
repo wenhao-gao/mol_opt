@@ -194,7 +194,6 @@ class DQN(object):
                  global_step):
         """
         A function to run one generation episode.
-
         :param episode: The number of episode, used to adjust exploration rate.
         :param global_step: Total number of steps.
         :return: New global step.
@@ -245,7 +244,6 @@ class DQN(object):
               gen=False):
         """
         A function to run one generation step
-
         :param epsilon: parameter for epsilon-greedy
         :param head:
         :param gen:
@@ -288,7 +286,6 @@ class DQN(object):
     def _compute_td_loss(self, batch_size, episode):
         """
         Compute the td error and update the network
-
         :param batch_size: Batch size.
         :param episode: Number of episodes.
         :return: TD error
@@ -469,7 +466,6 @@ class DQN(object):
     def get_action(self, observation, epsilon, head=0):
         """
         Get action from observations
-
         :param observation: All possible next step.
         :param epsilon: Parameter for epsilon greedy.
         :param head: Number of bootstrap heads.
@@ -516,7 +512,6 @@ class Storage(object):
     def insert(self, sample):
         """
         Insert a new sample into the tracker.
-
         :param sample: A tuple with (mol, scaled_reward, reward, sa)
         """
         mol, scaled_reward, reward, sa = sample
