@@ -23,7 +23,8 @@ class MultiLayerNetwork(nn.Module):
         self.device = device
         self.dense = nn.Sequential()
 
-        hparams_layers = self.args['dense_layers']
+        hparams_layers = [self.args['n_neurons']] * self.args['n_layers']
+
         # The input length is the size of Morgan fingerprint plus steps
         input_size = self.args['fingerprint_length'] + 1
         output_size = self.args['num_bootstrap_heads']
@@ -34,8 +35,8 @@ class MultiLayerNetwork(nn.Module):
             self.dense.add_module('dense_%i' % i, nn.Linear(hparams_layers[i - 1], hparams_layers[i]))
 
             if i != len(hparams_layers) - 1:
-                if self.args['batch_norm']:
-                    self.dense.add_module('BN_%i' % i, nn.BatchNorm1d(1))
+                # if self.args['batch_norm']:
+                #     self.dense.add_module('BN_%i' % i, nn.BatchNorm1d(1))
                 self.dense.add_module('%s_%i' % (self.args['activation'], i),
                                       getattr(nn, self.args['activation'])())
                 self.dense.add_module('Dropout_%i' % i, nn.Dropout(self.args['dropout']))

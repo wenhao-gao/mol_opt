@@ -22,26 +22,26 @@ class DistributionalMultiLayerNetwork(nn.Module):
         self.vmax = vmax
         self.args = args
 
-        self.encoder = functools.partial(mol2fp, radius=args.fingerprint_radius, length=args.fingerprint_length)
+        self.encoder = functools.partial(mol2fp, radius=args['fingerprint_radius'], length=args['fingerprint_length'])
 
         self.device = device
         self.dense = nn.Sequential()
 
-        hparams_layers = self.args.dense_layers
+        hparams_layers = [self.args['n_neurons']] * self.args['n_layers']
         # The input length is the size of Morgan fingerprint plus steps
-        input_size = self.args.fingerprint_length + 1
-        output_size = self.args.num_bootstrap_heads
+        input_size = self.args['fingerprint_length'] + 1
+        output_size = self.args['num_bootstrap_heads']
         hparams_layers = [input_size] + hparams_layers + [output_size]
 
         self.dense.add_module('dense_%i' % 1, nn.Linear(hparams_layers[0], hparams_layers[1]))
 
         for i in range(1, len(hparams_layers) - 1):
 
-            if self.args.batch_norm:
-                self.dense.add_module('BN_%i' % i, nn.BatchNorm1d(1))
-            self.dense.add_module('%s_%i' % (self.args.activation, i),
-                                  getattr(nn, self.args.activation)())
-            self.dense.add_module('Dropout_%i' % i, nn.Dropout(self.args.dropout))
+            # if self.args['batch_norm']:
+            #     self.dense.add_module('BN_%i' % i, nn.BatchNorm1d(1))
+            self.dense.add_module('%s_%i' % (self.args['activation'], i),
+                                  getattr(nn, self.args['activation'])())
+            self.dense.add_module('Dropout_%i' % i, nn.Dropout(self.args['dropout']))
 
             self.dense.add_module('dense_%i' % (i+1), NoisyLinear(hparams_layers[i], hparams_layers[i+1]))
 
@@ -54,9 +54,9 @@ class DistributionalMultiLayerNetwork(nn.Module):
         """
         if step is not None:
             input_tensor = self.encoder(x, step).to(self.device)
-            return F.softmax(self.dense(input_tensor).view(-1, self.args.num_bootstrap_heads))
+            return F.softmax(self.dense(input_tensor).view(-1, self.args['num_bootstrap_heads']))
         else:
-            return F.softmax(self.dense(x).view(-1, self.args.num_bootstrap_heads))
+            return F.softmax(self.dense(x).view(-1, self.args['num_bootstrap_heads']))
 
     def reset_noise(self):
         for layer in self.dense:

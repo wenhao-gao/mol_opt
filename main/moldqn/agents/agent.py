@@ -1,11 +1,8 @@
 import copy
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import random
-# import json
 import time
 import numpy as np
-# from tensorboardX import SummaryWriter
 from collections import OrderedDict
 
 import torch
@@ -14,9 +11,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from utils.utils import LinearSchedule, PiecewiseSchedule, ReplayBuffer, PrioritizedReplayBuffer
-# from utils.utils import get_sa_score, sa_gaussian_wrapper, sc_gaussian_wrapper, smi_wrapper
-# from utils.utils import get_sa_score, get_sc_score, sa_gaussian_wrapper, sc_gaussian_wrapper, smi_wrapper
-# from environments import synth_env as envs
 from environments import environments as envs
 from networks.nn_utils import initialize_weights
 from networks import mpnn
@@ -31,9 +25,9 @@ class DQN(object):
                 oracle, 
                 q_fn, 
                 task='moldqn',
-                # objective,
                 args=None,
                 param=None,
+                n_max_oracle_call=10000,
                 keep=250,
                 model_path='./checkpoints',
                 gen_file='./mol_gen_'):
@@ -49,8 +43,6 @@ class DQN(object):
         :param gen_file: The name of file to store generated molecules
         """
         self.oracle = oracle
-        # max_oracle_call 
-        # self.score_fn = score_fn 
         self.task = task
         self.args = args
         self.num_episodes = self.args['num_episodes']
@@ -58,14 +50,14 @@ class DQN(object):
         self.batch_size = self.args['batch_size']
         self.gamma = self.args['gamma']
         # Replay buffer option
-        self.prioritized = self.args['prioritized']
+        self.prioritized = True
         self.replay_buffer_size = self.args['replay_buffer_size']
         self.prioritized_alpha = self.args['prioritized_alpha']
         self.prioritized_beta = self.args['prioritized_beta']
         self.prioritized_epsilon = self.args['prioritized_epsilon']
         self.distribution = self.args['distribution']
         # Double DQN option
-        self.double = self.args['double_q']
+        self.double = True
         self.update_frequency = self.args['update_frequency']
         # Bootstrap option
         self.num_bootstrap_heads = self.args['num_bootstrap_heads']
@@ -79,13 +71,13 @@ class DQN(object):
         self.learning_rate_decay_steps = self.args['learning_rate_decay_steps']
         self.grad_clipping = self.args['grad_clipping']
         self.learning_rate = self.args['learning_rate'] 
-        self.allowed_ring_sizes = self.args['allowed_ring_sizes']
-        self.allow_bonds_between_rings = self.args['allow_bonds_between_rings']
-        self.allow_no_modification = self.args['allow_no_modification']
-        self.allow_removal = self.args['allow_removal']
+        self.allowed_ring_sizes = [5, 6]
+        self.allow_bonds_between_rings = False
+        self.allow_no_modification = True
+        self.allow_removal = True
         self.init_mol = self.args['init_mol']
         self.discount_factor = self.args['discount_factor']
-        self.atom_types = self.args['atom_types']
+        self.atom_types = ["C", "O", "N"]
 
         self.env = envs.Molecule(
                 atom_types=set(self.atom_types), 
@@ -129,8 +121,6 @@ class DQN(object):
         self.q_fn_target = self.q_fn_target.to(self.device)
         self.q_fn = self.q_fn.to(self.device)
 
-
-
         self.optimizer = optim.Adam(
             params=self.q_fn.parameters(),
             lr=self.learning_rate,
@@ -145,14 +135,11 @@ class DQN(object):
             gamma=self.learning_rate_decay_rate
         )
 
-
-
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         self.log_path = os.path.join(model_path, self.task)
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
-        # self.writer = SummaryWriter(self.log_path)
 
         # Logging attribute
         self.tracker = Storage(keep=keep)
@@ -163,12 +150,12 @@ class DQN(object):
         # epsilon-greedy exploration schedule
         if not self.noisy:
             self.exploration = PiecewiseSchedule(
-                [(0, 0), (int(self.num_episodes * 2 / 3), 0), (self.num_episodes, 0)],
+                [(0, 1.0), (int(n_max_oracle_call * 1 / 3), 0.1), (n_max_oracle_call, 0.01)],
                 outside_value=0.01
             )
         else:
             self.exploration = PiecewiseSchedule(
-                [(0, 0), (self.num_episodes, 0)],
+                [(0, 1.0), (int(n_max_oracle_call * 1 / 3), 0.1), (n_max_oracle_call, 0.01)],
                 outside_value=0.01
             )
 
@@ -190,7 +177,6 @@ class DQN(object):
         for episode in range(self.num_episodes):
             global_step = self._episode(episode, global_step)
 
-
             oracle_num = self.env.called_oracle_number()
             if self.oracle.finish:
                 print('max oracle hit... abort!')
@@ -208,7 +194,6 @@ class DQN(object):
                  global_step):
         """
         A function to run one generation episode.
-
         :param episode: The number of episode, used to adjust exploration rate.
         :param global_step: Total number of steps.
         :return: New global step.
@@ -230,18 +215,6 @@ class DQN(object):
                 print('Episode %d/%d took %gs' % (episode + 1, self.num_episodes, time.time() - episode_start_time))
                 print('SMILES: %s' % state_mol)
                 print('The reward is: %s' % str(reward))
-                # print('The SA score is: %s' % str(sa_score))
-                # print('The scaled reward is: %s\n' % str(reward_scaled))
-
-                # Keep track the result
-                # if reward > self.tracker.lowest:
-                # self.tracker.insert((state_mol, reward_scaled, reward, sa_score))
-                # self.writer.add_text('SMILES reward', state_mol + ' Reward: ' + str(reward), episode)
-
-                # Log result
-                # self.writer.add_scalar('scaled_reward', reward_scaled, episode)
-                # self.writer.add_scalar('reward', reward, episode)
-                # self.writer.add_scalar('sa', sa_score, episode)
 
             # Training the network
             start_train = 3 # if self.args.noisy else 50
@@ -255,8 +228,7 @@ class DQN(object):
                 td_error = self._compute_td_loss(self.batch_size, episode)
 
                 # Log result
-                print('Current TD error: %.4f' % np.mean(np.abs(td_error)))
-                # self.writer.add_scalar('td_error', td_error, episode)
+                # print('Current TD error: %.4f' % np.mean(np.abs(td_error)))
 
                 # Update the target network
                 if self.double and (episode % self.update_frequency == 0):
@@ -272,7 +244,6 @@ class DQN(object):
               gen=False):
         """
         A function to run one generation step
-
         :param epsilon: parameter for epsilon-greedy
         :param head:
         :param gen:
@@ -288,18 +259,6 @@ class DQN(object):
 
         # Take a step forward
         next_state_mol, _, reward, done = self.env.step(action)
-
-        # Synthesizability consideration
-        # sa_score = get_sa_score(next_state_mol)
-
-        # if self.args.synthesizability is None:
-        #     reward_scaled = reward
-        # elif self.args.synthesizability == 'sa':
-        #     reward_scaled = reward * sa_gaussian_wrapper(sa_score)
-        # elif self.args.synthesizability == 'sc':
-        #     reward_scaled = reward * sc_gaussian_wrapper(get_sc_score(next_state_mol))
-        # elif self.args.synthesizability == 'smi':
-        #     reward_scaled = reward * smi_wrapper(len(next_state_mol))
 
         # Get new observation for updating the value network
         next_observations = list(self.env.get_valid_actions())
@@ -327,7 +286,6 @@ class DQN(object):
     def _compute_td_loss(self, batch_size, episode):
         """
         Compute the td error and update the network
-
         :param batch_size: Batch size.
         :param episode: Number of episodes.
         :return: TD error
@@ -508,7 +466,6 @@ class DQN(object):
     def get_action(self, observation, epsilon, head=0):
         """
         Get action from observations
-
         :param observation: All possible next step.
         :param epsilon: Parameter for epsilon greedy.
         :param head: Number of bootstrap heads.
@@ -542,32 +499,6 @@ class DQN(object):
 
         return action
 
-    # def generate(self):
-    #     """
-    #     Run the genartion process
-    #     :return:
-    #     """
-    #     with open(self.gen_file, 'wt') as f:
-    #         print('SMILES,reward', file=f)
-    #         for episode in range(1, self.gen_num_episode + 1):
-    #
-    #             episode_start_time = time.time()
-    #             state_mol, state_step = self.env.reset()
-    #
-    #             for step in range(self.max_steps_per_episode):
-    #
-    #                 state_mol, reward, sa, reward_scaled, done = self._step(
-    #                     epsilon=self.gen_epsilon,
-    #                     head=0,
-    #                     gen=True
-    #                 )
-    #
-    #                 if done:
-    #                     print('Episode %d/%d took %gs' % (episode, self.gen_num_episode, time.time() - episode_start_time))
-    #                     print('SMIELS: %s' % state_mol)
-    #                     print('The reward is: %s\n' % str(reward))
-    #                     print(str(state_mol) + ',' + str(reward), file=f)
-
 
 class Storage(object):
     """A class to store the training result"""
@@ -581,7 +512,6 @@ class Storage(object):
     def insert(self, sample):
         """
         Insert a new sample into the tracker.
-
         :param sample: A tuple with (mol, scaled_reward, reward, sa)
         """
         mol, scaled_reward, reward, sa = sample

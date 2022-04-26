@@ -5,7 +5,6 @@ import yaml
 import os
 import sys
 sys.path.append(os.path.realpath(__file__))
-import numpy as np
 from tdc import Oracle
 from time import time 
 

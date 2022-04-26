@@ -1,15 +1,10 @@
-import os, pickle, torch, random, argparse
-import yaml
+import os, torch
 import numpy as np 
-from tqdm import tqdm 
-from tdc import Oracle
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-from tdc import Oracle
-from utils.parsing import parse_args
 from agents.agent import DQN 
 
 class MolDQN_Optimizer(BaseOptimizer):
@@ -24,7 +19,8 @@ class MolDQN_Optimizer(BaseOptimizer):
 
         agent = DQN(
             oracle=self.oracle,
-            q_fn = config['q_function'], 
+            q_fn = 'mlp', 
+            n_max_oracle_call=self.args.max_oracle_calls,
             args=config,
         )
 
@@ -35,11 +31,10 @@ class MolDQN_Optimizer(BaseOptimizer):
 
         for episode in range(agent.num_episodes):
 
-            # global_step = agent._episode(episode, global_step)
+            epsilon = agent.exploration.value(len(self.oracle))
+            # print(f"Episode: {episode}, epsilon: {epsilon}")
 
-            epsilon = agent.exploration.value(episode)
-
-            state_mol, state_step = agent.env.reset()
+            _, _ = agent.env.reset()
             head = np.random.randint(agent.num_bootstrap_heads)
 
             for step in range(agent.max_steps_per_episode):
