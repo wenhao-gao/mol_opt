@@ -1,4 +1,4 @@
-vocab_path: 'main/jt_vae/vocab.txt'
+vocab_path: 'main/jt_vae/data/zinc/vocab.txt'
 model_path: 'main/jt_vae/fast_molvae/vae_model/model.iter-5000'
 hidden_size: 450
 latent_size: 56
