@@ -76,6 +76,8 @@ def main():
     elif args.method == 'boss':
         from main.boss.run import BOSS_Optimizer 
         Optimizer = BOSS_Optimizer 
+    elif args.method == 'chembo':
+        from main.chembo.run import ChemBOoptimizer as Optimizer 
     elif args.method == 'gpbo':
         from main.gpbo.run import GPBO_optimizer
         Optimizer = GPBO_optimizer 

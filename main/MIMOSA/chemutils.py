@@ -627,13 +627,19 @@ def add_fragment_at_position(editmol, position_idx, fragment, new_bond):
     atom_lst = list(fragment_mol.GetAtoms())
     for neighbor_atom in neighbor_atom_set:
         neighbor_atom_symbol = editmol.GetAtomWithIdx(neighbor_atom).GetSymbol()
-        bondtype_edit = new_mol.GetBondBetweenAtoms(neighbor_atom, old_idx2new_idx[position_idx]).GetBondType()
+        bbond = new_mol.GetBondBetweenAtoms(neighbor_atom, old_idx2new_idx[position_idx])
+        if bbond is None:
+            continue 
+        bondtype_edit = bbond.GetBondType()
         for i,v in enumerate(atom_lst):
             v_idx = v.GetIdx()
             ### v1 is neighbor of v 
             for v1 in [atom_lst[i-1], atom_lst[i+1-len(atom_lst)]]: 
                 v1_idx = v1.GetIdx()
-                bondtype_frag = fragment_mol.GetBondBetweenAtoms(v_idx, v1_idx).GetBondType()
+                bond = fragment_mol.GetBondBetweenAtoms(v_idx, v1_idx)
+                if bond is None:
+                    continue 
+                bondtype_frag = bond.GetBondType() 
                 # print("current:", current_atom_symbol, "neighbor:", neighbor_atom_symbol, bondtype_edit)
                 # print(v.GetSymbol(), v1.GetSymbol(), bondtype_frag)
                 if v.GetSymbol()==current_atom_symbol and v1.GetSymbol()==neighbor_atom_symbol and bondtype_edit==bondtype_frag: 
@@ -659,6 +665,8 @@ def add_fragment_at_position(editmol, position_idx, fragment, new_bond):
                         i1_new = old_idx2new_idx2[i1]
                         i2_new = old_idx2new_idx2[i2]
                         bt = bond.GetBondType()
+                        if bt is None:
+                            continue 
                         if not (set([i1,i2]) == set([v1.GetIdx(), v.GetIdx()])):
                             new_mol2.AddBond(i1_new, i2_new, bt)
                     ####### 3.2 add other atoms and bonds 
