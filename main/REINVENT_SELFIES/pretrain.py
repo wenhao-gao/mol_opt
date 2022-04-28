@@ -58,8 +58,8 @@ def pretrain(restore_from=None):
             # Every 500 steps we decrease learning rate and print some information
             if step % 500 == 0 and step != 0:
                 decrease_learning_rate(optimizer, decrease_by=0.03)
-                tqdm.write("*" * 50)
-                tqdm.write("Epoch {:3d}   step {:3d}    loss: {:5.2f}\n".format(epoch, step, loss.data[0]))
+                # tqdm.write("*" * 50)
+                # tqdm.write("Epoch {:3d}   step {:3d}    loss: {:5.2f}\n".format(epoch, step, loss.data[0]))
                 seqs, likelihood, _ = Prior.sample(128)
                 valid = 0
                 for i, seq in enumerate(seqs.cpu().numpy()):
