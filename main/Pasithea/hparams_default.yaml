@@ -7,9 +7,6 @@ lr_dream: 0.01
 test_model: 0
 plot_transform: 0
 
-data_preprocess:
-  smiles_file: main/Pasithea/datasets/0SelectedSMILES_QM9.txt
-
 data:
   num_train: 300
   num_dream: 10000
