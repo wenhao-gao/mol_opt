@@ -514,7 +514,16 @@ class Pasithea_optimizer(BaseOptimizer):
         test = settings['test_model']
         plot = settings['plot_transform']
         mols = settings['mols']
-        file_name = settings['data_preprocess']['smiles_file']
+        # file_name = settings['data_preprocess']['smiles_file']
+        ##### write it to a new smiles_file 
+        # self.all_smiles 
+        file_name = str(random.randint(100000,999999))+'.txt'
+        with open(file_name, 'w') as fo:
+            fo.write('idx,smiles\n')
+            for i,smiles in enumerate(self.all_smiles): 
+                fo.write(str(i+1) + ',' + smiles + '\n')
+
+
         lr_train=settings['lr_train']
         lr_train=float(lr_train)
         lr_dream=settings['lr_dream']
@@ -545,6 +554,8 @@ class Pasithea_optimizer(BaseOptimizer):
 
         if num_dream > num_train:
             num_mol = num_dream
+        import os 
+        os.system('rm -rf dream_results')
 
         directory = change_str('dream_results/{}_{}/{}/{}'.format(data_parameters_str,
                                        training_parameters_str,
