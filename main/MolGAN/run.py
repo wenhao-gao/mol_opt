@@ -47,6 +47,7 @@ class MolGAN_Optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
+        
 
         data = SparseMolecularDataset()
         data.load(os.path.join(path_here, 'data/gdb9_9nodes.sparsedataset'))
@@ -64,8 +65,8 @@ class MolGAN_Optimizer(BaseOptimizer):
 
 
         def train_fetch_dict(i, steps, epoch, epochs, min_epochs, model, optimizer):
-            a = [optimizer.train_step_G] if i % n_critic == 0 else [optimizer.train_step_D]
-            b = [optimizer.train_step_V] if i % n_critic == 0 and la < 1 else []
+            a = [optimizer.train_step_G] if i % config['n_critic'] == 0 else [optimizer.train_step_D]
+            b = [optimizer.train_step_V] if i % config['n_critic'] == 0 and la < 1 else []
             return a + b
 
 
@@ -75,7 +76,7 @@ class MolGAN_Optimizer(BaseOptimizer):
 
             if la < 1:
 
-                if i % n_critic == 0:
+                if i % config['n_critic'] == 0:
                     rewardR = reward(mols)
 
                     n, e = session.run([model.nodes_gumbel_argmax, model.edges_gumbel_argmax],
