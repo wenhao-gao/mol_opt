@@ -23,7 +23,7 @@ import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
-from main.optimizer import BaseOptimizer
+from main.optimizer import BaseOptimizer, Oracle
 
 # export PYTHONPATH="${PYTHONPATH}:${PWD}:${PWD}/rdkit_contrib:${PWD}/synth/:${PWD}/synth/rexgen_direct"
 sys.path.append(os.path.join(path_here, 'rdkit_contrib'))
@@ -109,8 +109,25 @@ class ChemBOoptimizer(BaseOptimizer):
         worker_manager = SyntheticWorkerManager(num_workers=N_WORKERS,
                                                 time_distro='const')
 
-        # Problem settings ------ oracle 
-        # objective_func = get_objective_by_name(args.objective) 
+        class neworacle(Oracle):
+            def __call__(self, mol):
+
+                print(mol[0], type(mol[0])) ### mols.molecule.Molecule "./mols/molecule.py"
+                if type(mol)==list:
+                    mol = mol[0]
+                try:
+                    # smiles = Chem.MolToSmiles(m)
+                    smiles = mol.to_smiles()
+                    values = self.oracle(smiles)
+                except:
+                    values = 0.0
+                print('======== mol, score, used calls', mol, values, len(self.oracle))
+                return values 
+
+        # glob self.oracle
+
+        # self.oracle.old_scores = [-1 for i in range(5)]
+        import copy 
         def objective_func(mol):
             # print('input of objective_func', mol, type(mol))
             print(mol[0], type(mol[0])) ### mols.molecule.Molecule "./mols/molecule.py"
@@ -118,23 +135,36 @@ class ChemBOoptimizer(BaseOptimizer):
                 mol = mol[0]
             try:
                 # smiles = Chem.MolToSmiles(m)
-                smiles = mol.to_smiles() 
-                values = self.oracle(smiles)                
+                smiles = mol.to_smiles()
+                values = self.oracle(smiles)
             except:
                 values = 0.0
             print('======== mol, score, used calls', mol, values, len(self.oracle))
+
+            # print('--------test early stop--------')
+            if len(self.oracle) > config['init_pool_size']: 
+                self.oracle.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.oracle.mol_buffer.items())[:5]]
+                print('  >>>>> new_scores', new_scores, 'old_scores', objective_func.old_scores, \
+                      'equal to not:', new_scores == objective_func.old_scores, 'patience', objective_func.patience)
+                if new_scores == objective_func.old_scores:
+                    print('patience ++')
+                    objective_func.patience += 1
+                    if objective_func.patience >= 3:
+                        self.oracle.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        objective_func.stop = True
+                else:
+                    objective_func.patience = 0
+                objective_func.old_scores = copy.deepcopy(new_scores)
+            # objective_func.stop = True 
             return values 
 
-            # print(self.oracle(mol))
-            # exit() 
-            # # print()
-            # return self.oracle(mol)
-            # if type(mol)==list:
-            #     print(mol)
-            #     smiles_lst = [Chem.MolToSmiles(m) for m in mol]
-            #     return self.oracle(smiles_lst)
-            # smiles = Chem.MolToSmiles(mol)
-            # return self.oracle(smiles)
+        objective_func.old_scores = [-1 for i in range(5)]
+        objective_func.stop = False 
+        objective_func.patience = 0 
+
+
 
         chemist_args = {
             'acq_opt_method': 'rand_explorer',

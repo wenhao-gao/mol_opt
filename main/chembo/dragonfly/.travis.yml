@@ -1,0 +1,75 @@
+language: python
+os:
+  - linux
+python:
+  - "3.5"
+  - "3.6"
+env:
+  - DIRECT_STATE=-direct OPT_STATE=-optimal
+  - DIRECT_STATE=direct OPT_STATE=-optimal
+
+osx-setup-steps: &osx-setup-steps
+  os: osx
+  language: generic  # 'language: python' is not yet supported on macOS
+  before_install:
+    - brew update
+    - brew outdated pyenv || brew upgrade pyenv
+    - brew unlink pyenv
+    - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/922f1a6709446cb1c6cfb954651275bf4033eef8/Formula/pyenv.rb
+    - if [[ "$DIRECT_STATE" == "direct" ]]; then
+        brew ls --versions gcc && brew upgrade gcc || brew install gcc ;
+      fi
+    - brew install pyenv-virtualenv
+    - eval "$(pyenv init -)"
+    - eval "$(pyenv virtualenv-init -)"
+    - pyenv install $PYTHON
+    - export PYENV_VERSION=$PYTHON
+    - export PATH="/Users/travis/.pyenv/shims:${PATH}"
+    - pyenv virtualenv venv
+    - pyenv activate venv
+    - python --version
+
+# We have to be explicit with the OSX versions because Python is not supported by default.
+# The Python versions then have to be explicitly labelled with full version numbers because
+# that is what pyenv uses for the installs. The extra "python" label to fix the display in the UI.
+matrix:
+  include:
+    - python: 3.5
+      env: PYTHON=3.5.6 DIRECT_STATE=direct OPT_STATE=-optimal
+      <<: *osx-setup-steps
+    - python: 3.5
+      env: PYTHON=3.5.6 DIRECT_STATE=-direct OPT_STATE=-optimal
+      <<: *osx-setup-steps
+    - python: 3.6
+      env: PYTHON=3.6.8 DIRECT_STATE=direct OPT_STATE=-optimal
+      <<: *osx-setup-steps
+    - python: 3.6
+      env: PYTHON=3.6.8 DIRECT_STATE=-direct OPT_STATE=-optimal
+      <<: *osx-setup-steps
+
+notifications:
+  email: false
+
+before_cache:
+  - brew cleanup
+
+cache:
+  pip: true
+  directories:
+    - $HOME/Library/Caches/Homebrew
+    - $HOME/.pyenv_cache
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DIRECT_STATE" == "direct" ]]; then
+    sudo apt-get install -y -qq python-dev gfortran build-essential ;
+    fi
+
+install:
+  - pip install -U pip
+  - pip install numpy==1.16.1 cython
+  - pip install -r requirements-dev.txt
+  - pip install -e . -v
+
+script: 
+  - bash run_all_tests.sh sanity $DIRECT_STATE
+  - bash run_all_tests.sh

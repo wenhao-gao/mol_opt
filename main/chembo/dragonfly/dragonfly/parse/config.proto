@@ -1,0 +1,15 @@
+message Experiment {
+  required string name        = 1;
+  repeated ParameterSpec domain = 2;
+  repeated ParameterSpec fidel_space = 3;
+
+  message ParameterSpec {
+    required string name   = 1;
+    optional string type   = 2 [default = "float"];
+    optional double min    = 3 [default = -inf];
+    optional double max    = 4 [default = inf];
+    optional string dim    = 5 [default = ""];
+    optional string kernel = 6 [default = ""];
+    optional string items  = 7 [default = ""];
+  }
+}

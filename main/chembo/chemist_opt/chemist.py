@@ -153,7 +153,7 @@ class Chemist:
             domain_dist_computers=self.domain_dist_computers, 
         )
         print('create optimizer, before optimization')
-
+        # exit()
         return optimiser.optimise(max_capital)
 
     # def get_raw_domain_point_from_processed(self, opt_point):

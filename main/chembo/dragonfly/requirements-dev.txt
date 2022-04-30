@@ -1,0 +1,9 @@
+-r requirements.txt
+nose
+protobuf
+coverage
+scikit-learn
+matplotlib
+cython
+POT
+graphviz
