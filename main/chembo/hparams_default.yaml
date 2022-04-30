@@ -2,5 +2,5 @@ budget: 1000
 dataset: 'chembl'
 steps: 10
 kernel: 'similarity_kernel'
-init_pool_size: 10 
+init_pool_size: 20 
 max_pool_size: 200

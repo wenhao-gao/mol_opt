@@ -102,31 +102,9 @@ class ChemBOoptimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
-
-        # args = parse_args()
-        # Obtain a reporter and worker manager
-        # reporter = get_reporter(open(EXP_LOG_FILE, 'w'))
         worker_manager = SyntheticWorkerManager(num_workers=N_WORKERS,
                                                 time_distro='const')
 
-        class neworacle(Oracle):
-            def __call__(self, mol):
-
-                print(mol[0], type(mol[0])) ### mols.molecule.Molecule "./mols/molecule.py"
-                if type(mol)==list:
-                    mol = mol[0]
-                try:
-                    # smiles = Chem.MolToSmiles(m)
-                    smiles = mol.to_smiles()
-                    values = self.oracle(smiles)
-                except:
-                    values = 0.0
-                print('======== mol, score, used calls', mol, values, len(self.oracle))
-                return values 
-
-        # glob self.oracle
-
-        # self.oracle.old_scores = [-1 for i in range(5)]
         import copy 
         def objective_func(mol):
             # print('input of objective_func', mol, type(mol))
@@ -148,16 +126,14 @@ class ChemBOoptimizer(BaseOptimizer):
                 print('  >>>>> new_scores', new_scores, 'old_scores', objective_func.old_scores, \
                       'equal to not:', new_scores == objective_func.old_scores, 'patience', objective_func.patience)
                 if new_scores == objective_func.old_scores:
-                    print('patience ++')
                     objective_func.patience += 1
-                    if objective_func.patience >= 3:
+                    if objective_func.patience >= 10:
                         self.oracle.log_intermediate(finish=True)
                         print('convergence criteria met, abort ...... ')
                         objective_func.stop = True
                 else:
                     objective_func.patience = 0
                 objective_func.old_scores = copy.deepcopy(new_scores)
-            # objective_func.stop = True 
             return values 
 
         objective_func.old_scores = [-1 for i in range(5)]

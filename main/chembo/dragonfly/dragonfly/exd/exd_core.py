@@ -736,22 +736,6 @@ class ExperimentDesigner(object):
       print('--------test early stop--------')
       if self.func_caller.funcs.stop:
         break 
-      # patience = 0 
-      # old_scores = [-1 for i in range(10)]
-
-      # self.func_caller.sort_buffer()
-      # new_scores = [item[1][0] for item in list(self.func_caller.mol_buffer.items())[:5]]
-      # if new_scores == old_scores:
-      #   patience += 1
-      #   if patience >= 3:
-      #     self.func_caller.log_intermediate(finish=True)
-      #     print('convergence criteria met, abort ...... ')
-      #     break
-      # else:
-      #   patience = 0
-      # old_scores = new_scores
-
-
 
     # Wrap up and return
     self._run_experiment_wrap_up()
