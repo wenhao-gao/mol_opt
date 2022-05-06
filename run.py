@@ -58,6 +58,9 @@ def main():
     elif args.method == "selfies_ga":
         from main.selfies_ga.run import SELFIES_GA_optimizer 
         Optimizer = SELFIES_GA_optimizer 
+    elif args.method == "synnet":
+        from main.synnet.run import SynNet_GA_optimizer 
+        Optimizer = SynNet_GA_optimizer 
 
     elif args.method == 'graph_mcts':
         from main.graph_mcts.run import Graph_MCTS_Optimizer 

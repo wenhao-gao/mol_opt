@@ -5,48 +5,23 @@ to optimize embeddings before decoding.
 """
 
 
-import os, pickle, torch, random, argparse
-import yaml
+import os
 import numpy as np 
 from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-# import sys, os 
-# path_here = os.path.dirname(os.path.realpath(__file__))
-# sys.path.append(path_here)
-# sys.path.append('..')
-
 
 from syn_net.utils.ga_utils import crossover, mutation
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
 import time
-import json
 import scripts._mp_decode as decode
-from tdc import Oracle
-
 from syn_net.utils.predict_utils import mol_fp
-
 from tqdm import tqdm 
-
-# define the following oracle functions from the TDC
-# logp  = Oracle(name = 'LogP')
-# qed   = Oracle(name = 'QED')
-# jnk   = Oracle(name = 'JNK3')
-# gsk   = Oracle(name = 'GSK3B')
-# drd2  = Oracle(name = 'DRD2')
-# _7l11 = Oracle(name = '7l11_docking')
-# _drd3 = Oracle(name = 'drd3_docking')
-
 
 
 def fitness(embs, _pool, obj):
@@ -82,18 +57,6 @@ def fitness(embs, _pool, obj):
     smiles  = [r[0] for r in results]
     trees   = [r[1] for r in results]
     scores = [obj(smi) for smi in smiles]
-    # if obj == 'qed':
-    #     scores = [qed(smi) for smi in smiles]
-    # elif obj == 'logp':
-    #     scores = [logp(smi) for smi in smiles]
-    # elif obj == 'jnk':
-    #     scores = [jnk(smi) if smi is not None else 0.0 for smi in smiles]
-    # elif obj == 'gsk':
-    #     scores = [gsk(smi) if smi is not None else 0.0 for smi in smiles]
-    # elif obj == 'drd2':
-    #     scores = [drd2(smi) if smi is not None else 0.0 for smi in smiles]
-    # else:
-    #     raise ValueError('Objective function not implemneted')
     return scores, smiles, trees
 
 
@@ -161,8 +124,6 @@ class SynNetoptimizer(BaseOptimizer):
 
         self.oracle.assign_evaluator(oracle)
 
-        np.random.seed(config['seed'])
-
         if config['restart']:
             population = np.load(config['input_file'])
             print(f"Starting with {len(population)} fps from {config['input_file']}")
@@ -198,6 +159,7 @@ class SynNetoptimizer(BaseOptimizer):
 
         recent_scores = []
         for n in tqdm(range(config['num_gen'])):
+
             if self.finish:
                 break 
 
@@ -213,6 +175,7 @@ class SynNetoptimizer(BaseOptimizer):
             offspring = mutation(offspring_crossover=offspring,
                                  num_mut_per_ele=num_mut_per_ele_,
                                  mut_probability=mut_probability_)
+
             new_population = np.unique(np.concatenate([population, offspring], axis=0), axis=0)
             with mp.Pool(processes=config['ncpu']) as pool:
                 new_scores, new_mols, trees = fitness(new_population, pool, self.oracle)
@@ -249,92 +212,4 @@ class SynNetoptimizer(BaseOptimizer):
             recent_scores.append(scores.mean())
             if len(recent_scores) > 10:
                 del recent_scores[0]
-
-            # np.save('population_' + args.objective + '_' + str(n+1) + '.npy', population)
-
-            # data = {
-            #         'top1'     : np.mean(scores[:1]),
-            #         'top10'    : np.mean(scores[:10]),
-            #         'top100'   : np.mean(scores[:100]),
-            #         'smiles'   : mols,
-            #         'scores'   : scores.tolist()}
-            # with open('opt_' + args.objective + '.json', 'w') as f:
-            #     json.dump(data, f)
-
-            # if n > 30 and recent_scores[-1] - recent_scores[0] < 0.01:
-            #     print("Early Stop!")
-            #     break
-
-        # data = {'objective': args.objective,
-        #         'top1'     : np.mean(scores[:1]),
-        #         'top10'    : np.mean(scores[:10]),
-        #         'top100'   : np.mean(scores[:100]),
-        #         'smiles'   : mols,
-        #         'scores'   : scores.tolist()}
-        # with open('opt_' + args.objective + '.json', 'w') as f:
-        #     json.dump(data, f)
-
-        # np.save('population_' + args.objective + '.npy', population)
-
-
-
-
-
-
-
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=110)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
-
-    path_here = os.path.dirname(os.path.realpath(__file__))
-
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
-
-        oracle = Oracle(name = oracle_name)
-        optimizer = SynNetoptimizer(args=args)
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-    main() 
-
-
-
-
-
 
