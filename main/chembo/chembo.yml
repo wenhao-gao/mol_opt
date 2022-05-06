@@ -148,8 +148,7 @@ dependencies:
     - promise==2.3
     - protobuf==3.19.1
     - pytdc==0.3.2
-    - python-graphviz==0.18
-    - python-igraph==0.9.8
+    - graphviz
     - rd-filters==0.1
     - scikit-learn==0.20.3
     - scipy==1.5.4
@@ -170,5 +169,3 @@ dependencies:
     - wrapt==1.13.3
     - yaspin==2.1.0
     - zipp==3.6.0
-prefix: /nethome/tfu42/.conda/envs/chembo
-
