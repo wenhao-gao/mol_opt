@@ -58,7 +58,6 @@ class ChemBOoptimizer(BaseOptimizer):
             if type(mol)==list:
                 mol = mol[0]
             try:
-                # smiles = Chem.MolToSmiles(m)
                 smiles = mol.to_smiles()
                 values = self.oracle(smiles)
             except:
@@ -85,8 +84,6 @@ class ChemBOoptimizer(BaseOptimizer):
         objective_func.stop = False 
         objective_func.patience = 0 
 
-
-
         chemist_args = {
             'acq_opt_method': 'rand_explorer',
             'init_capital': int(config['init_pool_size']),
@@ -98,7 +95,6 @@ class ChemBOoptimizer(BaseOptimizer):
             'gpb_hp_tune_criterion': 'ml'
         }
 
-        # budget = int(config['max_pool_size']) - int(config['init_pool_size'])
         budget = self.oracle.max_oracle_calls - int(config['init_pool_size'])
         if budget <= 100:
             budget = 100

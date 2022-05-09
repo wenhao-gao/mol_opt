@@ -3,7 +3,7 @@
 # methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
 #          'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo' \
 #          'smiles_vae' 'selfies_vae')
-methods=('smiles_vae' 'selfies_vae')
+methods=('chembo')
 
 for method in "${methods[@]}"
 do

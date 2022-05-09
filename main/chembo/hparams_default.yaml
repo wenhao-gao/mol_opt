@@ -1,4 +1,3 @@
-budget: 1000
 dataset: 'chembl'
 steps: 10
 kernel: 'similarity_kernel'
