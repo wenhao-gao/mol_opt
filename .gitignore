@@ -139,7 +139,8 @@ result*.yaml
 production_*.sh
 *.ipynb
 
-
+# molgan
+save
 
 # DST
 main/DST/data/

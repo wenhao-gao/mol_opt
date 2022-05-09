@@ -1,18 +1,10 @@
-import os, pickle, random, argparse
-import yaml
+import os
 import numpy as np 
-from tqdm import tqdm 
-# torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-
 
 import tensorflow as tf
 
@@ -28,22 +20,11 @@ from optimizers.gan import GraphGANOptimizer
 from rdkit import Chem
 
 
-# batch_dim = 128
-# dropout = 0
-# n_critic = 5
-# metric = 'validity,sas'
-# z_dim = 8
-# epochs = 2
-# save_every = 1 # May lead to errors if left as None
-
-
-
-
 class MolGAN_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "MolGAN"
+        self.model_name = "molgan"
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
@@ -52,7 +33,7 @@ class MolGAN_Optimizer(BaseOptimizer):
         data = SparseMolecularDataset()
         data.load(os.path.join(path_here, 'data/gdb9_9nodes.sparsedataset'))
         steps = (len(data) // config['batch_dim'])
-        n_samples = 5000
+        n_samples = config['n_samples']
         la = 1
 
 
@@ -61,8 +42,6 @@ class MolGAN_Optimizer(BaseOptimizer):
             scores = self.oracle(smiles_list)  
             scores = np.array(scores).reshape(-1,1) 
             return scores 
-
-
 
         def train_fetch_dict(i, steps, epoch, epochs, min_epochs, model, optimizer):
             a = [optimizer.train_step_G] if i % config['n_critic'] == 0 else [optimizer.train_step_D]
@@ -184,7 +163,6 @@ class MolGAN_Optimizer(BaseOptimizer):
             m0.update(m1)
             return m0
 
-
         model = GraphGANModel(data.vertexes, data.bond_num_types, data.atom_num_types, config['z_dim'],
                               decoder_units=(128, 256, 512), discriminator_units=((128, 64), 128, (128, 64)),
                               decoder=decoder_adj, discriminator=encoder_rgcn,
@@ -194,8 +172,6 @@ class MolGAN_Optimizer(BaseOptimizer):
         session.run(tf.global_variables_initializer())
         trainer = Trainer(model, optimizer, session)
         print('Parameters: {}'.format(np.sum([np.prod(e.shape) for e in session.run(tf.trainable_variables())])))
-
-
 
         trainer.train(batch_dim=config['batch_dim'],
                       epochs=config['epochs'],
@@ -210,35 +186,3 @@ class MolGAN_Optimizer(BaseOptimizer):
                       directory='save', # here users need to first create and then specify a folder where to save the model
                       _eval_update=_eval_update,
                       _test_update=_test_update)
-
-
-
-
-# def reward(mols):
-#     rr = 1.
-#     for m in ('logp,sas,qed,unique' if metric == 'all' else metric).split(','):
-#         if m == 'np':
-#             rr *= MolecularMetrics.natural_product_scores(mols, norm=True)
-#         elif m == 'logp':
-#             rr *= MolecularMetrics.water_octanol_partition_coefficient_scores(mols, norm=True)
-#         elif m == 'sas':
-#             rr *= MolecularMetrics.synthetic_accessibility_score_scores(mols, norm=True)
-#         elif m == 'qed':
-#             rr *= MolecularMetrics.quantitative_estimation_druglikeness_scores(mols, norm=True)
-#         elif m == 'novelty':
-#             rr *= MolecularMetrics.novel_scores(mols, data)
-#         elif m == 'dc':
-#             rr *= MolecularMetrics.drugcandidate_scores(mols, data)
-#         elif m == 'unique':
-#             rr *= MolecularMetrics.unique_scores(mols)
-#         elif m == 'diversity':
-#             rr *= MolecularMetrics.diversity_scores(mols, data)
-#         elif m == 'validity':
-#             rr *= MolecularMetrics.valid_scores(mols)
-#         else:
-#             raise RuntimeError('{} is not defined as a metric'.format(m))
-
-#     return rr.reshape(-1, 1)
-
-
-

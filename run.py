@@ -105,12 +105,14 @@ def main():
         from main.DST.run import DSToptimizer
         Optimizer = DSToptimizer 
 
+    elif args.method == 'molgan':
+        from main.molgan.run import MolGAN_Optimizer 
+        Optimizer = MolGAN_Optimizer 
+
     elif args.method == 'MARS':
         from main.MARS.run import MARS_Optimizer 
         Optimizer = MARS_Optimizer 
-    elif args.method == 'MolGAN':
-        from main.MolGAN.run import MolGAN_Optimizer 
-        Optimizer = MolGAN_Optimizer 
+
     elif args.method == 'moldqn':
         from main.moldqn.run import MolDQN_Optimizer
         Optimizer = MolDQN_Optimizer 

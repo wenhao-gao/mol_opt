@@ -4,3 +4,4 @@ save_every: 1
 batch_dim: 128
 dropout: 0
 n_critic: 5
+n_samples: 1000
