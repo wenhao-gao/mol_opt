@@ -1,27 +1,24 @@
-lamb: 2
-topk: 5
-epsilon: 0.7
-device: 'cpu'
-data_dir: 'data'
-run_dir: 'runs/'
-train: False
-root_dir: './main/mars/'
-editor_dir: 
-mols_ref: 
-mols_init: 
-vocab: 'zinc'
-vocab_size: 1000
-max_size: 40
+train: True
 num_mols: 1000
-num_step: 500
-log_every: 1
-sampler: 'sa'
-proposal: 'editor'
+alpha: 0.95
 lr: 0.0003
-dataset_size: 50000
 batch_size: 128
 n_atom_feat: 17
 n_bond_feat: 5
 n_node_hidden: 64
 n_edge_hidden: 128
 n_layers: 6
+device: 'cpu'
+data_dir: 'data'
+run_dir: 'runs/'
+root_dir: './main/mars/'
+sampler: 'sa'
+proposal: 'editor'
+editor_dir: 
+mols_ref: 
+mols_init: 
+vocab: 'zinc'
+vocab_size: 1000
+beta: 0.05
+max_size: 40
+dataset_size: 50000

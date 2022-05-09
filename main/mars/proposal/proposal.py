@@ -129,7 +129,7 @@ class Proposal(ABC):
                 new_mol = combine(skeleton, new_arm)
 
                 if check_validity(new_mol) and \
-                    new_mol.GetNumAtoms() <= 40: # limit size
+                    new_mol.GetNumAtoms() <= 60: # limit size
                     if backward:
                         new_g = mol_to_dgl(new_mol)
                         u = skeleton.u

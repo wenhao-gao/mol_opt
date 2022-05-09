@@ -13,13 +13,12 @@ from common.train import train
 from common.chem import mol_to_dgl
 from common.utils import print_mols
 from datasets.utils import load_mols
-from datasets.datasets import ImitationDataset, \
-                               GraphClassificationDataset
+from datasets.datasets import ImitationDataset
 
 class Sampler():
     def __init__(self, config, proposal, oracle):
         self.proposal = proposal
-        # self.estimator = estimator
+        self.config = config
         self.oracle = oracle 
         
         self.writer = None
@@ -34,12 +33,8 @@ class Sampler():
         self.last_avg_size = 20
         self.train = config['train']
         self.num_mols = config['num_mols']
-        self.num_step = config['num_step']
-        self.log_every = config['log_every']
+        # self.num_step = config['num_step']
         self.batch_size = config['batch_size']
-        # self.score_wght = {k: v for k, v in zip(config['objectives'], config['score_wght'])}
-        # self.score_succ = {k: v for k, v in zip(config['objectives'], config['score_succ'])}
-        # self.score_clip = {k: v for k, v in zip(config['objectives'], config['score_clip'])}
         self.fps_ref = [AllChem.GetMorganFingerprintAsBitVect(x, 3, 2048) 
                         for x in config['mols_ref']] if config['mols_ref'] else None
 
@@ -177,7 +172,8 @@ class Sampler():
         old_scores = [self.oracle(smiles) for smiles in old_smiles]
         acc_rates = [0. for _ in old_mols]
 
-        for step in tqdm(range(self.num_step)):
+        step = 0
+        while True:
             if self.oracle.finish:
                 print('max oracle number hit')
                 break 
@@ -235,12 +231,13 @@ class Sampler():
                     collate_fn=ImitationDataset.collate_fn
                 )
                 
+                print('Training ...')
                 train(
                     model=self.proposal.editor, 
                     loaders={'dev': loader}, 
                     optimizer=self.optimizer,
                     n_epoch=1,
-                    log_every=10,
+                    log_every=25,
                     max_step=25,
                     metrics=[
                         'loss', 
@@ -254,6 +251,8 @@ class Sampler():
                     torch.device('cpu'):
                     torch.cuda.empty_cache()
 
+                step += 1
+
 
 class Sampler_SA(Sampler):
 
@@ -261,14 +260,13 @@ class Sampler_SA(Sampler):
         super().__init__(config, proposal, oracle, )
         self.k = 0
         self.step_cur_T = 0
-        self.T = Sampler_SA.T_k(self.k)
+        self.T = self.T_k(self.k)
 
-    @staticmethod
-    def T_k(k):
+    # @staticmethod
+    def T_k(self, k):
         T_0 = 1. #.1
-        BETA = .05
-        ALPHA = .95
-        
+        BETA = self.config['beta']
+        ALPHA = self.config['alpha']
         # return 1. * T_0 / (math.log(k + 1) + 1e-6)
         # return max(1e-6, T_0 - k * BETA)
         return ALPHA ** k * T_0
@@ -278,7 +276,7 @@ class Sampler_SA(Sampler):
         if self.step_cur_T == STEP_PER_T:
             self.k += 1
             self.step_cur_T = 0
-            self.T = Sampler_SA.T_k(self.k)
+            self.T = self.T_k(self.k)
         else: self.step_cur_T += 1
         self.T = max(self.T, 1e-2)
         return self.T

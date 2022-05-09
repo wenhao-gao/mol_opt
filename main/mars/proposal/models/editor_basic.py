@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from dgl.nn.pytorch.glob import Set2Set
 
-from common.nn import GraphEncoder, MLP
+from common.nn import MLP
 from .editor import Editor
 
 class BasicEditor(Editor):

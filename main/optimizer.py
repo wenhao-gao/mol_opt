@@ -293,7 +293,7 @@ class BaseOptimizer:
         # hparam_space["name"] = hparam_space["name"] + "_" + oracle.name
         
         def _func():
-            with wandb.init(config=hparam_default) as run:
+            with wandb.init(config=hparam_default, allow_val_change=True) as run:
                 avg_auc = 0
                 for oracle in oracles:
                     auc_top10s = []
