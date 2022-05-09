@@ -1,10 +1,7 @@
 from __future__ import print_function
 
 import argparse
-import yaml
-import os
-from rdkit import Chem, rdBase
-from tdc import Oracle
+from rdkit import rdBase
 rdBase.DisableLog('rdApp.error')
 
 import torch
@@ -74,7 +71,6 @@ class GFlowNet_Optimizer(BaseOptimizer):
         dataset = Dataset(args, bpath, device, floatX=args.floatX)
         print(args)
 
-
         mdp = dataset.mdp
 
         model = make_model(args, mdp)
@@ -85,53 +81,34 @@ class GFlowNet_Optimizer(BaseOptimizer):
         print('Done.')
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=1000)
-    parser.add_argument('--freq_log', type=int, default=100)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
+class GFlowNet_AL_Optimizer(BaseOptimizer):
 
-    path_here = os.path.dirname(os.path.realpath(__file__))
+    def __init__(self, args=None):
+        super().__init__(args)
+        self.model_name = "gflownet_al"
 
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
+    def _optimize(self, oracle, config):
 
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
+        self.oracle.assign_evaluator(oracle)
 
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
+        args = model_parser.parse_args()
+        
+        bpath = "/home/whgao/mol_opt/main/gflownet/data/blocks_PDB_105.json"
+        device = torch.device('cuda')
 
-        oracle = Oracle(name = oracle_name)
-        optimizer = GFlowNet_Optimizer(args=args)
+        if args.floatX == 'float32':
+            args.floatX = torch.float
+        else:
+            args.floatX = torch.double
+        dataset = Dataset(args, bpath, device, floatX=args.floatX)
+        print(args)
 
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
+        mdp = dataset.mdp
 
+        model = make_model(args, mdp)
+        model.to(args.floatX)
+        model.to(device)
 
-if __name__ == "__main__":
-    main()
+        train_model_with_proxy(args, model, self.oracle, dataset, do_save=True)
+        print('Done.')
 

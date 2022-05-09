@@ -109,16 +109,22 @@ def main():
         from main.molgan.run import MolGAN_Optimizer 
         Optimizer = MolGAN_Optimizer 
 
-    elif args.method == 'MARS':
-        from main.MARS.run import MARS_Optimizer 
+    elif args.method == 'mars':
+        from main.mars.run import MARS_Optimizer 
         Optimizer = MARS_Optimizer 
+    elif args.method == 'MIMOSA':
+        from main.MIMOSA.run import MIMOSA_Optimizer 
+        Optimizer = MIMOSA_Optimizer
+    elif args.method == 'gflownet':
+        from main.gflownet.run import GFlowNet_Optimizer 
+        Optimizer = GFlowNet_Optimizer
+    elif args.method == 'gflownet_al':
+        from main.gflownet.run import GFlowNet_AL_Optimizer 
+        Optimizer = GFlowNet_AL_Optimizer
 
     elif args.method == 'moldqn':
         from main.moldqn.run import MolDQN_Optimizer
         Optimizer = MolDQN_Optimizer 
-    elif args.method == 'MIMOSA':
-        from main.MIMOSA.run import MIMOSA_Optimizer 
-        Optimizer = MIMOSA_Optimizer 
     elif args.method == 'REINVENT':
         from main.REINVENT.run import REINVENToptimizer
         Optimizer = REINVENToptimizer
@@ -128,6 +134,7 @@ def main():
     elif args.method == "rationaleRL":
         from main.rationaleRL.run import RationaleRLoptimizer 
         Optimizer = RationaleRLoptimizer 
+
     else:
         raise ValueError("Unrecognized method name.")
 

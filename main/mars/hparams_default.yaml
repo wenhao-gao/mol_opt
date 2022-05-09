@@ -8,7 +8,7 @@ device: 'cpu'
 data_dir: 'data'
 run_dir: 'runs/'
 train: False
-root_dir: './main/MARS/'
+root_dir: './main/mars/'
 editor_dir: 
 mols_ref: 
 mols_init: 
