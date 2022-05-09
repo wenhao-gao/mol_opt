@@ -7,7 +7,7 @@ from rdkit import Chem, RDLogger
 import sys 
 sys.path.append('.')
 
-from utils import load_mols
+from .utils import load_mols
 from common.chem import break_bond, Arm, Skeleton
 
 lg = RDLogger.logger()
@@ -17,8 +17,8 @@ lg.setLevel(RDLogger.CRITICAL)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',   type=str,   default='./data')
-    parser.add_argument('--mols_file',  type=str,   default='chembl_10k.txt')
-    parser.add_argument('--vocab_name', type=str,   default='chembl',)
+    parser.add_argument('--mols_file',  type=str,   default='zinc.txt')
+    parser.add_argument('--vocab_name', type=str,   default='zinc',)
     parser.add_argument('--max_size',   type=int,   default=10, help='max size of arm')
     args = parser.parse_args()
 

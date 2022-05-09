@@ -50,7 +50,6 @@ class MARS_Optimizer(BaseOptimizer):
         ### estimator
         if config['mols_ref']: 
             config['mols_ref'] = load_mols(config['data_dir'], config['mols_ref'])
-        # estimator = Estimator(config)
 
         run_dir = config['run_dir']
 

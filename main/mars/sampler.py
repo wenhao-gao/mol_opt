@@ -62,9 +62,6 @@ class Sampler():
         for score_dict in dicts:
             score = 0.
             for k, v in score_dict.items():
-                # if self.score_clip[k] > 0.:
-                #     v = min(v, self.score_clip[k])
-                # score += self.score_wght[k] * v
                 score += v 
             # score /= score_norm
             score = max(score, 0.)
@@ -175,18 +172,10 @@ class Sampler():
         old_dicts = [{} for i in old_mols]
         old_smiles = [Chem.MolToSmiles(mol) for mol in old_mols]
         for ii,smiles in enumerate(old_smiles): 
-            # if smiles in mol_buffer:
-            #     value = mol_buffer[smiles][0]
-            # else: 
-            #     value = self.oracle(smiles)
-            #     mol_buffer[smiles] = [value, len(mol_buffer)+1]
             value = self.oracle(smiles)
             old_dicts[ii][smiles] = value 
         old_scores = [self.oracle(smiles) for smiles in old_smiles]
-        # old_dicts = self.estimator.get_scores(old_mols)
-        # old_scores = self.scores_from_dicts(old_dicts)
         acc_rates = [0. for _ in old_mols]
-        # self.record(-1, old_mols, old_dicts, acc_rates)
 
         for step in tqdm(range(self.num_step)):
             if self.oracle.finish:
@@ -202,16 +191,9 @@ class Sampler():
             new_dicts = [{} for i in new_mols]
             new_smiles = [Chem.MolToSmiles(mol) for mol in new_mols]
             for ii,smiles in enumerate(new_smiles):
-                # if smiles in mol_buffer:
-                #     value = mol_buffer[smiles][0]
-                # else:
-                #     value = self.oracle(smiles)
-                #     mol_buffer[smiles] = [value, len(mol_buffer)+1]
                 value = self.oracle(smiles)
                 new_dicts[ii][smiles] = value 
             new_scores = [self.oracle(smiles) for smiles in new_smiles]
-            # new_dicts = self.estimator.get_scores(new_mols)
-            # new_scores = self.scores_from_dicts(new_dicts)
             
             indices = [i for i in range(len(old_mols)) if new_scores[i] > old_scores[i]]
             with open(os.path.join(self.run_dir, 'edits.txt'), 'a') as f:
@@ -230,8 +212,6 @@ class Sampler():
                 old_mols[i] = new_mols[i]
                 old_scores[i] = new_scores[i]
                 old_dicts[i] = new_dicts[i]
-            # if step % self.log_every == 0:
-            #     self.record(step, old_mols, old_dicts, acc_rates)
 
             ### train editor
             if self.train:
@@ -274,7 +254,6 @@ class Sampler():
                     torch.device('cpu'):
                     torch.cuda.empty_cache()
 
-        # return mol_buffer 
 
 class Sampler_SA(Sampler):
 

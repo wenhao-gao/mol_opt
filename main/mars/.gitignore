@@ -1,5 +1,5 @@
 runs/
-data/vocab_*/
+# data/vocab_*/
 .vscode
 
 # Byte-compiled / optimized / DLL files

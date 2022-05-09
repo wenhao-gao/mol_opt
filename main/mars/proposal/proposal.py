@@ -1,16 +1,12 @@
-import os
 import dgl
-import math
 import torch
-import rdkit
 import random
-import pickle
 import torch.nn.functional as F
 from rdkit import Chem
 from abc import ABC, abstractmethod
 from torch.utils.data import DataLoader
 
-from datasets.utils import load_mols, load_vocab
+from datasets.utils import load_vocab
 from datasets.datasets import GraphDataset, ImitationDataset
 from common.utils import sample_idx
 from common.chem import mol_to_dgl, check_validity, \
