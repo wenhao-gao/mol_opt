@@ -9,8 +9,5 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tdc import Oracle
-torch.manual_seed(1)
-np.random.seed(2)
-
 
 

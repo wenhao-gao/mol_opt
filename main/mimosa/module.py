@@ -13,9 +13,6 @@ from tqdm import tqdm
 from gnn_layer import GraphConvolution, GraphAttention
 from chemutils import smiles2graph, vocabulary 
 
-torch.manual_seed(4) 
-np.random.seed(1)
-
 # def sigmoid(x):
 #     return 1/(1+np.exp(-x))
 # device = 'cuda' if torch.cuda.is_available() else 'cpu'

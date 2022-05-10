@@ -8,10 +8,8 @@ from copy import deepcopy
 import numpy as np 
 import torch 
 from torch.autograd import Variable
-torch.manual_seed(4) 
-np.random.seed(1)
 import random 
-random.seed(1)
+
 
 '''
 	1. vocabulary: find frequent words (atom and ring) 

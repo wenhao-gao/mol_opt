@@ -9,10 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tdc import Oracle
-torch.manual_seed(1)
-np.random.seed(2)
 import random 
-random.seed(1)
 from chemutils import * 
 '''
 optimize_single_molecule_one_iterate

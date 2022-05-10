@@ -1,12 +1,11 @@
 import numpy as np
 import math
-np.random.seed(1)
 
 class DPPModel(object):
     def __init__(self, smiles_lst, sim_matrix, f_scores, top_k, lamb):
         self.smiles_lst = smiles_lst 
         self.sim_matrix = sim_matrix # (n,n)
-        self.lamb = lamb
+        self.lamb = lamb # weight: oracle score / diversity
         self.f_scores = np.exp(f_scores) * self.lamb # (n,) 
         self.max_iter = top_k 
         self.n = len(smiles_lst)

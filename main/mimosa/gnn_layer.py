@@ -5,8 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
-torch.manual_seed(3) 
-np.random.seed(1)
 
 class GraphConvolution(Module):
     """

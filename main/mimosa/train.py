@@ -7,8 +7,6 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 import pickle 
 from random import shuffle 
-torch.manual_seed(4) 
-np.random.seed(2)
 from module import GCN 
 from chemutils import smiles2graph, vocabulary, smiles2feature  
 from utils import Molecule_Dataset 
