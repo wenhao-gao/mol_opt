@@ -20,7 +20,7 @@ def pretrain(restore_from=None):
 
 
     print('# Create a Dataset from a SMILES file')
-    moldata = MolData("data/zinc.txt", voc)
+    moldata = MolData("data/mols_filtered.smi", voc)
     data = DataLoader(moldata, batch_size=128, shuffle=True, drop_last=True,
                       collate_fn=MolData.collate_fn)
     print('build DataLoader')

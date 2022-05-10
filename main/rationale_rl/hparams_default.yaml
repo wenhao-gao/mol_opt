@@ -1,4 +1,4 @@
-init_model: 'main/rationaleRL/ckpt/model.20'
+init_model: 'main/rationale_rl/ckpt/model.20'
 batch_size: 32 
 epoch: 10000 
 anneal_rate: 1.0 

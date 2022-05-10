@@ -193,3 +193,5 @@ main/SynNet/reactions_hb.json.gz
 main/SynNet/tests
 
 
+*.txt
+dream_results
