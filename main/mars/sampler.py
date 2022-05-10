@@ -7,7 +7,7 @@ from tqdm import tqdm
 from rdkit.Chem import AllChem
 from rdkit import Chem, DataStructs
 from torch.utils import data
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 from common.train import train
 from common.chem import mol_to_dgl
@@ -122,17 +122,17 @@ class Sampler():
         }
 
         ### logging and writing tensorboard
-        log.info('Step: {:02d},\tScore: {:.7f}'.format(step, avg_score))
-        self.writer.add_scalar('score_avg', avg_score, step)
-        self.writer.add_scalar('size_avg', avg_size, step)
-        self.writer.add_scalars('success_dict', success_dict, step)
-        self.writer.add_scalars('evaluation', evaluation, step)
-        self.writer.add_histogram('acc_rates', torch.tensor(acc_rates), step)
-        self.writer.add_histogram('scores', torch.tensor(old_scores), step)
-        for k in old_dicts[0].keys():
-            scores = [score_dict[k] for score_dict in old_dicts]
-            self.writer.add_histogram(k, torch.tensor(scores), step)
-        print_mols(self.run_dir, step, old_mols, old_scores, old_dicts)
+        # log.info('Step: {:02d},\tScore: {:.7f}'.format(step, avg_score))
+        # self.writer.add_scalar('score_avg', avg_score, step)
+        # self.writer.add_scalar('size_avg', avg_size, step)
+        # self.writer.add_scalars('success_dict', success_dict, step)
+        # self.writer.add_scalars('evaluation', evaluation, step)
+        # self.writer.add_histogram('acc_rates', torch.tensor(acc_rates), step)
+        # self.writer.add_histogram('scores', torch.tensor(old_scores), step)
+        # for k in old_dicts[0].keys():
+        #     scores = [score_dict[k] for score_dict in old_dicts]
+        #     self.writer.add_histogram(k, torch.tensor(scores), step)
+        # print_mols(self.run_dir, step, old_mols, old_scores, old_dicts)
         
         ### early stop
         if evaluation['prod'] > .1 and evaluation['prod'] < self.best_eval_res  + .01 and \
@@ -153,14 +153,14 @@ class Sampler():
         '''
         raise NotImplementedError
 
-    def sample(self, run_dir, mols_init):
+    def sample(self, mols_init):
         '''
         sample molecules from initial ones
         @params:
             mols_init : initial molecules
         '''
-        self.run_dir = run_dir 
-        self.writer = SummaryWriter(log_dir=run_dir)
+        # self.run_dir = run_dir 
+        # self.writer = SummaryWriter(log_dir=run_dir)
         
         ### sample
         old_mols = [mol for mol in mols_init]
@@ -192,13 +192,13 @@ class Sampler():
             new_scores = [self.oracle(smiles) for smiles in new_smiles]
             
             indices = [i for i in range(len(old_mols)) if new_scores[i] > old_scores[i]]
-            with open(os.path.join(self.run_dir, 'edits.txt'), 'a') as f:
-                f.write('edits at step %i\n' % step)
-                f.write('improve\tact\tarm\n')
-                for i, item in enumerate(self.proposal.dataset):
-                    _, edit = item
-                    improve = new_scores[i] > old_scores[i]
-                    f.write('%i\t%i\t%i\n' % (improve, edit['act'], edit['arm']))
+            # with open(os.path.join(self.run_dir, 'edits.txt'), 'a') as f:
+            #     f.write('edits at step %i\n' % step)
+            #     f.write('improve\tact\tarm\n')
+            #     for i, item in enumerate(self.proposal.dataset):
+            #         _, edit = item
+            #         improve = new_scores[i] > old_scores[i]
+            #         f.write('%i\t%i\t%i\n' % (improve, edit['act'], edit['arm']))
             
             acc_rates = self.acc_rates(new_scores, old_scores, fixings)
             acc_rates = [min(1., max(0., A)) for A in acc_rates]

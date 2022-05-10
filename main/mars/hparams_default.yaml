@@ -9,8 +9,7 @@ n_node_hidden: 64
 n_edge_hidden: 128
 n_layers: 6
 device: 'cpu'
-data_dir: 'data'
-run_dir: 'runs/'
+data_dir: './main/mars/data'
 root_dir: './main/mars/'
 sampler: 'sa'
 proposal: 'editor'
