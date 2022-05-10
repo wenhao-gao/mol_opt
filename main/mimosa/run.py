@@ -1,12 +1,5 @@
-import os, pickle, torch, random
-import numpy as np 
-import argparse
-from matplotlib import pyplot as plt
-from random import shuffle 
-import torch.nn as nn
-import torch.nn.functional as F
-from tdc import Oracle
-import sys, yaml 
+import os, torch
+import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
@@ -27,7 +20,6 @@ class MIMOSA_Optimizer(BaseOptimizer):
 
 		population_size = config['population_size']
 		lamb = config['lamb']
-		# topk = config['topk']
 
 		start_smiles_lst = ['C1(N)=NC=CC=N1']  ## 'C1=CC=CC=C1NC2=NC=CC=N2' 
 		model_ckpt = os.path.join(path_here, "pretrained_model/GNN.ckpt") # mGNN only

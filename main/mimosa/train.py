@@ -1,14 +1,8 @@
-import sys
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np 
 from tqdm import tqdm 
-from matplotlib import pyplot as plt
-import pickle 
 from random import shuffle 
 from module import GCN 
-from chemutils import smiles2graph, vocabulary, smiles2feature  
+from chemutils import smiles2feature  
 from utils import Molecule_Dataset 
 
 

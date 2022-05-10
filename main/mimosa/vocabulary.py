@@ -3,7 +3,7 @@
 import os
 from collections import defaultdict 
 from tqdm import tqdm 
-from rdkit import Chem, DataStructs
+from rdkit import Chem
 
 
 def smiles2mol(smiles):

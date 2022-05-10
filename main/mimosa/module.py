@@ -1,22 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from copy import deepcopy 
-from torch.autograd import Variable
-from torch.utils import data
-from torch.utils.data import SequentialSampler
-import matplotlib.pyplot as plt
-import numpy as np 
-sigmoid = torch.nn.Sigmoid() 
-from tqdm import tqdm 
-
-from gnn_layer import GraphConvolution, GraphAttention
-from chemutils import smiles2graph, vocabulary 
+from gnn_layer import GraphConvolution
+from chemutils import smiles2graph 
 
 # def sigmoid(x):
 #     return 1/(1+np.exp(-x))
 # device = 'cuda' if torch.cuda.is_available() else 'cpu'
 device = 'cpu'
+sigmoid = torch.nn.Sigmoid() 
 
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, num_layer):
@@ -106,16 +98,4 @@ class GCN(nn.Module):
 
 if __name__ == "__main__":
     gnn = GCN(nfeat = 50, nhid = 100, num_layer = 2)
-
-
-
-
-
-
-
-
-
-
-
-
 
