@@ -101,8 +101,8 @@ def main():
     elif args.method == 'Pasithea':
         from main.Pasithea.run import Pasithea_optimizer
         Optimizer = Pasithea_optimizer 
-    elif args.method == 'DST':
-        from main.DST.run import DSToptimizer
+    elif args.method == 'dst':
+        from main.dst.run import DSToptimizer
         Optimizer = DSToptimizer 
 
     elif args.method == 'molgan':
@@ -112,8 +112,8 @@ def main():
     elif args.method == 'mars':
         from main.mars.run import MARS_Optimizer 
         Optimizer = MARS_Optimizer 
-    elif args.method == 'MIMOSA':
-        from main.MIMOSA.run import MIMOSA_Optimizer 
+    elif args.method == 'mimosa':
+        from main.mimosa.run import MIMOSA_Optimizer 
         Optimizer = MIMOSA_Optimizer
     elif args.method == 'gflownet':
         from main.gflownet.run import GFlowNet_Optimizer 
