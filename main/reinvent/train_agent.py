@@ -1,5 +1,4 @@
 import torch
-import pickle
 import numpy as np
 import time
 import os
@@ -157,27 +156,6 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
     print('train_agent', scoring_function.mol_buffer)
     return scoring_function.mol_buffer  
 
-    # If the entire training finishes, we create a new folder where we save this python file
-    # as well as some sampled sequences and the contents of the experinence (which are the highest
-    # scored sequences seen during training)
-    # if not save_dir:
-    #     save_dir = 'data/results/run_' + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
-    #     save_dir = os.path.join(path_here, save_dir)
-    # os.makedirs(path_here, save_dir)
-    # copyfile('train_agent.py', os.path.join(save_dir, "train_agent.py"))
-
-    # experience.print_memory(os.path.join(save_dir, "memory"))
-    # torch.save(Agent.rnn.state_dict(), os.path.join(save_dir, 'Agent.ckpt'))
-
-    # seqs, agent_likelihood, entropy = Agent.sample(256)
-    # prior_likelihood, _ = Prior.likelihood(Variable(seqs))
-    # prior_likelihood = prior_likelihood.data.cpu().numpy()
-    # smiles = seq_to_smiles(seqs, voc)
-    # score = scoring_function(smiles)
-    # with open(os.path.join(save_dir, "sampled"), 'w') as f:
-    #     f.write("SMILES Score PriorLogP\n")
-    #     for smiles, score, prior_likelihood in zip(smiles, score, prior_likelihood):
-    #         f.write("{} {:5.2f} {:6.2f}\n".format(smiles, score, prior_likelihood))
 
 if __name__ == "__main__":
     train_agent()

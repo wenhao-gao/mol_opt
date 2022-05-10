@@ -4,17 +4,10 @@ Example script demonstrating molecular transformations, using logP as target.
 The entire cycle - training and dreaming - is involved.
 """
 
-
-import os, pickle, torch, random, argparse
-import yaml
+import os, torch, random
 import numpy as np 
 from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
@@ -31,7 +24,7 @@ from random import shuffle
 from torch import nn
 
 from utilities.utils import change_str, make_dir, use_gpu
-from utilities.mol_utils import edit_hot, lst_of_logP, multiple_hot_to_indices
+from utilities.mol_utils import edit_hot, multiple_hot_to_indices
 
 
 class fc_model(nn.Module):
@@ -451,51 +444,6 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
 
         if oracle.finish:
             break 
-
-    # dream_time = time.process_time()-t
-
-    # plot final distribution of property value after transformation
-    # plot_utils.dreamed_histogram(prop_lst, prop, directory)
-
-    # avg2 = sum(prop_lst)/len(prop_lst)
-
-    # save a summary of the dreaming results to file
-    # name = directory + '/summary'
-    # f = open(name, "w+")
-
-    # f.write('Summary of dreaming:\n\n')
-    # f.write('Input upperbound='+str(upperbound) +'\n')
-    # f.write('Target logP='+str(prop)+'\n')
-    # f.write('Prediction lr='+str(lr_train)+'\n')
-    # f.write('Dreaming lr='+str(lr_dream)+'\n')
-    # f.write('Number of molecules trained:'+str(num_train)+'\n')
-    # f.write('Number of molecules dreamed:'+str(num_dream)+'\n')
-    # f.write('avg before dreaming: '+str(avg1)+'\n')
-    # f.write('avg after dreaming: '+str(avg2)+'\n')
-    # f.write('Percent unchanged: '+str(percent_unchanged)+'%\n')
-    # f.write('Percent adjusted toward target: '+str(percent_valid)+'%\n')
-    # f.write('Percent adjusted away from target: '+str(percent_invalid)+'%\n')
-    # f.write('Dreaming time: '+str(dream_time)+'\n')
-    # f.write('Training time: '+str(train_time)+'\n')
-
-    # f.close()
-
-    # save list of all transformations to file
-    # name = directory +'/original_to_dream_mol'
-    # g = open(name, "w+")
-    # for t in transforms:
-    #     g.write(t+'\n')
-    # g.close()
-
-    # # save intermediate molecules for each transformation to file
-    # name = directory + '/sampled_intermediate_mol'
-    # h1 = open(name, "w+")
-    # for i in range(len(interm)):
-    #     h1.write('Sample '+str(i+1)+'\n')
-    #     h1.write(str(interm[i][0])+'\n')
-    #     h1.write(str(interm[i][1])+'\n')
-    # h1.close()
-
 
 
 class Pasithea_optimizer(BaseOptimizer):

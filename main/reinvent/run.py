@@ -1,20 +1,11 @@
-import os, pickle, torch, random, argparse
-import yaml
-import numpy as np 
-from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
+import os
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('/'.join(path_here.rstrip('/').split('/')[:-2]))
 print("path:", '/'.join(path_here.rstrip('/').split('/')[:-2]))
 print(sys.path)
 from main.optimizer import BaseOptimizer
-import time
 from train_agent import train_agent
 
 
@@ -43,9 +34,4 @@ class REINVENT_Optimizer(BaseOptimizer):
                 num_processes=0, 
                 sigma=config['sigma'],
                 experience_replay=0)
-
-
-
-
-
 
