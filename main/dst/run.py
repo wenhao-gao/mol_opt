@@ -27,6 +27,7 @@ class DSToptimizer(BaseOptimizer):
 		gnn = torch.load(model_ckpt)
 
 		current_set = set(start_smiles_lst)
+
 		while True:
 
 			if len(self.oracle) > 100:
@@ -36,6 +37,7 @@ class DSToptimizer(BaseOptimizer):
 				old_scores = 0
 
 			next_set = set() 
+			print('Sampling from current state')
 			for smiles in current_set:
 				try:
 					if substr_num(smiles) < 3: #### short smiles
@@ -58,6 +60,7 @@ class DSToptimizer(BaseOptimizer):
 			print(smiles_score_lst[:5], "Oracle num: ", len(self.oracle))
 
 			# current_set = [i[0] for i in smiles_score_lst[:population_size]]  # Option I: top-k 
+			print('DPP ing ...')
 			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) # Option II: DPP
 
 			# early stopping
