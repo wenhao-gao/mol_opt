@@ -1,6 +1,4 @@
-import os, pickle, torch, random
-import yaml
-import numpy as np 
+import os, torch
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
@@ -19,7 +17,6 @@ class DSToptimizer(BaseOptimizer):
 
 		self.oracle.assign_evaluator(oracle)
 
-		max_generations = config["max_generations"]
 		population_size = config['population_size']
 		lamb = config['lamb']
 		topk = config['topk']
@@ -31,6 +28,13 @@ class DSToptimizer(BaseOptimizer):
 
 		current_set = set(start_smiles_lst)
 		while True:
+
+			if len(self.oracle) > 100:
+				self.sort_buffer()
+				old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+			else:
+				old_scores = 0
+
 			next_set = set() 
 			for smiles in current_set:
 				try:
@@ -41,9 +45,12 @@ class DSToptimizer(BaseOptimizer):
 					next_set = next_set.union(smiles_set)
 				except:
 					pass 
+
 			smiles_lst = list(next_set)
 			score_lst = self.oracle(smiles_lst)
+
 			if self.finish:
+				print('max oracle hit, abort ...... ')
 				break
 				
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
@@ -53,5 +60,15 @@ class DSToptimizer(BaseOptimizer):
 			# current_set = [i[0] for i in smiles_score_lst[:population_size]]  # Option I: top-k 
 			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) # Option II: DPP
 
-			if self.finish:
-				break
+			# early stopping
+			if len(self.oracle) > 2000:
+				self.sort_buffer()
+				new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+				if new_scores == old_scores:
+					patience += 1
+					if patience >= self.args.patience * 5:
+						self.log_intermediate(finish=True)
+						print('convergence criteria met, abort ...... ')
+						break
+				else:
+					patience = 0

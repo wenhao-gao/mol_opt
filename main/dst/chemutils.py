@@ -2,16 +2,11 @@ import rdkit
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
-from functools import reduce 
-from tqdm import tqdm 
 from copy import deepcopy 
 import numpy as np 
-import torch, os 
-from torch.autograd import Variable
-torch.manual_seed(4) 
-np.random.seed(1)
+import os 
 import random 
-random.seed(1)
+
 
 '''
 	1. vocabulary: find frequent words (atom and ring) 

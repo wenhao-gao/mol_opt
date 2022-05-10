@@ -1,6 +1,5 @@
 import numpy as np
-import math
-np.random.seed(1)
+
 
 class DPPModel(object):
     def __init__(self, smiles_lst, sim_matrix, f_scores, top_k, lamb):
