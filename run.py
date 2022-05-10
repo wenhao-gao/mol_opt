@@ -98,8 +98,8 @@ def main():
         from main.dog_ae.run import DoG_AE_Optimizer
         Optimizer = DoG_AE_Optimizer 
 
-    elif args.method == 'Pasithea':
-        from main.Pasithea.run import Pasithea_optimizer
+    elif args.method == 'pasithea':
+        from main.pasithea.run import Pasithea_optimizer
         Optimizer = Pasithea_optimizer 
     elif args.method == 'dst':
         from main.dst.run import DSToptimizer
@@ -125,15 +125,15 @@ def main():
     elif args.method == 'moldqn':
         from main.moldqn.run import MolDQN_Optimizer
         Optimizer = MolDQN_Optimizer 
-    elif args.method == 'REINVENT':
-        from main.REINVENT.run import REINVENToptimizer
-        Optimizer = REINVENToptimizer
-    elif args.method == 'REINVENT_SELFIES':
-        from main.REINVENT_SELFIES.run import REINVENT_SELFIES_optimizer 
-        Optimizer = REINVENT_SELFIES_optimizer 
-    elif args.method == "rationaleRL":
-        from main.rationaleRL.run import RationaleRLoptimizer 
-        Optimizer = RationaleRLoptimizer 
+    elif args.method == 'reinvent':
+        from main.reinvent.run import REINVENT_Optimizer
+        Optimizer = REINVENT_Optimizer
+    elif args.method == 'reinvent_selfies':
+        from main.reinvent_selfies.run import REINVENT_SELFIES_Optimizer 
+        Optimizer = REINVENT_SELFIES_Optimizer 
+    elif args.method == "rationale_rl":
+        from main.rationale_rl.run import Rationale_RL_Optimizer 
+        Optimizer = Rationale_RL_Optimizer 
 
     else:
         raise ValueError("Unrecognized method name.")

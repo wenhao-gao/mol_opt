@@ -74,11 +74,11 @@ def property_filter(cand_mols, scoring_function):
 
 
 
-class RationaleRLoptimizer(BaseOptimizer):
+class Rationale_RL_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "rationaleRL"
+        self.model_name = "rationale_rl"
 
     def _optimize(self, oracle, config):
 

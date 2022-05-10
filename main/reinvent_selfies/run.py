@@ -2,9 +2,6 @@ import os, pickle, torch, random, argparse
 import yaml
 import numpy as np 
 from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
 from tdc import Oracle
 import sys
 # sys.path.append('../..')
@@ -17,7 +14,7 @@ import time
 from train_agent import train_agent
 
 
-class REINVENT_SELFIES_optimizer(BaseOptimizer):
+class REINVENT_SELFIES_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
