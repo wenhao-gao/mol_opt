@@ -1,13 +1,7 @@
-import os, pickle, torch, random, argparse
+import os, pickle, torch, random
 import yaml
 import numpy as np 
-from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
@@ -30,16 +24,13 @@ class DSToptimizer(BaseOptimizer):
 		lamb = config['lamb']
 		topk = config['topk']
 		epsilon = config['epsilon']
-		# lamb=2 
-		# topk = 5 
-		# epsilon = 0.7 
 
 		start_smiles_lst = ['C1(N)=NC=CC=N1']
 		model_ckpt = os.path.join(path_here, "pretrained_model/qed_epoch_4_iter_0_validloss_0.57661.ckpt")
 		gnn = torch.load(model_ckpt)
 
 		current_set = set(start_smiles_lst)
-		for i_gen in tqdm(range(max_generations)):
+		while True:
 			next_set = set() 
 			for smiles in current_set:
 				try:
@@ -52,6 +43,9 @@ class DSToptimizer(BaseOptimizer):
 					pass 
 			smiles_lst = list(next_set)
 			score_lst = self.oracle(smiles_lst)
+			if self.finish:
+				break
+				
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)
 			print(smiles_score_lst[:5], "Oracle num: ", len(self.oracle))
@@ -61,58 +55,3 @@ class DSToptimizer(BaseOptimizer):
 
 			if self.finish:
 				break
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--smi_file', default=None)
-    parser.add_argument('--config_default', default='hparams_default.yaml')
-    parser.add_argument('--config_tune', default='hparams_tune.yaml')
-    parser.add_argument('--n_jobs', type=int, default=-1)
-    parser.add_argument('--output_dir', type=str, default=None)
-    parser.add_argument('--patience', type=int, default=5)
-    parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--max_oracle_calls', type=int, default=500)
-    parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"])
-    args = parser.parse_args()
-
-    path_here = os.path.dirname(os.path.realpath(__file__))
-
-    if args.output_dir is None:
-        args.output_dir = os.path.join(path_here, "results")
-    
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
-    
-    for oracle_name in args.oracles:
-
-        try:
-            config_default = yaml.safe_load(open(args.config_default))
-        except:
-            config_default = yaml.safe_load(open(os.path.join(path_here, args.config_default)))
-
-        if args.task == "tune":
-            try:
-                config_tune = yaml.safe_load(open(args.config_tune))
-            except:
-                config_tune = yaml.safe_load(open(os.path.join(path_here, args.config_tune)))
-
-        oracle = Oracle(name = oracle_name)
-        optimizer = DSToptimizer(args=args)
-
-        if args.task == "simple":
-            optimizer.optimize(oracle=oracle, config=config_default)
-        elif args.task == "tune":
-            optimizer.hparam_tune(oracle=oracle, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
-        elif args.task == "production":
-            optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
-
-
-if __name__ == "__main__":
-	main() 
-
-
-
-
-
-
