@@ -6,6 +6,8 @@ sys.path.append('.')
 from main.optimizer import BaseOptimizer
 from chemutils import * 
 from inference_utils import * 
+from tqdm import tqdm
+
 
 class DSToptimizer(BaseOptimizer):
 
@@ -38,7 +40,7 @@ class DSToptimizer(BaseOptimizer):
 
 			next_set = set() 
 			print('Sampling from current state')
-			for smiles in current_set:
+			for smiles in tqdm(current_set):
 				try:
 					if substr_num(smiles) < 3: #### short smiles
 						smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### optimize_single_molecule_one_iterate_v2

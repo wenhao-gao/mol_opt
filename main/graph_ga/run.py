@@ -82,7 +82,7 @@ class GB_GA_Optimizer(BaseOptimizer):
 
         patience = 0
 
-        for _ in range(config["max_generations"]):
+        while True:
 
             # new_population
             mating_pool = make_mating_pool(population_mol, population_scores, config["population_size"])

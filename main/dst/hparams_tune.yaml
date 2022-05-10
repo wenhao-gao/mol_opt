@@ -5,7 +5,7 @@ metric:
   name: avg_auc
 parameters:
   population_size:
-    values: [50, 100, 150, 200]
+    values: [10, 25, 50, 100]
   topk:
     values: [3, 5, 10]
   lamb:

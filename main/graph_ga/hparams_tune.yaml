@@ -16,7 +16,3 @@ parameters:
     distribution: uniform
     min: 0
     max: 0.1
-  patience:
-    value: 5
-  max_generations:
-    value: 10000
