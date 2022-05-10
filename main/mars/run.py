@@ -24,7 +24,6 @@ class MARS_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
         config['device'] = torch.device(config['device'])
-        # config['data_dir'] = os.path.join(config['root_dir'], config['data_dir'])
 
         ### estimator
         # if config['mols_ref']: 
@@ -51,6 +50,8 @@ class MARS_Optimizer(BaseOptimizer):
             mols = random.choices(mols, k=config['num_mols'])
             mols_init = mols[:config['num_mols']]
         else: 
-            mols_init = [Chem.MolFromSmiles('CC') for _ in range(config['num_mols'])]
+            # mols_init = [Chem.MolFromSmiles('CC') for _ in range(config['num_mols'])]
+            half = int(config["num_mols"]/5)
+            mols_init = [Chem.MolFromSmiles(smi) for smi in self.all_smiles[:half]] + [Chem.MolFromSmiles('CC') for _ in range(config['num_mols'] - half)]
 
         sampler.sample(mols_init)

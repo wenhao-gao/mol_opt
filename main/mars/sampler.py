@@ -159,8 +159,6 @@ class Sampler():
         @params:
             mols_init : initial molecules
         '''
-        # self.run_dir = run_dir 
-        # self.writer = SummaryWriter(log_dir=run_dir)
         
         ### sample
         old_mols = [mol for mol in mols_init]
@@ -172,16 +170,20 @@ class Sampler():
         old_scores = [self.oracle(smiles) for smiles in old_smiles]
         acc_rates = [0. for _ in old_mols]
 
-        step = 0
+        step = 1
+        patience = 0
+
         while True:
-            if self.oracle.finish:
-                print('max oracle number hit')
-                break 
+
+            if len(self.oracle) > 100:
+                self.oracle.sort_buffer()
+                old_scores_forst = [item[1][0] for item in list(self.oracle.mol_buffer.items())[:50]]
             else:
-                print("# of oracle", len(self.oracle))
+                old_scores_forst = 0
 
             if self.patience <= 0: break
             self.step = step
+            print("Proposing new molecules ......")
             new_mols, fixings = self.proposal.propose(old_mols) 
 
             new_dicts = [{} for i in new_mols]
@@ -190,6 +192,10 @@ class Sampler():
                 value = self.oracle(smiles)
                 new_dicts[ii][smiles] = value 
             new_scores = [self.oracle(smiles) for smiles in new_smiles]
+
+            if self.oracle.finish:
+                print('max oracle hit, abort ...... ')
+                break 
             
             indices = [i for i in range(len(old_mols)) if new_scores[i] > old_scores[i]]
             # with open(os.path.join(self.run_dir, 'edits.txt'), 'a') as f:
@@ -210,11 +216,11 @@ class Sampler():
                 old_dicts[i] = new_dicts[i]
 
             ### train editor
-            if self.train:
+            if self.train and len(self.oracle) > 500:
                 dataset = self.proposal.dataset
                 dataset = data.Subset(dataset, indices)
                 if self.dataset: 
-                    print(dataset)
+                    # print(dataset)
                     self.dataset.merge_(dataset)
                 else: self.dataset = ImitationDataset.reconstruct(dataset)
                 n_sample = len(self.dataset)
@@ -252,6 +258,18 @@ class Sampler():
                     torch.cuda.empty_cache()
 
                 step += 1
+
+            if len(self.oracle) > 100:
+                self.oracle.sort_buffer()
+                new_scores_forst = [item[1][0] for item in list(self.oracle.mol_buffer.items())[:50]]
+                if new_scores_forst == old_scores_forst:
+                    patience += 1
+                    if patience >= 5:
+                        self.oracle.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
 
 
 class Sampler_SA(Sampler):

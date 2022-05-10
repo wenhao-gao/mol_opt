@@ -1,5 +1,5 @@
 name: mars
-method: grid
+method: random
 metric:
   goal: maximize
   name: avg_auc
