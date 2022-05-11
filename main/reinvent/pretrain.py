@@ -2,14 +2,13 @@
 
 import torch
 from torch.utils.data import DataLoader
-import pickle
 from rdkit import Chem
 from rdkit import rdBase
 from tqdm import tqdm
 
 from data_structs import MolData, Vocabulary
 from model import RNN
-from utils import Variable, decrease_learning_rate
+from utils import decrease_learning_rate
 rdBase.DisableLog('rdApp.error')
 
 def pretrain(restore_from=None):
