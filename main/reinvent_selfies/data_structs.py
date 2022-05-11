@@ -10,7 +10,8 @@ from torch.utils.data import Dataset
 
 from utils import Variable
 from tdc.chem_utils import MolConvert
-converter = MolConvert(src = 'SELFIES', dst = 'SMILES',)
+selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
+smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 
 class Vocabulary(object):
     """A class for handling encoding/decoding from SMILES to an array of indices"""
@@ -38,7 +39,7 @@ class Vocabulary(object):
             if i == self.vocab['EOS']: break
             chars.append(self.reversed_vocab[i])
         selfies = "".join(chars)
-        smiles = converter(selfies)
+        smiles = selfies2smiles(selfies)
         # smiles = smiles.replace("L", "Cl").replace("R", "Br")
         return smiles
 
@@ -142,7 +143,7 @@ class Experience(object):
             # Retain highest scores
             self.memory.sort(key = lambda x: x[1], reverse=True)
             self.memory = self.memory[:self.max_size]
-            print("\nBest score in memory: {:.2f}".format(self.memory[0][1]))
+            # print("\nBest score in memory: {:.2f}".format(self.memory[0][1]))
 
     def sample(self, n):
         """Sample a batch size n of experience"""
@@ -155,7 +156,7 @@ class Experience(object):
             smiles = [x[0] for x in sample]
             scores = [x[1] for x in sample]
             prior_likelihood = [x[2] for x in sample]
-        tokenized = [self.voc.tokenize(smile) for smile in smiles]
+        tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles]
         encoded = [Variable(self.voc.encode(tokenized_i)) for tokenized_i in tokenized]
         encoded = MolData.collate_fn(encoded)
         return encoded, np.array(scores), np.array(prior_likelihood)
