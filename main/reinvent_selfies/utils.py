@@ -26,6 +26,12 @@ def seq_to_smiles(seqs, voc):
         smiles.append(voc.decode(seq))
     return smiles
 
+def seq_to_selfies(seqs, voc):
+    selfies_list = []
+    for seq in seqs.cpu().numpy():
+        selfies_list.append(voc.decode_selfies(seq))
+    return selfies_list 
+
 def fraction_valid_smiles(smiles):
     """Takes a list of SMILES and returns fraction valid."""
     i = 0

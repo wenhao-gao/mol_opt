@@ -43,6 +43,20 @@ class Vocabulary(object):
         # smiles = smiles.replace("L", "Cl").replace("R", "Br")
         return smiles
 
+    def decode_selfies(self, matrix):
+        """Takes an array of indices and returns the corresponding SMILES"""
+        chars = []
+        for i in matrix:
+            if i == self.vocab['EOS']: break
+            chars.append(self.reversed_vocab[i])
+        selfies = "".join(chars)
+        # smiles = selfies2smiles(selfies)
+        # smiles = smiles.replace("L", "Cl").replace("R", "Br")
+        # return smiles
+        return selfies 
+
+
+
     def tokenize(self, selfies):
         """Takes a SMILES and return a list of characters/tokens"""
         # regex = '(\[[^\[\]]{1,6}\])' 
@@ -156,10 +170,29 @@ class Experience(object):
             smiles = [x[0] for x in sample]
             scores = [x[1] for x in sample]
             prior_likelihood = [x[2] for x in sample]
-        tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles]
+        tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles] #### oov 
         encoded = [Variable(self.voc.encode(tokenized_i)) for tokenized_i in tokenized]
         encoded = MolData.collate_fn(encoded)
         return encoded, np.array(scores), np.array(prior_likelihood)
+
+    def sample_selfies(self, n):
+        """Sample a batch size n of experience"""
+        if len(self.memory)<n:
+            raise IndexError('Size of memory ({}) is less than requested sample ({})'.format(len(self), n))
+        else:
+            scores = [x[1] for x in self.memory]
+            sample = np.random.choice(len(self), size=n, replace=False, p=scores/np.sum(scores))
+            sample = [self.memory[i] for i in sample]
+            smiles = [x[0] for x in sample]
+            scores = [x[1] for x in sample]
+            prior_likelihood = [x[2] for x in sample]
+        # tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles] #### oov 
+        tokenized = [self.voc.tokenize(selfies) for selfies in smiles] #### oov 
+        encoded = [Variable(self.voc.encode(tokenized_i)) for tokenized_i in tokenized]
+        encoded = MolData.collate_fn(encoded)
+        return encoded, np.array(scores), np.array(prior_likelihood)
+
+
 
     def initiate_from_file(self, fname, scoring_function, Prior):
         """Adds experience from a file with SMILES
