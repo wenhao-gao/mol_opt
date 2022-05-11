@@ -137,7 +137,7 @@ class Experience(object):
             # Retain highest scores
             self.memory.sort(key = lambda x: x[1], reverse=True)
             self.memory = self.memory[:self.max_size]
-            print("\nBest score in memory: {:.2f}".format(self.memory[0][1]))
+            # print("\nBest score in memory: {:.2f}".format(self.memory[0][1]))
 
     def sample(self, n):
         """Sample a batch size n of experience"""

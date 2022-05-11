@@ -153,7 +153,7 @@ def train_agent(restore_prior_from='data/Prior.ckpt',
         logger.log(np.array(step_score), "Scores")
 
 
-    print('train_agent', scoring_function.mol_buffer)
+    # print('train_agent', scoring_function.mol_buffer)
     return scoring_function.mol_buffer  
 
 
