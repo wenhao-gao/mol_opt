@@ -9,6 +9,6 @@ parameters:
   batch_size:
     values: [64, 128]
   sigma: 
-    values: [5, 10, 20, 30, 50]
+    values: [5, 10, 20, 40, 60]
   experience_replay: 
     values: [0, 4, 8]
