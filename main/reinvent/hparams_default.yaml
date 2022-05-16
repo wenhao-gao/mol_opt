@@ -1,4 +1,4 @@
 learning_rate: 0.0005
 batch_size: 64
-sigma: 60
-experience_replay: 4
+sigma: 500
+experience_replay: 24

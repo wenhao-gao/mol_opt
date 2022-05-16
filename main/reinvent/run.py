@@ -53,9 +53,16 @@ class REINVENT_Optimizer(BaseOptimizer):
         print("Model initialized, starting training...")
 
         step = 0
+        patience = 0
 
         while True:
 
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
+            
             # Sample from Agent
             seqs, agent_likelihood, entropy = Agent.sample(config['batch_size'])
 
@@ -73,6 +80,19 @@ class REINVENT_Optimizer(BaseOptimizer):
             if self.finish:
                 print('max oracle hit')
                 break 
+
+            # early stopping
+            if len(self.oracle) > 1000:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience*2:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
 
             # Calculate augmented likelihood
             augmented_likelihood = prior_likelihood.float() + config['sigma'] * Variable(score).float()
