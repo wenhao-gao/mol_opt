@@ -1,0 +1,17 @@
+name: mtransformer_py3.6_pt0.4
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.6
+  - cuda92=1.0
+  - numpy=1.18.1
+  - pip=20.0.2
+  - pytorch=0.4.1
+  - six=1.14
+  - sqlite=3.31
+  - pip:
+    - torchtext==0.3.1
+    - tqdm==4.46.0
+    - urllib3==1.25.9
+    - flask==1.1.2
