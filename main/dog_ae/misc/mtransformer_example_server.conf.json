@@ -1,0 +1,19 @@
+{
+  "models_root": "./saved_models/",
+  "models": [
+    {
+      "id": 0,
+      "model": "molecular_transformer_weights.pt",
+      "timeout": 1000,
+      "on_timeout": "to_cpu",
+      "load": true,
+      "opt": {
+        "gpu": 0,
+        "replace_unk": true,
+        "max_length": 500,
+        "fast": true,
+        "n_best": 1
+      }
+    }
+  ]
+}
