@@ -75,6 +75,8 @@ def main():
     elif args.method == 'dog_gen':
         from main.dog_gen.run import DoG_Gen_Optimizer
         Optimizer = DoG_Gen_Optimizer 
+    elif args.method == 'gegl':
+        from main.gegl.run import GEGL_Optimizer as Optimizer 
 
     elif args.method == 'boss':
         from main.boss.run import BOSS_Optimizer 
@@ -99,6 +101,7 @@ def main():
     elif args.method == 'dog_ae':
         from main.dog_ae.run import DoG_AE_Optimizer
         Optimizer = DoG_AE_Optimizer 
+
 
     elif args.method == 'pasithea':
         from main.pasithea.run import Pasithea_optimizer
