@@ -133,6 +133,8 @@ class Oracle:
         """
         if len(self.mol_buffer) > self.max_oracle_calls:
             return 0
+        if smi is None:
+            return 0
         mol = Chem.MolFromSmiles(smi)
         if mol is None or len(smi) == 0:
             return 0
