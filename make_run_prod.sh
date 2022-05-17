@@ -29,7 +29,7 @@ done" > production_$method.sh
 #         CUDA_VISIBLE_DEVICES=1 nohup bash production_${method}.sh &> ${method}_prod.out &
 #     elif [[ $method = 'selfies_lstm_hc' ]]
 #     then
-#         CUDA_VISIBLE_DEVICES=2 nohup bash production_${method}.sh&> ${method}_prod.out &
+#         CUDA_VISIBLE_DEVICES=2 nohup bash production_${method}.sh &> ${method}_prod.out &
 #     elif [[ $method = 'selfies_ga' ]]
 #     then
 #         CUDA_VISIBLE_DEVICES=3 nohup bash production_${method}.sh &> ${method}_prod.out &
