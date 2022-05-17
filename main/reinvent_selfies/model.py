@@ -55,7 +55,7 @@ class RNN():
         """
         batch_size, seq_length = target.size()
         start_token = Variable(torch.zeros(batch_size, 1).long())
-        start_token[:] = self.voc.vocab['GO']
+        start_token[:] = self.voc.vocab['[GO]']
         x = torch.cat((start_token, target[:, :-1]), 1)
         h = self.rnn.init_h(batch_size)
 
@@ -84,7 +84,7 @@ class RNN():
                                     currently used.
         """
         start_token = Variable(torch.zeros(batch_size).long())
-        start_token[:] = self.voc.vocab['GO']
+        start_token[:] = self.voc.vocab['[GO]']
         h = self.rnn.init_h(batch_size)
         x = start_token
 
@@ -106,7 +106,7 @@ class RNN():
             entropy += -torch.sum((log_prob * prob), 1)
 
             x = Variable(x.data)
-            EOS_sampled = (x == self.voc.vocab['EOS']).data
+            EOS_sampled = (x == self.voc.vocab['[EOS]']).data
             finished = torch.ge(finished + EOS_sampled, 1)
             if torch.prod(finished) == 1: break
 

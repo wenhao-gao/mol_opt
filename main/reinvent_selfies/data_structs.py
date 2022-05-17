@@ -16,7 +16,7 @@ smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 class Vocabulary(object):
     """A class for handling encoding/decoding from SMILES to an array of indices"""
     def __init__(self, init_from_file=None, max_length=140):
-        self.special_tokens = ['EOS', 'GO']
+        self.special_tokens = ['[EOS]', '[GO]']
         self.additional_chars = set()
         self.chars = self.special_tokens
         self.vocab_size = len(self.chars)
@@ -36,7 +36,7 @@ class Vocabulary(object):
         """Takes an array of indices and returns the corresponding SMILES"""
         chars = []
         for i in matrix:
-            if i == self.vocab['EOS']: break
+            if i == self.vocab['[EOS]']: break
             chars.append(self.reversed_vocab[i])
         selfies = "".join(chars)
         smiles = selfies2smiles(selfies)
@@ -47,7 +47,8 @@ class Vocabulary(object):
         """Takes an array of indices and returns the corresponding SMILES"""
         chars = []
         for i in matrix:
-            if i == self.vocab['EOS']: break
+            if i == self.vocab['[EOS]'] or i==self.vocab['[GO]']: 
+                break
             chars.append(self.reversed_vocab[i])
         selfies = "".join(chars)
         # smiles = selfies2smiles(selfies)
@@ -71,7 +72,7 @@ class Vocabulary(object):
             else:
                 chars = [unit for unit in char]
                 [tokenized.append(unit) for unit in chars]
-        tokenized.append('EOS')
+        tokenized.append('[EOS]')
         return tokenized
 
     def add_characters(self, chars):
@@ -253,7 +254,7 @@ def tokenize(smiles):
         else:
             chars = [unit for unit in char]
             [tokenized.append(unit) for unit in chars]
-    tokenized.append('EOS')
+    tokenized.append('[EOS]')
     return tokenized
 
 def canonicalize_smiles_from_file(fname):
