@@ -5,7 +5,7 @@ path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('/'.join(path_here.rstrip('/').split('/')[:-2]))
 from main.optimizer import BaseOptimizer
-from utils import Variable, seq_to_smiles, fraction_valid_smiles, unique
+from utils import Variable, seq_to_smiles, unique
 from model import RNN
 from data_structs import Vocabulary, Experience
 import torch
