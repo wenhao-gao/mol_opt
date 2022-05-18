@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
-#          'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo' \
-#          'smiles_vae' 'selfies_vae' 'chembo' 'mars' 'reinvent' 'reinvent_selfies')
-methods=('gpbo' 'smiles_ga' 'selfies_ga' 'smiles_lstm_hc' 'selfies_lstm_hc' 'mars' 'reinvent' 'reinvent_selfies' 'smiles_vae' 'selfies_vae')
+methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
+         'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo' 'jt_vae' 'moldqn' \
+         'smiles_vae' 'selfies_vae' 'chembo' 'mars' 'reinvent' 'reinvent_selfies')
+# methods=('gpbo' 'smiles_ga' 'selfies_ga' 'smiles_lstm_hc' 'selfies_lstm_hc' 'mars' 'reinvent' 'reinvent_selfies' 'smiles_vae' 'selfies_vae')
 
 for method in "${methods[@]}"
 do
     echo "#!/bin/bash
 
-oracle_array=('drd2' 'qed' 'jnk3' 'gsk3b' 'celecoxib_rediscovery' \\
+oracle_array=('jnk3' 'gsk3b' 'celecoxib_rediscovery' \\
     'troglitazone_rediscovery' \\
     'thiothixene_rediscovery' 'albuterol_similarity' 'mestranol_similarity' \\
     'isomers_c7h8n2o2' 'isomers_c9h10n2o2pf2cl' 'median1' 'median2' 'osimertinib_mpo' \\
