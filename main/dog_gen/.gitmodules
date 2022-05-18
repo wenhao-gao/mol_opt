@@ -1,0 +1,6 @@
+[submodule "submodules/GNN"]
+	path = submodules/GNN
+	url = git@github.com:john-bradshaw/GNN.git
+[submodule "submodules/autoencoders"]
+	path = submodules/autoencoders
+	url = git@github.com:john-bradshaw/autoencoders.git

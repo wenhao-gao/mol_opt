@@ -1,0 +1,13 @@
+{
+  "data_dir": "./samples",
+  "table_format": "github",
+  "tables_to_create": [
+
+    {"metrics":  ["num_generated","validity", "uniqueness",
+                   "novelty", "FCD","quality_filters"],
+      "rows": {
+        "Dog-AE": ["20kDogAESamples.txt", 20000]
+      }
+    }
+  ]
+}

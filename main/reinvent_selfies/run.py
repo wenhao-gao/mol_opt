@@ -5,10 +5,14 @@ path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('/'.join(path_here.rstrip('/').split('/')[:-2]))
 from main.optimizer import BaseOptimizer
-from utils import Variable, seq_to_smiles, fraction_valid_smiles, unique
+from utils import Variable, seq_to_smiles, fraction_valid_smiles, unique, seq_to_selfies 
 from model import RNN
 from data_structs import Vocabulary, Experience
 import torch
+
+from tdc.chem_utils import MolConvert
+selfies2smiles = MolConvert(src = 'SELFIES', dst = 'SMILES')
+smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 
 
 class REINVENT_SELFIES_Optimizer(BaseOptimizer):
@@ -53,9 +57,16 @@ class REINVENT_SELFIES_Optimizer(BaseOptimizer):
         print("Model initialized, starting training...")
 
         step = 0
+        patience = 0
 
         while True:
 
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
+            
             # Sample from Agent
             seqs, agent_likelihood, entropy = Agent.sample(config['batch_size'])
 
@@ -67,12 +78,33 @@ class REINVENT_SELFIES_Optimizer(BaseOptimizer):
 
             # Get prior likelihood and score
             prior_likelihood, _ = Prior.likelihood(Variable(seqs))
-            smiles = seq_to_smiles(seqs, voc)
-            score = np.array(self.oracle(smiles))
+            ##### original 
+            # smiles = seq_to_smiles(seqs, voc) #################### matrix (seq) -> smiles_list
+            # score = np.array(self.oracle(smiles))
+            ##### original 
+
+            ##### new 
+            selfies_list = seq_to_selfies(seqs, voc) 
+            smiles_list = selfies2smiles(selfies_list)
+            score = np.array(self.oracle(smiles_list))
+            ##### new 
 
             if self.finish:
                 print('max oracle hit')
                 break 
+
+            # early stopping
+            if len(self.oracle) > 1000:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience*2:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
 
             # Calculate augmented likelihood
             augmented_likelihood = prior_likelihood.float() + config['sigma'] * Variable(score).float()
@@ -81,7 +113,8 @@ class REINVENT_SELFIES_Optimizer(BaseOptimizer):
             # Experience Replay
             # First sample
             if config['experience_replay'] and len(experience)>config['experience_replay']:
-                exp_seqs, exp_score, exp_prior_likelihood = experience.sample(config['experience_replay'])
+                # exp_seqs, exp_score, exp_prior_likelihood = experience.sample(config['experience_replay']) #### old ---- bug  
+                exp_seqs, exp_score, exp_prior_likelihood = experience.sample_selfies(config['experience_replay']) #### new ---- 
                 exp_agent_likelihood, exp_entropy = Agent.likelihood(exp_seqs.long())
                 exp_augmented_likelihood = exp_prior_likelihood + config['sigma'] * exp_score
                 exp_loss = torch.pow((Variable(exp_augmented_likelihood) - exp_agent_likelihood), 2)
@@ -90,7 +123,9 @@ class REINVENT_SELFIES_Optimizer(BaseOptimizer):
 
             # Then add new experience
             prior_likelihood = prior_likelihood.data.cpu().numpy()
-            new_experience = zip(smiles, score, prior_likelihood)
+            # print(smiles) ## list of smiles 
+            # new_experience = zip(smiles, score, prior_likelihood) ## old === bugs: oov string 
+            new_experience = zip(selfies_list, score, prior_likelihood) ## new 
             experience.add_experience(new_experience)
 
             # Calculate loss

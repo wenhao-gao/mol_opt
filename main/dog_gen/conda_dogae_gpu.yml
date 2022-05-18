@@ -1,0 +1,39 @@
+name: dogae_py3.7_pt1.4
+channels:
+  - rdkit
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.7
+  - pip=20.0.2
+  - numpy=1.18.1
+  - cudatoolkit=10.1
+  - ignite=0.3.0
+  - ipython=7.11.1
+  - jsonschema=3.2.0
+  - jupyter=1.0.0
+  - jupyterlab=1.2.6
+  - networkx=2.4
+  - pytorch=1.4.0
+  - rdkit=2020.03.1.0
+  - torchtext=0.5.0
+  - torchvision=0.5.0
+  - tqdm=4.42.0
+  - matplotlib
+  - pytest=6.1.2
+  - pip:
+    - docopt==0.6.2
+    - keras==2.3.1
+    - fcd==1.1
+    - h5py==2.10.0
+    - guacamol==0.5.2
+    - ipdb==0.13.2
+    - multiset==2.1.1
+    - tabulate==0.8.7
+    - tensorboard==2.1.0
+    - tensorflow==2.0
+    - scikit-learn==0.22
+    - jug==2.0.0
+    - lazy==1.4
+    - git+https://github.com/PatWalters/rd_filters.git@451d5cf92ac630df11851bce2dde98609967e5b4
+

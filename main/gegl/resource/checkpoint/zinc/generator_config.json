@@ -1,0 +1,1 @@
+{"input_size": 41, "hidden_size": 1024, "output_size": 41, "n_layers": 3, "lstm_dropout": 0.2}

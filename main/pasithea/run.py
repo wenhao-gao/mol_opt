@@ -276,7 +276,7 @@ def dream_model(oracle, model, prop, largest_molecule_len, alphabet, upperbound,
         smi = sf.decoder(mol_utils.indices_to_selfies(ind, alphabet))
         smiles_of_mol.append(smi)
     prop_of_mol = oracle(smiles_of_mol)
-    print(' ----- oracle', len(oracle))
+    # print(' ----- oracle', len(oracle))
     # prop_of_mol, smiles_of_mol=lst_of_logP(gathered_indices, alphabet)
 
     #initiailize list of intermediate property values and molecules
@@ -374,7 +374,7 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
             molecule and property
         - Intermediate molecules for each transformation"""
 
-    data_dream=torch.tensor(data_dream, dtype=torch.float, device=args.device)
+    data_dream = torch.tensor(data_dream, dtype=torch.float, device=args.device)
     prop_dream = torch.tensor(prop_dream, dtype=torch.float, device=args.device)
 
     # plot initial distribution of property value in the dataset
@@ -390,7 +390,6 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
     t= time.process_time()
     print('num of dream', num_dream)
     for i in tqdm(range(num_dream)):
-        print('Molecule #'+str(i))
 
         # convert one-hot encoding to SMILES molecule
         mol = data_dream[i].clone()
@@ -402,7 +401,7 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
             smi = sf.decoder(mol_utils.indices_to_selfies(ind, alphabet))
             smiles_of_mol.append(smi)
         prop_of_mol = oracle(smiles_of_mol)
-        print('------- oracle', len(oracle))
+        # print('------- oracle', len(oracle))
         # prop_of_mol,smiles_of_mol=mol_utils.lst_of_logP(gathered_mols, alphabet)
 
         mol1 = smiles_of_mol[0]
@@ -455,14 +454,12 @@ class Pasithea_optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
-        settings = config 
-        # import hyperparameter and training settings from yaml
+
         print('Start reading data file...')
-        # settings=yaml.load(open(os.path.join(path_here,"settings.yml"), "r"))
-        test = settings['test_model']
-        plot = settings['plot_transform']
-        mols = settings['mols']
-        # file_name = settings['data_preprocess']['smiles_file']
+        test = config['test_model']
+        plot = config['plot_transform']
+        mols = config['mols']
+
         ##### write it to a new smiles_file 
         # self.all_smiles 
         file_name = str(random.randint(100000,999999))+'.txt'
@@ -472,31 +469,28 @@ class Pasithea_optimizer(BaseOptimizer):
                 fo.write(str(i+1) + ',' + smiles + '\n')
 
 
-        lr_train=settings['lr_train']
-        lr_train=float(lr_train)
-        lr_dream=settings['lr_dream']
-        lr_dream=float(lr_dream)
+        lr_train = float(config['lr_train'])
+        lr_dream = float(config['lr_dream'])
 
-        batch_size=settings['training']['batch_size']
-        num_epochs = settings['training']['num_epochs']
-        model_parameters = settings['model']
-        dreaming_parameters = settings['dreaming']
+        batch_size = config['training']['batch_size']
+        num_epochs = config['training']['num_epochs']
+        model_parameters = config['model']
+        dreaming_parameters = config['dreaming']
         dreaming_parameters_str = '{}_{}'.format(dreaming_parameters['batch_size'],
                                                  dreaming_parameters['num_epochs'])
-        training_parameters = settings['training']
+        training_parameters = config['training']
         training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
                                                  training_parameters['batch_size'])
-        data_parameters = settings['data']
+        data_parameters = config['data']
         data_parameters_str = '{}_{}'.format(data_parameters['num_train'],
                                              data_parameters['num_dream'])
 
-        upperbound_tr = settings['upperbound_tr']
-        upperbound_dr = settings['upperbound_dr']
-        prop=settings['property_value']
+        upperbound_tr = config['upperbound_tr']
+        upperbound_dr = config['upperbound_dr']
+        prop = config['property_value']
 
-        num_train = settings['data']['num_train']
-        num_dream = settings['data']['num_dream']
-
+        num_train = config['data']['num_train']
+        num_dream = config['data']['num_dream']
 
         num_mol = num_train
 
@@ -518,12 +512,13 @@ class Pasithea_optimizer(BaseOptimizer):
         data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
             data_loader.preprocess(num_mol, file_name, self.oracle)
 
+        # import ipdb; ipdb.set_trace()
 
         # add stochasticity to data
         x = [i for i in range(len(data))]  # random shuffle input
         shuffle(x)
         data = data[x]
-        prop_vals=prop_vals[x]
+        prop_vals = prop_vals[x]
 
         data_dream = data[:num_dream]
         prop_dream = prop_vals[:num_dream]
@@ -531,7 +526,7 @@ class Pasithea_optimizer(BaseOptimizer):
         data_train, data_test, prop_vals_train, prop_vals_test \
             = data_loader.split_train_test(data, prop_vals, num_train, 0.85)
 
-        t=time.process_time()
+        t = time.process_time()
         model = train(directory, args, model_parameters, len_max_molec1Hot,
                       upperbound_tr, data_train, prop_vals_train, data_test,
                       prop_vals_test, lr_train, num_epochs, batch_size)
@@ -548,9 +543,4 @@ class Pasithea_optimizer(BaseOptimizer):
               model, train_time, upperbound_dr, data_dream,
               prop_dream, prop, lr_train, lr_dream, num_train,
               num_dream, dreaming_parameters)
-        print('-----', len(self.oracle))
-
-
-
-
 

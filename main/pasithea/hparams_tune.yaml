@@ -1,4 +1,4 @@
-name: Pasithea
+name: pasithea
 method: random
 metric:
   goal: maximize

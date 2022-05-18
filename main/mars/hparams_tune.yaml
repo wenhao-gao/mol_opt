@@ -1,16 +1,18 @@
 name: mars
-method: random
+method: grid
 metric:
   goal: maximize
   name: avg_auc
 parameters:
   n_layers: 
-    values: [5, 6, 7]
-  lr:
-    values: [0.0003, 0.0001, 0.0005]
-  alpha:
-    values: [0.99, 0.95, 0.9]
+    values: [1, 2, 3]
+  # train:
+  #   values: [True, False]
+  # lr:
+  #   values: [0.0003, 0.0001, 0.0005]
+  # alpha:
+  #   values: [0.99, 0.95, 0.9]
   num_mols:
-    values: [500, 1000, 1500]
-  vocab_size:
-    values: [500, 1000, 2000]
+    values: [32, 64, 128]
+  # vocab_size:
+  #   values: [500, 1000, 2000]

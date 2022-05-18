@@ -16,7 +16,7 @@ smiles2selfies = MolConvert(src = 'SMILES', dst = 'SELFIES')
 class Vocabulary(object):
     """A class for handling encoding/decoding from SMILES to an array of indices"""
     def __init__(self, init_from_file=None, max_length=140):
-        self.special_tokens = ['EOS', 'GO']
+        self.special_tokens = ['[EOS]', '[GO]']
         self.additional_chars = set()
         self.chars = self.special_tokens
         self.vocab_size = len(self.chars)
@@ -36,12 +36,27 @@ class Vocabulary(object):
         """Takes an array of indices and returns the corresponding SMILES"""
         chars = []
         for i in matrix:
-            if i == self.vocab['EOS']: break
+            if i == self.vocab['[EOS]']: break
             chars.append(self.reversed_vocab[i])
         selfies = "".join(chars)
         smiles = selfies2smiles(selfies)
         # smiles = smiles.replace("L", "Cl").replace("R", "Br")
         return smiles
+
+    def decode_selfies(self, matrix):
+        """Takes an array of indices and returns the corresponding SMILES"""
+        chars = []
+        for i in matrix:
+            if i == self.vocab['[EOS]'] or i==self.vocab['[GO]']: 
+                break
+            chars.append(self.reversed_vocab[i])
+        selfies = "".join(chars)
+        # smiles = selfies2smiles(selfies)
+        # smiles = smiles.replace("L", "Cl").replace("R", "Br")
+        # return smiles
+        return selfies 
+
+
 
     def tokenize(self, selfies):
         """Takes a SMILES and return a list of characters/tokens"""
@@ -57,7 +72,7 @@ class Vocabulary(object):
             else:
                 chars = [unit for unit in char]
                 [tokenized.append(unit) for unit in chars]
-        tokenized.append('EOS')
+        tokenized.append('[EOS]')
         return tokenized
 
     def add_characters(self, chars):
@@ -156,10 +171,29 @@ class Experience(object):
             smiles = [x[0] for x in sample]
             scores = [x[1] for x in sample]
             prior_likelihood = [x[2] for x in sample]
-        tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles]
+        tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles] #### oov 
         encoded = [Variable(self.voc.encode(tokenized_i)) for tokenized_i in tokenized]
         encoded = MolData.collate_fn(encoded)
         return encoded, np.array(scores), np.array(prior_likelihood)
+
+    def sample_selfies(self, n):
+        """Sample a batch size n of experience"""
+        if len(self.memory)<n:
+            raise IndexError('Size of memory ({}) is less than requested sample ({})'.format(len(self), n))
+        else:
+            scores = [x[1]+1e-10 for x in self.memory]
+            sample = np.random.choice(len(self), size=n, replace=False, p=scores/np.sum(scores))
+            sample = [self.memory[i] for i in sample]
+            smiles = [x[0] for x in sample]
+            scores = [x[1] for x in sample]
+            prior_likelihood = [x[2] for x in sample]
+        # tokenized = [self.voc.tokenize(smiles2selfies(smile)) for smile in smiles] #### oov 
+        tokenized = [self.voc.tokenize(selfies) for selfies in smiles] #### oov 
+        encoded = [Variable(self.voc.encode(tokenized_i)) for tokenized_i in tokenized]
+        encoded = MolData.collate_fn(encoded)
+        return encoded, np.array(scores), np.array(prior_likelihood)
+
+
 
     def initiate_from_file(self, fname, scoring_function, Prior):
         """Adds experience from a file with SMILES
@@ -220,7 +254,7 @@ def tokenize(smiles):
         else:
             chars = [unit for unit in char]
             [tokenized.append(unit) for unit in chars]
-    tokenized.append('EOS')
+    tokenized.append('[EOS]')
     return tokenized
 
 def canonicalize_smiles_from_file(fname):

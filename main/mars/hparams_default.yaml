@@ -1,13 +1,13 @@
 train: True
-num_mols: 1000
+num_mols: 64
 alpha: 0.95
-lr: 0.0003
+lr: 0.0005
 batch_size: 128
 n_atom_feat: 17
 n_bond_feat: 5
 n_node_hidden: 64
 n_edge_hidden: 128
-n_layers: 6
+n_layers: 3
 device: 'cpu'
 data_dir: './main/mars/data'
 root_dir: './main/mars/'
