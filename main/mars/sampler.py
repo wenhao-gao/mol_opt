@@ -198,13 +198,6 @@ class Sampler():
                 break 
             
             indices = [i for i in range(len(old_mols)) if new_scores[i] > old_scores[i]]
-            # with open(os.path.join(self.run_dir, 'edits.txt'), 'a') as f:
-            #     f.write('edits at step %i\n' % step)
-            #     f.write('improve\tact\tarm\n')
-            #     for i, item in enumerate(self.proposal.dataset):
-            #         _, edit = item
-            #         improve = new_scores[i] > old_scores[i]
-            #         f.write('%i\t%i\t%i\n' % (improve, edit['act'], edit['arm']))
             
             acc_rates = self.acc_rates(new_scores, old_scores, fixings)
             acc_rates = [min(1., max(0., A)) for A in acc_rates]
@@ -219,7 +212,7 @@ class Sampler():
             if self.train and len(self.oracle) > 500:
                 dataset = self.proposal.dataset
                 dataset = data.Subset(dataset, indices)
-                if self.dataset: 
+                if self.dataset and len(self.dataset) > 0: 
                     # print(dataset)
                     self.dataset.merge_(dataset)
                 else: self.dataset = ImitationDataset.reconstruct(dataset)
