@@ -6,8 +6,9 @@ sys.path.append('.')
 from main.optimizer import BaseOptimizer
 from chemutils import * 
 from inference_utils import * 
-
-
+from online_train import * ### 
+# def train_gnn(data, gnn): 
+from random import shuffle 
 class MIMOSA_Optimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
@@ -27,7 +28,7 @@ class MIMOSA_Optimizer(BaseOptimizer):
 		current_set = set(start_smiles_lst)
 
 		patience = 0
-
+		all_smiles_score_list = []  
 		while True:
 
 			if len(self.oracle) > 100:
@@ -43,6 +44,9 @@ class MIMOSA_Optimizer(BaseOptimizer):
 				next_set = next_set.union(smiles_set)
 
 			smiles_lst = list(next_set)
+			shuffle(smiles_lst)
+			smiles_lst = smiles_lst[:500]
+
 			score_lst = self.oracle(smiles_lst)
 
 			if self.finish:
@@ -52,6 +56,15 @@ class MIMOSA_Optimizer(BaseOptimizer):
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)
 			current_set, _, _ = dpp(smiles_score_lst = smiles_score_lst, num_return = population_size, lamb = lamb) 	# Option II: DPP
+
+			### online train gnn 
+			all_smiles_score_list.extend(smiles_score_lst)
+			all_smiles_score_list.sort(key=lambda x:x[1], reverse=True)
+			good_smiles_list = [i[0] for i in filter(lambda x:x[1] > 0.5, all_smiles_score_list)]
+			if len(good_smiles_list) < 300:
+				good_smiles_list.extend(all_smiles_score_list[:300])
+			train_gnn(good_smiles_list, gnn)
+
 
 			# early stopping
 			if len(self.oracle) > 2000:
