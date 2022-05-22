@@ -8,6 +8,11 @@ from chemutils import *
 from inference_utils import * 
 from tqdm import tqdm
 
+from module import GCN 
+from chemutils import smiles2graph, vocabulary 
+from utils import Molecule_Dataset 
+from online_train import train_gnn ### train_gnn(data, gnn) 
+from random import shuffle 
 
 class DSToptimizer(BaseOptimizer):
 
@@ -25,11 +30,11 @@ class DSToptimizer(BaseOptimizer):
 		epsilon = config['epsilon']
 
 		start_smiles_lst = ['C1(N)=NC=CC=N1']
-		model_ckpt = os.path.join(path_here, "pretrained_model/qed_epoch_4_iter_0_validloss_0.57661.ckpt")
+		model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
 		gnn = torch.load(model_ckpt)
 
 		current_set = set(start_smiles_lst)
-
+		all_smiles_score_list = []
 		while True:
 
 			if len(self.oracle) > 100:
@@ -51,7 +56,12 @@ class DSToptimizer(BaseOptimizer):
 					pass 
 
 			smiles_lst = list(next_set)
+			shuffle(smiles_lst)
+			smiles_lst = smiles_lst[:config['pool_size']]   ### at most XXX mols per generation
 			score_lst = self.oracle(smiles_lst)
+			all_smiles_score_list.extend(list(zip(smiles_lst, score_lst)))
+			#### online train GNN 
+			train_gnn(all_smiles_score_list, gnn)
 
 			if self.finish:
 				print('max oracle hit, abort ...... ')
