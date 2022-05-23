@@ -9,6 +9,8 @@ import torch
 from main.optimizer import BaseOptimizer
 from gflownet_tdc import train_model_with_proxy, Dataset, make_model
 
+import os 
+path_here = os.path.dirname(os.path.realpath(__file__))
 
 model_parser = argparse.ArgumentParser()
 model_parser.add_argument("--learning_rate", default=5e-4, help="Learning rate", type=float)
@@ -61,7 +63,8 @@ class GFlowNet_Optimizer(BaseOptimizer):
 
         args = model_parser.parse_args()
         
-        bpath = "/home/whgao/mol_opt/main/gflownet/data/blocks_PDB_105.json"
+        # bpath = "/home/whgao/mol_opt/main/gflownet/data/blocks_PDB_105.json"
+        bpath = os.path.join(path_here, 'data/blocks_PDB_105.json')
         device = torch.device('cuda')
 
         if args.floatX == 'float32':
@@ -93,7 +96,8 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
 
         args = model_parser.parse_args()
         
-        bpath = "/home/whgao/mol_opt/main/gflownet/data/blocks_PDB_105.json"
+        # bpath = "/home/whgao/mol_opt/main/gflownet/data/blocks_PDB_105.json"
+        bpath = os.path.join(path_here, 'data/blocks_PDB_105.json')
         device = torch.device('cuda')
 
         if args.floatX == 'float32':
