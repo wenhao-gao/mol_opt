@@ -57,7 +57,7 @@ class DSToptimizer(BaseOptimizer):
 
 			smiles_lst = list(next_set)
 			shuffle(smiles_lst)
-			smiles_lst = smiles_lst[:config['pool_size']]   ### at most XXX mols per generation
+			smiles_lst = smiles_lst[:config['pool_size']] + start_smiles_lst  ### at most XXX mols per generation
 			score_lst = self.oracle(smiles_lst)
 			all_smiles_score_list.extend(list(zip(smiles_lst, score_lst)))
 			#### online train GNN 
