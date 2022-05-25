@@ -163,15 +163,20 @@ def smiles2word(smiles):
 
     cliques = [list(x) for x in Chem.GetSymmSSSR(mol)]
     cliques_smiles = []
-    for clique in cliques:
-        clique_smiles = Chem.MolFragmentToSmiles(mol, clique, kekuleSmiles=True)
-        cliques_smiles.append(clique_smiles)
-    atom_not_in_rings_list = [atom.GetSymbol() for atom in mol.GetAtoms() if not atom.IsInRing()]
-    return cliques_smiles + atom_not_in_rings_list 
+    try:
+        for clique in cliques:
+            clique_smiles = Chem.MolFragmentToSmiles(mol, clique, kekuleSmiles=True)
+            cliques_smiles.append(clique_smiles)
+        atom_not_in_rings_list = [atom.GetSymbol() for atom in mol.GetAtoms() if not atom.IsInRing()]
+        return cliques_smiles + atom_not_in_rings_list 
+    except:
+        return None 
 
 ## is_valid_smiles 
 def is_valid(smiles):
     word_lst = smiles2word(smiles)
+    if word_lst is None:
+        return False 
     word_set = set(word_lst)
     return word_set.issubset(vocabulary)     
 
