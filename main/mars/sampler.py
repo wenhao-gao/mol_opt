@@ -214,7 +214,10 @@ class Sampler():
                 dataset = data.Subset(dataset, indices)
                 if self.dataset and len(self.dataset) > 0: 
                     # print(dataset)
-                    self.dataset.merge_(dataset)
+                    try:
+                        self.dataset.merge_(dataset)
+                    except:
+                        print(f"Problem happned when merging data, pass this round.")
                 else: self.dataset = ImitationDataset.reconstruct(dataset)
                 n_sample = len(self.dataset)
                 if n_sample > 2 * self.DATASET_MAX_SIZE:

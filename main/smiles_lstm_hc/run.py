@@ -68,6 +68,8 @@ class SMILES_LSTM_HC_Optimizer(BaseOptimizer):
                 results.append(k)
                 seen.add(k.smiles)
 
+        patience = 0
+        
         while True:
 
             if len(self.oracle) > 50:
