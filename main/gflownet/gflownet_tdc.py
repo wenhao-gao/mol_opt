@@ -360,6 +360,7 @@ _stop = [None]
 
 
 def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=True):
+    ##### proxy is self.oracle 
     debug_no_threads = False
     device = torch.device('cuda')
 
@@ -377,6 +378,8 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
 
     dataset.set_sampling_model(model, proxy, sample_prob=args.sample_prob)
 
+
+    ########## save_stuff ###########
     def save_stuff():
         pickle.dump([i.data.cpu().numpy() for i in model.parameters()],
                     gzip.open(f'{exp_dir}/params.pkl.gz', 'wb'))
@@ -394,6 +397,7 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
 
         pickle.dump(train_infos,
                     gzip.open(f'{exp_dir}/train_info.pkl.gz', 'wb'))
+    ########## save_stuff ###########
 
 
     opt = torch.optim.Adam(model.parameters(), args.learning_rate, weight_decay=args.weight_decay,
@@ -432,6 +436,9 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
     leaf_coef = args.leaf_coef
 
     for i in range(num_steps):
+        #### oracle #####
+        if proxy.finish:
+            return 
         if not debug_no_threads:
             r = sampler()
             for thread in dataset.sampler_threads:
