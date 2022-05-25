@@ -29,7 +29,7 @@ class DSToptimizer(BaseOptimizer):
 		topk = config['topk']
 		epsilon = config['epsilon']
 
-		start_smiles_lst = ['C1(N)=NC=CC=N1']
+		start_smiles_lst = ['C1(N)=NC=CC=N1', 'C1(C)=NC=CC=N1', 'C1(C)=CC=CC=C1', 'C1(N)=CC=CC=C1', 'CC', 'C1(C)CCCCC1']
 		model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
 		gnn = torch.load(model_ckpt)
 

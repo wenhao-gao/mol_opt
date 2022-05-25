@@ -35,6 +35,8 @@ def main():
     if not args.log_code:
         os.environ["WANDB_DISABLE_CODE"] = "false"
 
+    args.method = args.method.lower() 
+
     path_main = os.path.dirname(os.path.realpath(__file__))
     path_main = os.path.join(path_main, "main", args.method)
 
@@ -46,103 +48,65 @@ def main():
     print(args.method)
     # Add method name here when adding new ones
     if args.method == 'screening':
-        from main.screening.run import Exhaustive_Optimizer 
-        Optimizer = Exhaustive_Optimizer
+        from main.screening.run import Exhaustive_Optimizer as Optimizer 
     elif args.method == 'molpal':
-        from main.molpal.run import MolPAL_Optimizer 
-        Optimizer = MolPAL_Optimizer
-
+        from main.molpal.run import MolPAL_Optimizer as Optimizer
     elif args.method == 'graph_ga':
-        from main.graph_ga.run import GB_GA_Optimizer
-        Optimizer = GB_GA_Optimizer
+        from main.graph_ga.run import GB_GA_Optimizer as Optimizer
     elif args.method == 'smiles_ga':
-        from main.smiles_ga.run import SMILES_GA_Optimizer
-        Optimizer = SMILES_GA_Optimizer
+        from main.smiles_ga.run import SMILES_GA_Optimizer as Optimizer
     elif args.method == "selfies_ga":
-        from main.selfies_ga.run import SELFIES_GA_optimizer 
-        Optimizer = SELFIES_GA_optimizer 
+        from main.selfies_ga.run import SELFIES_GA_optimizer as Optimizer
     elif args.method == "synnet":
-        from main.synnet.run import SynNet_GA_optimizer 
-        Optimizer = SynNet_GA_optimizer 
-
+        from main.synnet.run import SynNet_GA_optimizer as Optimizer
     elif args.method == 'graph_mcts':
-        from main.graph_mcts.run import Graph_MCTS_Optimizer 
-        Optimizer = Graph_MCTS_Optimizer 
-
+        from main.graph_mcts.run import Graph_MCTS_Optimizer as Optimizer
     elif args.method == "smiles_lstm_hc":
-        from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer 
-        Optimizer = SMILES_LSTM_HC_Optimizer 
+        from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer as Optimizer
     elif args.method == 'selfies_lstm_hc':
-        from main.selfies_lstm_hc.run import SELFIES_LSTM_HC_Optimizer
-        Optimizer = SELFIES_LSTM_HC_Optimizer 
+        from main.selfies_lstm_hc.run import SELFIES_LSTM_HC_Optimizer as Optimizer
     elif args.method == 'dog_gen':
-        from main.dog_gen.run import DoG_Gen_Optimizer
-        Optimizer = DoG_Gen_Optimizer 
+        from main.dog_gen.run import DoG_Gen_Optimizer as Optimizer
     elif args.method == 'gegl':
         from main.gegl.run import GEGL_Optimizer as Optimizer 
-
     elif args.method == 'boss':
-        from main.boss.run import BOSS_Optimizer 
-        Optimizer = BOSS_Optimizer 
+        from main.boss.run import BOSS_Optimizer as Optimizer
     elif args.method == 'chembo':
         from main.chembo.run import ChemBOoptimizer as Optimizer 
     elif args.method == 'gpbo':
-        from main.gpbo.run import GPBO_optimizer
-        Optimizer = GPBO_optimizer 
+        from main.gpbo.run import GPBO_optimizer as Optimizer
     elif args.method == 'dog_gen':
         from main.dog_gen.run import DoG_Gen_Optimizer as Optimizer 
-
     elif args.method == "selfies_vae":
-        from main.selfies_vae.run import SELFIES_VAEBO_optimizer 
-        Optimizer = SELFIES_VAEBO_optimizer 
+        from main.selfies_vae.run import SELFIES_VAEBO_optimizer as Optimizer
     elif args.method == "smiles_vae":
-        from main.smiles_vae.run import SMILES_VAEBO_optimizer 
-        Optimizer = SMILES_VAEBO_optimizer 
+        from main.smiles_vae.run import SMILES_VAEBO_optimizer as Optimizer
     elif args.method == 'jt_vae':
-        from main.jt_vae.run import JTVAE_BO_optimizer
-        Optimizer = JTVAE_BO_optimizer 
+        from main.jt_vae.run import JTVAE_BO_optimizer as Optimizer
     elif args.method == 'dog_ae':
-        from main.dog_ae.run import DoG_AE_Optimizer
-        Optimizer = DoG_AE_Optimizer 
-
-
+        from main.dog_ae.run import DoG_AE_Optimizer as Optimizer
     elif args.method == 'pasithea':
-        from main.pasithea.run import Pasithea_optimizer
-        Optimizer = Pasithea_optimizer 
+        from main.pasithea.run import Pasithea_optimizer as Optimizer
     elif args.method == 'dst':
-        from main.dst.run import DSToptimizer
-        Optimizer = DSToptimizer 
-
+        from main.dst.run import DSToptimizer as Optimizer
     elif args.method == 'molgan':
-        from main.molgan.run import MolGAN_Optimizer 
-        Optimizer = MolGAN_Optimizer 
-
+        from main.molgan.run import MolGAN_Optimizer as Optimizer
     elif args.method == 'mars':
-        from main.mars.run import MARS_Optimizer 
-        Optimizer = MARS_Optimizer 
+        from main.mars.run import MARS_Optimizer as Optimizer
     elif args.method == 'mimosa':
-        from main.mimosa.run import MIMOSA_Optimizer 
-        Optimizer = MIMOSA_Optimizer
+        from main.mimosa.run import MIMOSA_Optimizer as Optimizer
     elif args.method == 'gflownet':
-        from main.gflownet.run import GFlowNet_Optimizer 
-        Optimizer = GFlowNet_Optimizer
+        from main.gflownet.run import GFlowNet_Optimizer as Optimizer
     elif args.method == 'gflownet_al':
-        from main.gflownet.run import GFlowNet_AL_Optimizer 
-        Optimizer = GFlowNet_AL_Optimizer
-
+        from main.gflownet.run import GFlowNet_AL_Optimizer as Optimizer
     elif args.method == 'moldqn':
-        from main.moldqn.run import MolDQN_Optimizer
-        Optimizer = MolDQN_Optimizer 
+        from main.moldqn.run import MolDQN_Optimizer as Optimizer
     elif args.method == 'reinvent':
-        from main.reinvent.run import REINVENT_Optimizer
-        Optimizer = REINVENT_Optimizer
+        from main.reinvent.run import REINVENT_Optimizer as Optimizer
     elif args.method == 'reinvent_selfies':
-        from main.reinvent_selfies.run import REINVENT_SELFIES_Optimizer 
-        Optimizer = REINVENT_SELFIES_Optimizer 
+        from main.reinvent_selfies.run import REINVENT_SELFIES_Optimizer as Optimizer
     elif args.method == "rationale_rl":
-        from main.rationale_rl.run import Rationale_RL_Optimizer 
-        Optimizer = Rationale_RL_Optimizer 
-
+        from main.rationale_rl.run import Rationale_RL_Optimizer as Optimizer
     else:
         raise ValueError("Unrecognized method name.")
 
