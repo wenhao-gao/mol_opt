@@ -16,7 +16,9 @@ sys.path.append(path_here)
 from random import random 
 
 from module import GCN 
-from chemutils import smiles2graph, vocabulary 
+from chemutils import smiles2graph, vocabulary, is_valid
+# def is_valid(smiles):  return True/False
+
 from utils import Molecule_Dataset 
 
 def collate_fn(batch_lst):
