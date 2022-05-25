@@ -1,31 +1,11 @@
 from __future__ import print_function
 
-import argparse
-import heapq
-import yaml
-import os
-import random
-from time import time
-from typing import List, Optional
-
-import joblib
-import numpy as np
-from joblib import delayed
-from rdkit import Chem, rdBase
-from rdkit.Chem.rdchem import Mol
-from tdc import Oracle
+from rdkit import rdBase
 rdBase.DisableLog('rdApp.error')
 
-import os, sys 
-path_here = os.path.dirname(os.path.realpath(__file__))
-import random
-import json
-import argparse
 import os
-
-import numpy as np
+path_here = os.path.dirname(os.path.realpath(__file__))
 import torch
-from torch.utils.data import DataLoader
 from torch.optim import Adam
 
 from runner.gegl_trainer import GeneticExpertGuidedLearningTrainer
@@ -43,11 +23,7 @@ from util.chemistry.benchmarks import (
 )
 from util.smiles.char_dict import SmilesCharDictionary
 from util.smiles.dataset import load_dataset
-
-
 from random import shuffle 
-
-
 from main.optimizer import BaseOptimizer
 
 
@@ -55,36 +31,12 @@ class GEGL_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "graph_ga"
+        self.model_name = "gegl"
 
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
 
-        # parser.add_argument("--smi_id_min", type=int, default=0)
-        # parser.add_argument("--smi_id_max", type=int, default=800)
-        # parser.add_argument("--dataset", type=str, default="zinc")
-        # parser.add_argument("--dataset_path", type=str, default="./resource/data/zinc/logp_800.txt")
-        # parser.add_argument("--max_smiles_length", type=int, default=120)
-        # parser.add_argument("--similarity_threshold", type=float, default=0.4)
-        # parser.add_argument("--apprentice_load_dir", type=str, default="./resource/checkpoint/zinc")
-        # parser.add_argument("--learning_rate", type=float, default=1e-3)
-        # parser.add_argument("--sample_batch_size", type=int, default=512)
-        # parser.add_argument("--optimize_batch_size", type=int, default=256)
-        # parser.add_argument("--mutation_rate", type=float, default=0.01)
-        # parser.add_argument("--num_steps", type=int, default=50)
-        # parser.add_argument("--num_keep", type=int, default=1024)
-        # parser.add_argument("--max_sampling_batch_size", type=int, default=1024)
-        # parser.add_argument("--apprentice_sampling_batch_size", type=int, default=1024)
-        # parser.add_argument("--expert_sampling_batch_size", type=int, default=1024)
-        # parser.add_argument("--apprentice_training_batch_size", type=int, default=256)
-        # parser.add_argument("--num_apprentice_training_steps", type=int, default=4)
-        # parser.add_argument("--num_jobs", type=int, default=8)
-        # parser.add_argument("--record_filtered", action="store_true")
-        # parser.add_argument("--use_atomrings", action="store_true")
-        # args.algorithm = "gegl_constrained"
-
-        random.seed(0)
         device = torch.device(0)
 
         char_dict = SmilesCharDictionary(dataset=config['dataset'], max_smi_len=config['max_smiles_length'])
@@ -160,11 +112,4 @@ class GEGL_Optimizer(BaseOptimizer):
             reference_score = penalized_logp_score_func(reference_smi)
             optimized_score = penalized_logp_score_func(optimized_smi)
             similarity = TanimotoScoringFunction(target=reference_smi, fp_type="ECFP4").score(optimized_smi)
-
-
-
-
-
-                
-
 

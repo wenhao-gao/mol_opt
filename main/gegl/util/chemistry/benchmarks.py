@@ -1,14 +1,10 @@
 import sys
 sys.path.append('.')
 
-import time
-from typing import Any, Dict, List, Tuple, Optional
-import numpy as np
-
 import os, sys
 
 from rdkit import Chem
-from rdkit.Chem import Descriptors, Mol, rdMolDescriptors
+from rdkit.Chem import Descriptors, Mol
 from rdkit.Chem import RDConfig
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
