@@ -11,7 +11,7 @@ from chemutils import smiles2graph, vocabulary
 from online_train import train_gnn
 from random import shuffle 
 
-class DSToptimizer(BaseOptimizer):
+class DST_Optimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
 		super().__init__(args)

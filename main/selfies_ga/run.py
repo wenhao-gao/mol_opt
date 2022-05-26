@@ -9,17 +9,11 @@ import torch
 import discriminator as D
 import evolution_functions as evo
 import generation_props as gen_func
-import numpy as np 
-import argparse, yaml  
 from main.optimizer import BaseOptimizer 
-from tdc import Oracle
 
 
-class SELFIES_GA_optimizer(BaseOptimizer):
-    """
-    This 
-    """
-
+class SELFIES_GA_Optimizer(BaseOptimizer):
+    
     def __init__(self, args=None):
         super().__init__(args)
         self.model_name = "selfies_ga"

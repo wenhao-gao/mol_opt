@@ -1,16 +1,9 @@
-import argparse
-import json
-import logging
-import pickle
 import random
-from random import shuffle 
 import numpy as np
-import functools, os 
-import yaml
+import functools
 import heapq
 import torch
 import gpytorch
-from tdc import Oracle
 from rdkit.Chem import rdMolDescriptors
 import sys
 sys.path.append('.')
@@ -23,7 +16,7 @@ from gp import (
 )
 from fingerprints import smiles_to_fp_array
 from bo import acquisition_funcs, gp_bo
-from function_utils import CachedFunction, CachedBatchFunction
+from function_utils import CachedBatchFunction
 from graph_ga.graph_ga import run_ga_maximization
 
 
@@ -86,7 +79,7 @@ def acq_f_of_time(bo_iter, bo_state_dict):
         beta=beta_curr ** 2,  # due to different conventions of what beta is in UCB
     )
 
-class GPBO_optimizer(BaseOptimizer):
+class GPBO_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)

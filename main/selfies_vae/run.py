@@ -17,7 +17,7 @@ converter = MolConvert(src = 'SMILES', dst = 'SELFIES')
 inverter = MolConvert(src='SELFIES', dst = 'SMILES')
 
 
-class SELFIES_VAEBO_optimizer(BaseOptimizer):
+class SELFIES_VAEBO_Optimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
 		super().__init__(args)

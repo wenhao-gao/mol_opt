@@ -56,9 +56,9 @@ def main():
     elif args.method == 'smiles_ga':
         from main.smiles_ga.run import SMILES_GA_Optimizer as Optimizer
     elif args.method == "selfies_ga":
-        from main.selfies_ga.run import SELFIES_GA_optimizer as Optimizer
+        from main.selfies_ga.run import SELFIES_GA_Optimizer as Optimizer
     elif args.method == "synnet":
-        from main.synnet.run import SynNet_GA_optimizer as Optimizer
+        from main.synnet.run import SynNet_Optimizer as Optimizer
     elif args.method == 'graph_mcts':
         from main.graph_mcts.run import Graph_MCTS_Optimizer as Optimizer
     elif args.method == "smiles_lstm_hc":
@@ -74,21 +74,21 @@ def main():
     elif args.method == 'chembo':
         from main.chembo.run import ChemBOoptimizer as Optimizer 
     elif args.method == 'gpbo':
-        from main.gpbo.run import GPBO_optimizer as Optimizer
+        from main.gpbo.run import GPBO_Optimizer as Optimizer
     elif args.method == 'dog_gen':
         from main.dog_gen.run import DoG_Gen_Optimizer as Optimizer 
     elif args.method == "selfies_vae":
-        from main.selfies_vae.run import SELFIES_VAEBO_optimizer as Optimizer
+        from main.selfies_vae.run import SELFIES_VAEBO_Optimizer as Optimizer
     elif args.method == "smiles_vae":
-        from main.smiles_vae.run import SMILES_VAEBO_optimizer as Optimizer
+        from main.smiles_vae.run import SMILES_VAEBO_Optimizer as Optimizer
     elif args.method == 'jt_vae':
-        from main.jt_vae.run import JTVAE_BO_optimizer as Optimizer
+        from main.jt_vae.run import JTVAE_BO_Optimizer as Optimizer
     elif args.method == 'dog_ae':
         from main.dog_ae.run import DoG_AE_Optimizer as Optimizer
     elif args.method == 'pasithea':
-        from main.pasithea.run import Pasithea_optimizer as Optimizer
+        from main.pasithea.run import Pasithea_Optimizer as Optimizer
     elif args.method == 'dst':
-        from main.dst.run import DSToptimizer as Optimizer
+        from main.dst.run import DST_Optimizer as Optimizer
     elif args.method == 'molgan':
         from main.molgan.run import MolGAN_Optimizer as Optimizer
     elif args.method == 'mars':

@@ -427,7 +427,7 @@ def dream(oracle, args, largest_molecule_len, alphabet, model,
         interm.append(interm_tuple)
 
 
-class Pasithea_optimizer(BaseOptimizer):
+class Pasithea_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)

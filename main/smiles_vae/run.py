@@ -1,5 +1,4 @@
-import os, pickle, torch
-import numpy as np 
+import os, torch
 from random import shuffle, choice  
 from tdc.chem_utils.oracle.oracle import smiles_to_rdkit_mol
 import sys
@@ -14,7 +13,7 @@ from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 
 
-class SMILES_VAEBO_optimizer(BaseOptimizer):
+class SMILES_VAEBO_Optimizer(BaseOptimizer):
 
 	def __init__(self, args=None):
 		super().__init__(args)

@@ -20,7 +20,7 @@ from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 
 
-class JTVAE_BO_optimizer(BaseOptimizer):
+class JTVAE_BO_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
