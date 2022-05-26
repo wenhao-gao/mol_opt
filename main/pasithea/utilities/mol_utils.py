@@ -114,6 +114,7 @@ def selfies_to_hot(selfie, largest_selfie_len, alphabet):
         letter[index] = 1
         onehot_encoded.append(letter)
 
+    # return integer_encoded, onehot_encoded
     return integer_encoded, np.array(onehot_encoded)
 
 
@@ -131,9 +132,28 @@ def multiple_selfies_to_hot(selfies_list, largest_molecule_len, alphabet):
 
     hot_list = []
     for s in selfies_list:
-        _, onehot_encoded = selfies_to_hot(s, largest_molecule_len, alphabet)
-        hot_list.append(onehot_encoded)
+        try:
+            _, onehot_encoded = selfies_to_hot(s, largest_molecule_len, alphabet)
+            hot_list.append(onehot_encoded)
+        except:
+            pass
     return np.array(hot_list)
+
+
+def multiple_selfies_to_hot_online(selfies_list, value_list, largest_molecule_len, alphabet):
+    """Convert a list of selfies strings to a one-hot encoding
+    """
+
+    hot_list = []
+    val_list = []
+    for i, s in enumerate(selfies_list):
+        try:
+            _, onehot_encoded = selfies_to_hot(s, largest_molecule_len, alphabet)
+            hot_list.append(onehot_encoded)
+            val_list.append(value_list[i])
+        except:
+            pass
+    return np.array(hot_list), val_list
 
 
 def hot_to_indices(hot):

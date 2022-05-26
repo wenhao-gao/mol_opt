@@ -1,25 +1,14 @@
-mols: ['O1C=CN=C1']
 upperbound_tr: 0.95
 upperbound_dr: 0.90
 property_value: 6
 lr_train: 1e-03
-lr_dream: 0.01
-test_model: 0
-plot_transform: 0
-
-data:
-  num_train: 300
-  num_dream: 10000
+lr_dream: 1e-02
+dream_num_epochs: 50
+train_num_epochs: 5
+initial_data_size: 500
+num_dream: 500
 
 model:
   num_of_neurons_layer1: 500
   num_of_neurons_layer2: 500
   num_of_neurons_layer3: 500
-
-training:
-  num_epochs: 5
-  batch_size: 1
-
-dreaming:
-  num_epochs: 50
-  batch_size: 1

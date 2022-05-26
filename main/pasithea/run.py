@@ -6,7 +6,6 @@ The entire cycle - training and dreaming - is involved.
 
 import os, torch, random
 import numpy as np 
-from tqdm import tqdm 
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
@@ -196,7 +195,7 @@ def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
 
     if os.path.exists(name):
         model = load_model(name, args, len_max_molec1Hot, model_parameters)
-        print('Testing model...')
+        # print('Testing model...')
         test_model(directory, args, model,
                    data_train, prop_vals_train, upperbound)
     else:
@@ -214,10 +213,10 @@ def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
         model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
         model.load_state_dict(torch.load(name))
         model.eval()
-        print('Testing model...')
+        # print('Testing model...')
         test_model(directory, args, model,
                    data_train, prop_vals_train, upperbound)
-        print('finished training and testing, now start dreaming :)\n\n\n')
+        # print('finished training and testing, now start dreaming :)\n\n\n')
 
     return model
 
@@ -309,11 +308,6 @@ def dream_model(oracle, model, prop, largest_molecule_len, alphabet, upperbound,
         real_loss=loss.detach().numpy()
         loss_prediction.append(real_loss)
 
-
-        if epoch%100==0:
-            if display:
-                print('epoch: ',epoch,', loss: ', real_loss)
-
         # convert one-hot encoding to SMILES molecule
         molecule_reshaped=torch.reshape(data_train_var,
                                         (1, largest_molecule_len,
@@ -364,9 +358,9 @@ def dream_model(oracle, model, prop, largest_molecule_len, alphabet, upperbound,
     return interm_prop, interm_mols, percent_valid_transform, loss_prediction, epoch_transformed
 
 
-def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_time,
-          upperbound, data_dream, prop_dream, prop,
-          lr_train, lr_dream, num_train, num_dream, dreaming_parameters):
+def dream(oracle, args, largest_molecule_len, alphabet, model,
+          upperbound, data_dream, prop,
+          lr_dream, num_dream, num_epochs):
     """Dreaming procedure for a dataset of molecules. Saves the following
     results to file:
         - Summary of dreaming
@@ -375,11 +369,6 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
         - Intermediate molecules for each transformation"""
 
     data_dream = torch.tensor(data_dream, dtype=torch.float, device=args.device)
-    prop_dream = torch.tensor(prop_dream, dtype=torch.float, device=args.device)
-
-    # plot initial distribution of property value in the dataset
-    plot_utils.initial_histogram(prop_dream.numpy(), directory)
-    avg1 = torch.mean(prop_dream).numpy()
 
     num_valid = 0
     num_unchanged = 0
@@ -387,12 +376,11 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
     prop_lst = []
     interm = []
     transforms = []
-    t= time.process_time()
-    print('num of dream', num_dream)
-    for i in tqdm(range(num_dream)):
+
+    for i in range(num_dream):
 
         # convert one-hot encoding to SMILES molecule
-        mol = data_dream[i].clone()
+        mol = random.choice(data_dream).clone()
         gathered_mols=[]
         _,max_index=mol.max(1)
         gathered_mols.append(max_index.data.cpu().numpy().tolist())
@@ -401,26 +389,25 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
             smi = sf.decoder(mol_utils.indices_to_selfies(ind, alphabet))
             smiles_of_mol.append(smi)
         prop_of_mol = oracle(smiles_of_mol)
-        # print('------- oracle', len(oracle))
-        # prop_of_mol,smiles_of_mol=mol_utils.lst_of_logP(gathered_mols, alphabet)
+
+        if oracle.finish:
+            break 
 
         mol1 = smiles_of_mol[0]
         mol1_prop = prop_of_mol[0]
         train_mol = torch.reshape(mol, (1, mol.shape[0], mol.shape[1]))
 
         # feed molecule into the inverse-model
-        (track_prop, track_mol,
-         percent_valid_interm,
-         track_loss,
-         epoch_transformed) = dream_model(oracle = oracle, 
-                                          model = model,
-                                          prop=prop,
-                                          largest_molecule_len=largest_molecule_len,
-                                          alphabet=alphabet,
-                                          upperbound = upperbound,
-                                          data_train=train_mol,
-                                          lr=lr_dream,
-                                          **dreaming_parameters)
+        (track_prop, track_mol, _, _, _) = dream_model(oracle = oracle, 
+                                                       model = model,
+                                                       prop=prop,
+                                                       largest_molecule_len=largest_molecule_len,
+                                                       alphabet=alphabet,
+                                                       upperbound = upperbound,
+                                                       data_train=train_mol,
+                                                       lr=lr_dream,
+                                                       batch_size=1, 
+                                                       num_epochs=num_epochs)
 
         # track and record results from dreaming
         prop_val = track_prop[len(track_prop)-1]
@@ -429,20 +416,15 @@ def dream(oracle, directory, args, largest_molecule_len, alphabet, model, train_
                 (prop < mol1_prop and prop_val < mol1_prop)
         if valid:
             num_valid += 1
-        if mol1_prop == prop_val or mol1==mol2:
+        if mol1_prop == prop_val or mol1 == mol2:
             num_unchanged += 1
-        percent_valid = num_valid*100/(i+1)
-        percent_unchanged = num_unchanged*100/(i+1)
-        percent_invalid = 100 - percent_valid -percent_unchanged
+
         transform = mol1+' --> '+mol2+', '+str(mol1_prop)+' --> '+str(prop_val)
 
         prop_lst.append(prop_val)
         transforms.append(transform)
         interm_tuple = ([mol1_prop]+track_prop, [mol1]+track_mol)
         interm.append(interm_tuple)
-
-        if oracle.finish:
-            break 
 
 
 class Pasithea_optimizer(BaseOptimizer):
@@ -455,82 +437,57 @@ class Pasithea_optimizer(BaseOptimizer):
 
         self.oracle.assign_evaluator(oracle)
 
-        print('Start reading data file...')
-        test = config['test_model']
-        plot = config['plot_transform']
-        mols = config['mols']
-
         ##### write it to a new smiles_file 
-        # self.all_smiles 
         file_name = str(random.randint(100000,999999))+'.txt'
         with open(file_name, 'w') as fo:
             fo.write('idx,smiles\n')
             for i,smiles in enumerate(self.all_smiles): 
                 fo.write(str(i+1) + ',' + smiles + '\n')
 
-
         lr_train = float(config['lr_train'])
         lr_dream = float(config['lr_dream'])
 
-        batch_size = config['training']['batch_size']
-        num_epochs = config['training']['num_epochs']
+        train_num_epochs = config['train_num_epochs']
+        dream_num_epochs = config['dream_num_epochs']
+        num_train = config['initial_data_size']
+        num_dream = config['num_dream']
+
         model_parameters = config['model']
-        dreaming_parameters = config['dreaming']
-        dreaming_parameters_str = '{}_{}'.format(dreaming_parameters['batch_size'],
-                                                 dreaming_parameters['num_epochs'])
-        training_parameters = config['training']
-        training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
-                                                 training_parameters['batch_size'])
-        data_parameters = config['data']
-        data_parameters_str = '{}_{}'.format(data_parameters['num_train'],
-                                             data_parameters['num_dream'])
+
+        dreaming_parameters_str = '{}_{}'.format(1, dream_num_epochs)
+        training_parameters_str = '{}_{}'.format(1, train_num_epochs)
+        data_parameters_str = '{}_{}'.format(num_train, num_dream)
 
         upperbound_tr = config['upperbound_tr']
         upperbound_dr = config['upperbound_dr']
         prop = config['property_value']
 
-        num_train = config['data']['num_train']
-        num_dream = config['data']['num_dream']
-
-        num_mol = num_train
-
-        if num_dream > num_train:
-            num_mol = num_dream
-        import os 
         os.system('rm -rf dream_results')
-
         directory = change_str('dream_results/{}_{}/{}/{}'.format(data_parameters_str,
                                        training_parameters_str,
                                        upperbound_tr,
                                        lr_train))
 
         make_dir(directory)
-
         args = use_gpu()
 
         # data-preprocessing
         data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
-            data_loader.preprocess(num_mol, file_name, self.oracle)
+            data_loader.preprocess(num_train, file_name, self.oracle)
+        os.system(f'rm -rf {file_name}')
 
-        # import ipdb; ipdb.set_trace()
-
-        # add stochasticity to data
-        x = [i for i in range(len(data))]  # random shuffle input
+        x = [i for i in range(len(data))] 
         shuffle(x)
         data = data[x]
         prop_vals = prop_vals[x]
 
-        data_dream = data[:num_dream]
-        prop_dream = prop_vals[:num_dream]
-
         data_train, data_test, prop_vals_train, prop_vals_test \
-            = data_loader.split_train_test(data, prop_vals, num_train, 0.85)
+            = data_loader.split_train_test(data, prop_vals, 0.85)
 
-        t = time.process_time()
+        print('Initial training ... ')
         model = train(directory, args, model_parameters, len_max_molec1Hot,
                       upperbound_tr, data_train, prop_vals_train, data_test,
-                      prop_vals_test, lr_train, num_epochs, batch_size)
-        train_time = time.process_time()-t
+                      prop_vals_test, lr_train, train_num_epochs, 1)
 
         directory += change_str('/{}_{}'.format(upperbound_dr, dreaming_parameters_str))
         make_dir(directory)
@@ -539,8 +496,37 @@ class Pasithea_optimizer(BaseOptimizer):
         directory += change_str('/{}'.format(prop))
         make_dir(directory)
 
-        dream(self.oracle, directory, args, largest_molecule_len, alphabet,
-              model, train_time, upperbound_dr, data_dream,
-              prop_dream, prop, lr_train, lr_dream, num_train,
-              num_dream, dreaming_parameters)
+        while True:
+        
+            print('Start dreaming ...')
+            dream(self.oracle, args, largest_molecule_len, alphabet,
+                model, upperbound_dr, data, prop, lr_dream, num_dream, dream_num_epochs)
+
+            if self.finish:
+                break
+
+            # prepare data
+            current_data = [item for item in self.oracle.mol_buffer.items()]
+            shuffle(current_data)
+            current_data = current_data[:5000]
+
+            smiles_list = [i[0] for i in current_data]
+            selfies_list = []
+            value_list = []
+            for i, smi in enumerate(smiles_list):
+                try:
+                    selfies_list.append(sf.encoder(smi))
+                    value_list.append(current_data[i][1][0])
+                except:
+                    pass
+
+            data, prop_vals = mol_utils.multiple_selfies_to_hot_online(selfies_list, value_list, largest_molecule_len, alphabet)
+
+            data_train, data_test, prop_vals_train, prop_vals_test \
+                = data_loader.split_train_test(data, prop_vals, 0.85)
+
+            print('Start training ...')
+            model = train(directory, args, model_parameters, len_max_molec1Hot, upperbound_tr, 
+                          data_train, prop_vals_train, data_test, prop_vals_test, 
+                          lr_train, train_num_epochs, 1)
 

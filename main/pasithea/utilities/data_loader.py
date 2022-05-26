@@ -35,24 +35,24 @@ def get_largest_string_len(smiles_list, filename):
     largest_smiles_len = -1
     largest_selfies_len = -1
 
-    if os.path.exists(name):
-        f = open(name, "r")
-        largest_smiles_len = f.readline()
-        largest_smiles_len = int(
-            largest_smiles_len[0:len(largest_smiles_len) - 1])
+    # if os.path.exists(name):
+    #     f = open(name, "r")
+    #     largest_smiles_len = f.readline()
+    #     largest_smiles_len = int(
+    #         largest_smiles_len[0:len(largest_smiles_len) - 1])
 
-        largest_selfies_len = f.readline()
-        largest_selfies_len = int(
-            largest_selfies_len[0:len(largest_selfies_len) - 1])
-        f.close()
-    else:
-        utils.make_dir(directory)
-        f = open(name, "w+")
-        largest_smiles_len = len(max(smiles_list, key=len))
-        f.write(str(largest_smiles_len) + '\n')
-        largest_selfies_len = get_largest_selfie_len(smiles_list)
-        f.write(str(largest_selfies_len) + '\n')
-        f.close()
+    #     largest_selfies_len = f.readline()
+    #     largest_selfies_len = int(
+    #         largest_selfies_len[0:len(largest_selfies_len) - 1])
+    #     f.close()
+    # else:
+    utils.make_dir(directory)
+    f = open(name, "w+")
+    largest_smiles_len = len(max(smiles_list, key=len))
+    f.write(str(largest_smiles_len) + '\n')
+    largest_selfies_len = get_largest_selfie_len(smiles_list)
+    f.write(str(largest_selfies_len) + '\n')
+    f.close()
 
     return (largest_smiles_len, largest_selfies_len)
 
@@ -86,12 +86,7 @@ def get_string_alphabet(smiles_list, filename):
     name2 = name2 + dataset
     selfies_alphabet = []
     smiles_alphabet = []
-    # if os.path.exists(name1):
-    #     df = pd.read_csv(name1)
-    #     smiles_alphabet = np.asanyarray(df.alphabet)
-    #     df = pd.read_csv(name2)
-    #     selfies_alphabet = np.asanyarray(df.alphabet)
-    # else:
+
     if True: 
         utils.make_dir(directory)
         f = open(name1, "w+")
@@ -160,58 +155,59 @@ def preprocess(num_mol, file_name, oracle):
     converts each SMILES to the SELFIES equivalent and one-hot encoding;
     encodes other string information."""
 
-    max_oracle_num = oracle.max_oracle_calls
-
     smiles_list = read_smiles(file_name)
     shuffle(smiles_list)
-    process_num = int(max_oracle_num * 0.03)
-    smiles_list = smiles_list[:process_num]
+    
+    # selfies_alphabet, largest_selfies_len, _, _ = get_selfie_and_smiles_info(smiles_list, file_name)
 
-    selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len \
-        = get_selfie_and_smiles_info(smiles_list, file_name)
-    selfies_list, smiles_list = \
-        get_selfie_and_smiles_encodings(smiles_list, num_mol)
+    # import ipdb; ipdb.set_trace()
+
+    largest_selfies_len = 72
+    selfies_alphabet = ['[#Branch1]', '[#Branch2]', '[#C]', '[#N+1]', '[#N]', '[-/Ring1]', '[-/Ring2]', \
+        '[-\\Ring1]', '[/Br]', '[/C@@H1]', '[/C@@]', '[/C@H1]', '[/C@]', '[/C]', '[/Cl]', '[/F]', '[/N+1]', \
+        '[/N-1]', '[/NH1+1]', '[/NH1-1]', '[/NH1]', '[/NH2+1]', '[/N]', '[/O+1]', '[/O-1]', '[/O]', '[/S-1]', '[/S@]', \
+        '[/S]', '[=Branch1]', '[=Branch2]', '[=C]', '[=N+1]', '[=N-1]', '[=NH1+1]', '[=NH2+1]', '[=N]', '[=O+1]', '[=OH1+1]', \
+        '[=O]', '[=P@@]', '[=P@]', '[=PH2]', '[=P]', '[=Ring1]', '[=Ring2]', '[=S+1]', '[=S@@]', '[=S@]', '[=SH1+1]', '[=S]', '[Br]', \
+        '[Branch1]', '[Branch2]', '[C@@H1]', '[C@@]', '[C@H1]', '[C@]', '[CH1-1]', '[CH2-1]', '[C]', '[Cl]', '[F]', '[I]', '[N+1]', '[N-1]', \
+        '[NH1+1]', '[NH1-1]', '[NH1]', '[NH2+1]', '[NH3+1]', '[N]', '[O-1]', '[O]', '[P+1]', '[P@@H1]', '[P@@]', '[P@]', '[PH1+1]', '[PH1]', \
+        '[P]', '[Ring1]', '[Ring2]', '[S+1]', '[S-1]', '[S@@+1]', '[S@@]', '[S@]', '[S]', '[\\Br]', '[\\C@@H1]', '[\\C@H1]', '[\\C]', '[\\Cl]', \
+        '[\\F]', '[\\I]', '[\\N+1]', '[\\N-1]', '[\\NH1+1]', '[\\NH1]', '[\\NH2+1]', '[\\N]', '[\\O-1]', '[\\O]', '[\\S-1]', '[\\S@]', '[\\S]', '[nop]']
+
+    smiles_list = smiles_list[:num_mol]
+    selfies_list, smiles_list = get_selfie_and_smiles_encodings(smiles_list, -1)
 
     print('Finished acquiring data.\n')
-    # prop_vals = mol_utils.logP_from_molecule(smiles_list)
-    # print(smiles_list[:5], type(smiles_list))
     prop_vals = oracle(smiles_list.tolist())
     prop_vals = np.array(prop_vals)
 
-    print('Representation: SELFIES')
-    alphabet = selfies_alphabet
-    encoding_list = selfies_list
-    largest_molecule_len = largest_selfies_len
     print('--> Creating one-hot encoding...')
-    data = mol_utils.multiple_selfies_to_hot(encoding_list,
-                                             largest_molecule_len,
-                                             alphabet)
+    data = mol_utils.multiple_selfies_to_hot(selfies_list,
+                                             largest_selfies_len,
+                                             selfies_alphabet)
     print('    Finished creating one-hot encoding.\n')
 
-    len_max_molec = data.shape[1]
-    len_alphabet = data.shape[2]
+    len_max_molec = data[0].shape[0]
+    len_alphabet = data[0].shape[1]
     len_max_molec1Hot = len_max_molec * len_alphabet
     print(' ')
     print('Alphabet has ', len_alphabet, ' letters, largest molecule is ',
           len_max_molec, ' letters.')
 
-    return data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len
+    return data, prop_vals, selfies_alphabet, len_max_molec1Hot, largest_selfies_len
 
 
-def split_train_test(data, prop_vals, num_mol, frac_train):
+def split_train_test(data, prop_vals, frac_train):
     """Split data into training and test data. frac_train is the fraction of
     data used for training. 1-frac_train is the fraction used for testing."""
 
     train_test_size = [frac_train, 1 - frac_train]
-    data = data[:num_mol]
-    prop_vals = prop_vals[:num_mol]
 
     idx_traintest = int(len(data) * train_test_size[0])
     idx_trainvalid = idx_traintest + int(len(data) * train_test_size[1])
-    data_train = data[0:idx_traintest]
-    prop_vals_train = prop_vals[0:idx_traintest]
+    # data_train = data[0:idx_traintest]
+    # prop_vals_train = prop_vals[0:idx_traintest]
 
     data_test = data[idx_traintest:idx_trainvalid]
     prop_vals_test = prop_vals[idx_traintest:idx_trainvalid]
 
-    return data_train, data_test, prop_vals_train, prop_vals_test
+    return data, data_test, prop_vals, prop_vals_test
