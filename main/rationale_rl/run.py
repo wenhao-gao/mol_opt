@@ -1,14 +1,8 @@
 
-import os, pickle, torch, random, argparse
-import yaml
+import os, torch, random
 import numpy as np 
 from tqdm import tqdm 
-torch.manual_seed(1)
-np.random.seed(2)
-random.seed(1)
-from tdc import Oracle
 import sys
-# sys.path.append('../..')
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
@@ -21,10 +15,8 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import DataLoader
 
-import argparse
 import rdkit
 import math, random, sys, os
-
 
 lg = rdkit.RDLogger.logger() 
 lg.setLevel(rdkit.RDLogger.CRITICAL)
@@ -39,7 +31,6 @@ def remove_order(s):
 from properties import get_scoring_function
 qed_sa_func = lambda x: x[0] >= 0.5 and x[1] >= 0.5 and x[2] >= 0.6 and x[3] <= 4.0
 normal_func = lambda x: min(x) >= 0.5
-
 
 
 # Decode molecules
@@ -69,10 +60,6 @@ def property_filter(cand_mols, scoring_function):
         if prop > 0.5:    
             new_data.append((init_smiles, final_smiles))
     return new_data
-
-
-
-
 
 class Rationale_RL_Optimizer(BaseOptimizer):
 
@@ -117,9 +104,6 @@ class Rationale_RL_Optimizer(BaseOptimizer):
                 if prop > 0.5:
                     new_data.append((init_smiles, final_smiles))
 
-            # model_ckpt = (rationale_dist, model.state_dict())
-            # torch.save(model_ckpt, os.path.join(args.save_dir, f"model.{epoch}"))
-
             cand_mols = list(set(new_data))
             if len(cand_mols) == 0:
                 print("early stopping, the generated molecules are all the same and converge")
@@ -146,8 +130,5 @@ class Rationale_RL_Optimizer(BaseOptimizer):
             print('used oracle call', len(self.oracle))
             if self.finish:
                 break  
-
-
-
 
 

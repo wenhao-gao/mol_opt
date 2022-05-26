@@ -7,11 +7,8 @@ from main.optimizer import BaseOptimizer
 from chemutils import * 
 from inference_utils import * 
 from tqdm import tqdm
-
-from module import GCN 
-from chemutils import smiles2graph, vocabulary, is_valid 
-from utils import Molecule_Dataset 
-from online_train import train_gnn ### train_gnn(data, gnn) 
+from chemutils import smiles2graph, vocabulary 
+from online_train import train_gnn
 from random import shuffle 
 
 class DSToptimizer(BaseOptimizer):
@@ -39,6 +36,8 @@ class DSToptimizer(BaseOptimizer):
 
 		current_set = set(start_smiles_lst)
 		all_smiles_score_list = []
+		patience = 0
+
 		while True:
 
 			if len(self.oracle) > 100:
@@ -64,13 +63,13 @@ class DSToptimizer(BaseOptimizer):
 			smiles_lst = smiles_lst[:config['pool_size']] + start_smiles_lst  ### at most XXX mols per generation
 			smiles_lst = list(filter(is_valid, smiles_lst))
 			score_lst = self.oracle(smiles_lst)
-			all_smiles_score_list.extend(list(zip(smiles_lst, score_lst)))
-			#### online train GNN 
-			train_gnn(all_smiles_score_list, gnn)
 
 			if self.finish:
 				print('max oracle hit, abort ...... ')
 				break
+
+			all_smiles_score_list.extend(list(zip(smiles_lst, score_lst)))
+			train_gnn(all_smiles_score_list, gnn)
 				
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)
@@ -86,7 +85,7 @@ class DSToptimizer(BaseOptimizer):
 				new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
 				if new_scores == old_scores:
 					patience += 1
-					if patience >= self.args.patience * 5:
+					if patience >= self.args.patience:
 						self.log_intermediate(finish=True)
 						print('convergence criteria met, abort ...... ')
 						break
