@@ -7,7 +7,6 @@ from main.optimizer import BaseOptimizer
 from chemutils import * 
 from inference_utils import * 
 from tqdm import tqdm
-
 from chemutils import smiles2graph, vocabulary 
 from online_train import train_gnn
 from random import shuffle 
@@ -28,6 +27,10 @@ class DSToptimizer(BaseOptimizer):
 		epsilon = config['epsilon']
 
 		start_smiles_lst = ['C1(N)=NC=CC=N1', 'C1(C)=NC=CC=N1', 'C1(C)=CC=CC=C1', 'C1(N)=CC=CC=C1', 'CC', 'C1(C)CCCCC1']
+		for smiles in start_smiles_lst:
+			# print(smiles)
+			assert is_valid(smiles)
+
 		model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
 		gnn = torch.load(model_ckpt)
 
@@ -58,6 +61,7 @@ class DSToptimizer(BaseOptimizer):
 			smiles_lst = list(next_set)
 			shuffle(smiles_lst)
 			smiles_lst = smiles_lst[:config['pool_size']] + start_smiles_lst  ### at most XXX mols per generation
+			smiles_lst = list(filter(is_valid, smiles_lst))
 			score_lst = self.oracle(smiles_lst)
 
 			if self.finish:
