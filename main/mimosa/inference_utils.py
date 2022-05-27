@@ -86,8 +86,10 @@ def optimize_single_molecule_one_iterate(smiles, gnn):
 
 	origin_idx_lst, origin_node_mat, origin_substructure_lst, \
 	origin_atomidx_2substridx, origin_adjacency_matrix, leaf_extend_idx_pair = smiles2graph(smiles)
-
-	feature_lst = smiles2expandfeature(smiles)
+	try:
+		feature_lst = smiles2expandfeature(smiles)
+	except:
+		return new_smiles_set 
 	for node_mat, adj_mat, mask_idx in feature_lst:
 		node_mat = torch.FloatTensor(node_mat) 
 		adj_mat = torch.FloatTensor(adj_mat)

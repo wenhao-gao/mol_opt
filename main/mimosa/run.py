@@ -17,17 +17,31 @@ class MIMOSA_Optimizer(BaseOptimizer):
 	def _optimize(self, oracle, config):
 
 		self.oracle.assign_evaluator(oracle)
+		all_smiles_score_list = []  
+
+		model_ckpt = os.path.join(path_here, "pretrained_model/GNN.ckpt") # mGNN only
+		gnn = torch.load(model_ckpt)
 
 		population_size = config['population_size']
 		lamb = config['lamb']
+		start_smiles_lst = ['C1(N)=NC=CC=N1', 'C1(C)=NC=CC=N1', 'C1(C)=CC=CC=C1', 'C1(N)=CC=CC=C1', 'CC', 'C1(C)CCCCC1']
+		shuffle(self.all_smiles)
+		warmstart_smiles_lst = self.all_smiles[:2000]
+		warmstart_smiles_score = self.oracle(warmstart_smiles_lst)
+		warmstart_smiles_score_lst = list(zip(warmstart_smiles_lst, warmstart_smiles_score))
+		warmstart_smiles_score_lst.sort(key=lambda x:x[1], reverse = True)  #### [(smiles1, score1), (smiles2, score2), ... ] 
+		all_smiles_score_list.extend(warmstart_smiles_score_lst)
 
-		start_smiles_lst = ['C1(N)=NC=CC=N1']  ## 'C1=CC=CC=C1NC2=NC=CC=N2' 
-		model_ckpt = os.path.join(path_here, "pretrained_model/GNN.ckpt") # mGNN only
-		gnn = torch.load(model_ckpt)
+		all_smiles_score_list.sort(key=lambda x:x[1], reverse=True)
+		good_smiles_list = all_smiles_score_list[:1000]
+		train_gnn(good_smiles_list, gnn, epoch=config['train_epoch'])
+
+		warmstart_smiles_lst = [i[0] for i in warmstart_smiles_lst[:50]] #### only smiles 
+		start_smiles_lst += warmstart_smiles_lst
+
+
 		current_set = set(start_smiles_lst)
-
 		patience = 0
-		all_smiles_score_list = []  
 
 		while True:
 
@@ -70,7 +84,7 @@ class MIMOSA_Optimizer(BaseOptimizer):
 			train_gnn(good_smiles_list, gnn, epoch=config['train_epoch'])
 
 			# early stopping
-			if len(self.oracle) > 2000:
+			if len(self.oracle) > 5000:
 				self.sort_buffer()
 				new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
 				if new_scores == old_scores:
