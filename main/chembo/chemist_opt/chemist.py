@@ -154,7 +154,7 @@ class Chemist:
         )
         print('create optimizer, before optimization')
         # exit()
-        return optimiser.optimise(max_capital)
+        return optimiser.optimise(max_capital) ### two optimise correspond the same core function
 
     # def get_raw_domain_point_from_processed(self, opt_point):
     #     return self.func_caller.get_raw_domain_point_from_processed(opt_point)

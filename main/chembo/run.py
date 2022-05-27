@@ -53,7 +53,8 @@ class ChemBOoptimizer(BaseOptimizer):
         worker_manager = SyntheticWorkerManager(num_workers=N_WORKERS,
                                                 time_distro='const')
 
-        def objective_func(mol):
+        #### self.oracle -> objective_func 
+        def objective_func(mol): 
             print(mol[0], type(mol[0])) ### mols.molecule.Molecule "./mols/molecule.py"
             if type(mol)==list:
                 mol = mol[0]
@@ -71,7 +72,7 @@ class ChemBOoptimizer(BaseOptimizer):
                       'equal to not:', new_scores == objective_func.old_scores, 'patience', objective_func.patience)
                 if new_scores == objective_func.old_scores:
                     objective_func.patience += 1
-                    if objective_func.patience >= 10:
+                    if objective_func.patience >= 5:
                         self.oracle.log_intermediate(finish=True)
                         print('convergence criteria met, abort ...... ')
                         objective_func.stop = True

@@ -732,10 +732,14 @@ class ExperimentDesigner(object):
       self._main_loop_post()
 
       # self.func_caller 
-      # early stopping
+      # early stopping is implemented in objective_func() in run.py 
       print('--------test early stop--------')
       if self.func_caller.funcs.stop:
         break 
+
+      ## objective_function (run.py) == self.func_caller.funcs 
+      # self.oracle.mol_buffer[smi] = [float(self.evaluator(smi)), len(self.mol_buffer)+1]
+
 
     # Wrap up and return
     self._run_experiment_wrap_up()
