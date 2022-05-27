@@ -5,7 +5,7 @@ from copy import deepcopy
 from torch.autograd import Variable
 from gnn_layer import GraphConvolution
 from chemutils import smiles2graph 
-
+import numpy as np 
 sigmoid = torch.nn.Sigmoid() 
 device = 'cpu'
 
@@ -171,6 +171,11 @@ class GCN(nn.Module):
 
     def update_molecule_v2(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np, 
                                  leaf_extend_idx_pair, leaf_nonleaf_lst):
+        """ 
+
+        TODO: 
+            add early stop to save time 
+        """
         (is_nonleaf_np, is_leaf_np, is_extend_np) = node_mask_np
         is_nonleaf = torch.BoolTensor(is_nonleaf_np).to(self.device)
         is_leaf = torch.BoolTensor(is_leaf_np).to(self.device)
@@ -207,10 +212,11 @@ class GCN(nn.Module):
             node_indicator_np2[is_nonleaf_np,:] = node_indicator_np[is_nonleaf_np,:]
             adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
 
-            if i%500==0:
-                pred_lst.append(pred_y.item())
-
-        # print('prediction', pred_lst)
+            ###### early stop 
+            pred_lst.append(pred_y.item())
+            if i%20==0 and len(pred_lst) > 500 and np.mean(pred_lst[-100:]) < np.mean(pred_lst[-200:-100]): 
+                print("... early stop when optimizing DST for a smiles ...")
+                break 
         # return node_indicator, adjacency_weight  ### torch.FloatTensor 
         return node_indicator_np2, adjacency_weight_np2  #### np.array 
 

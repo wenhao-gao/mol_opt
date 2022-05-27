@@ -6,7 +6,7 @@ from copy import deepcopy
 import numpy as np 
 import os 
 import random 
-
+from random import shuffle 
 
 '''
 	1. vocabulary: find frequent words (atom and ring) 
@@ -89,6 +89,7 @@ def load_vocabulary():
 
 vocabulary = load_vocabulary()
 bondtype_list = [rdkit.Chem.rdchem.BondType.SINGLE, rdkit.Chem.rdchem.BondType.DOUBLE]
+bondtype_list = [rdkit.Chem.rdchem.BondType.SINGLE]
 
 
 def ith_substructure_is_atom(i):
@@ -1232,9 +1233,38 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
     d = len(vocabulary)
 
 
+
+    ###### budget-limited version 
+    ##### delete: 1 
+    ##### replace: 3
+    ##### expand: 6 
+    budget_delete = 1 
+    budget_replace = 3 
+    budget_expand = 6 
+
     #### 2. edit the original molecule  
-    ####### 2.1 delete & 2.2 replace 
+    ####### 2.1 delete 
+    delete_lst = []
     for leaf_idx, extend_idx in leaf_extend_idx_pair:
+        nonleaf_idx = leaf2nonleaf[leaf_idx]
+        u = random.random() 
+        shrink_prob = sigmoid(adjacency_weight[leaf_idx,nonleaf_idx]) + sigmoid(adjacency_weight[nonleaf_idx,leaf_idx])
+        delete_lst.append([leaf_idx, extend_idx, shrink_prob])
+    delete_lst.sort(key = lambda x:x[-1])
+    delete_lst = delete_lst[:budget_delete]
+    delete_leaf_extend_idx_pair = [(i[0], i[1]) for i in delete_lst]
+
+    expand_lst = delete_lst[-budget_expand:]
+    expand_leaf_extend_idx_pair = [(i[0], i[1]) for i in expand_lst]
+
+    replace_lst = list(filter(lambda x:0.2<x[-1]<0.8, delete_lst))
+    num = int(len(replace_lst)/2)
+    replace_lst = replace_lst[num-1:num+2]
+    replace_leaf_extend_idx_pair = [(i[0], i[1]) for i in replace_lst]
+
+
+    ####### 2.1 delete 
+    for leaf_idx, extend_idx in delete_leaf_extend_idx_pair:
         leaf_atom_idx_lst = origin_substructure_lst[leaf_idx]
         if type(leaf_atom_idx_lst)==int:  ### single atom
             new_leaf_atom_idx_lst = [leaf_atom_idx_lst]
@@ -1260,6 +1290,7 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
         if delete_smiles is None or '.' in delete_smiles:
             continue
         delete_smiles = canonical(delete_smiles)
+
         nonleaf_idx = leaf2nonleaf[leaf_idx]
         u = random.random() 
         shrink_prob = sigmoid(adjacency_weight[leaf_idx,nonleaf_idx]) + sigmoid(adjacency_weight[nonleaf_idx,leaf_idx])
@@ -1267,8 +1298,10 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
             new_smiles_set.add(delete_smiles) 
         # if shrink_prob < 0: ### sigmoid(-3)=0.1
         #     new_smiles_set.add(delete_smiles)
-        #### 2.1 delete done
-        ####  2.2 replace  a & b 
+    #### 2.1 delete done
+    ########################################################################
+    ####  2.2 replace  a & b 
+    for leaf_idx, extend_idx in replace_leaf_extend_idx_pair:
         ######### (a) get neighbor substr
         neighbor_substructures_idx = [idx for idx,value in enumerate(origin_adjacency_matrix[leaf_idx]) if value==1]
         assert len(neighbor_substructures_idx)==1 
@@ -1283,11 +1316,13 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
         node_indicator_leaf[12:] -= 5
         node_indicator_leaf = np.exp(node_indicator_leaf)
         node_indicator_leaf = node_indicator_leaf / np.sum(node_indicator_leaf)
-        if u < epsilon:
-            added_substructure_lst = list(np.argsort(-node_indicator_leaf))[:topk]  ### topk (greedy)
-        else:
-            added_substructure_lst = random.choices(population=list(range(len(vocabulary))), weights = node_indicator_leaf, k=topk + 3)
-            added_substructure_lst = list(set(added_substructure_lst))[:topk]  ### avoid repetition
+        # if u < epsilon:
+        #     added_substructure_lst = list(np.argsort(-node_indicator_leaf))[:topk]  ### topk (greedy)
+        # else:
+        #     added_substructure_lst = random.choices(population=list(range(len(vocabulary))), weights = node_indicator_leaf, k=topk + 3)
+        #     added_substructure_lst = list(set(added_substructure_lst))[:topk]  ### avoid repetition
+        added_substructure_lst = list(np.argsort(-node_indicator_leaf))[:topk]  ### topk (greedy)
+
         for substructure_idx in added_substructure_lst: 
             new_substructure = vocabulary[substructure_idx]
             for new_bond in bondtype_list:
@@ -1300,16 +1335,22 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
                     else:
                         new_smiles_batch = add_fragment_at_position(editmol = delete_mol, position_idx = new_leaf_atom_idx, 
                                                                     fragment = new_substructure, new_bond = new_bond)
+                        #### random select one 
+                        new_smiles_batch = list(new_smiles_batch)
+                        shuffle(new_smiles_batch)
+                        new_smiles_batch = set(new_smiles_batch[:1])
                         new_smiles_set = new_smiles_set.union(new_smiles_batch)
 
-    expand_prob = sigmoid(adjacency_weight[leaf_idx,extend_idx]) + sigmoid(adjacency_weight[extend_idx,leaf_idx])/2
-    u = random.random() 
-    if u > expand_prob:
-        return new_smiles_set.difference(set([None]))
+    # expand_prob = sigmoid(adjacency_weight[leaf_idx,extend_idx]) + sigmoid(adjacency_weight[extend_idx,leaf_idx])/2
+    # u = random.random() 
+    # if u > expand_prob:
+    #     return new_smiles_set.difference(set([None]))
+    ####  2.2 replace  a & b 
+    ########################################################################
 
 
     ####### 2.3 add   todo: use adjacency_weight to further narrow scope
-    for leaf_idx, extend_idx in leaf_extend_idx_pair:
+    for leaf_idx, extend_idx in expand_leaf_extend_idx_pair:
         expand_prob = (adjacency_weight[leaf_idx][extend_idx] + adjacency_weight[extend_idx][leaf_idx])/2  ### [-inf, inf]
         # print("expand prob", expand_prob)
         if expand_prob < -3:
@@ -1323,14 +1364,16 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
             node_indicator_leaf[12:]-=5
             node_indicator_leaf = np.exp(node_indicator_leaf)
             node_indicator_leaf = node_indicator_leaf / np.sum(node_indicator_leaf)
-            if u < epsilon:
-                added_substructure_lst = list(np.argsort(-node_indicator_leaf))[:topk] 
-            else:
-                added_substructure_lst = random.choices(population=list(range(len(vocabulary))), weights = node_indicator_leaf, k=topk + 3)
-                added_substructure_lst = list(set(added_substructure_lst))[:topk]  ### avoid repetition
+            # if u < epsilon:
+            #     added_substructure_lst = list(np.argsort(-node_indicator_leaf))[:topk] 
+            # else: ### weight sampling 
+            #     added_substructure_lst = random.choices(population=list(range(len(vocabulary))), weights = node_indicator_leaf, k=topk + 3)
+            #     added_substructure_lst = list(set(added_substructure_lst))[:topk]  ### avoid repetition
+            added_substructure_lst = list(np.argsort(-node_indicator_leaf))[:topk] 
+
             for substructure_idx in added_substructure_lst:
                 new_substructure = vocabulary[substructure_idx]
-                for new_bond in bondtype_list:
+                for new_bond in bondtype_list: ### single, double 
                     if ith_substructure_is_atom(substructure_idx):
                         new_smiles = add_atom_at_position(editmol = origin_mol, position_idx = leaf_atom_idx, 
                                                           new_atom = new_substructure, new_bond = new_bond)
@@ -1338,6 +1381,11 @@ def differentiable_graph2smiles_sample_v2(origin_smiles, differentiable_graph,
                     else:
                         new_smiles_batch = add_fragment_at_position(editmol = origin_mol, position_idx = leaf_atom_idx, 
                                                                     fragment = new_substructure , new_bond = new_bond)
+
+                        #### random select one 
+                        new_smiles_batch = list(new_smiles_batch)
+                        shuffle(new_smiles_batch)
+                        new_smiles_batch = set(new_smiles_batch[:1])
                         new_smiles_set = new_smiles_set.union(new_smiles_batch)
 
     return new_smiles_set.difference(set([None])) 

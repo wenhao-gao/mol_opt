@@ -21,21 +21,28 @@ class DST_Optimizer(BaseOptimizer):
 
 		self.oracle.assign_evaluator(oracle)
 
+		model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
+		gnn = torch.load(model_ckpt)
+		all_smiles_score_list = []
+
 		population_size = config['population_size']
 		lamb = config['lamb']
 		topk = config['topk']
 		epsilon = config['epsilon']
 
 		start_smiles_lst = ['C1(N)=NC=CC=N1', 'C1(C)=NC=CC=N1', 'C1(C)=CC=CC=C1', 'C1(N)=CC=CC=C1', 'CC', 'C1(C)CCCCC1']
-		for smiles in start_smiles_lst:
-			# print(smiles)
-			assert is_valid(smiles)
 
-		model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
-		gnn = torch.load(model_ckpt)
+		shuffle(self.all_smiles)
+		warmstart_smiles_lst = self.all_smiles[:500] 
+		warmstart_smiles_score = self.oracle(warmstart_smiles_lst)
+		warmstart_smiles_score_lst = list(zip(warmstart_smiles_lst, warmstart_smiles_score))
+		warmstart_smiles_score_lst.sort(key=lambda x:x[1], reverse = True)  #### [(smiles1, score1), (smiles2, score2), ... ] 
+		all_smiles_score_list.extend(warmstart_smiles_score_lst)
+		train_gnn(all_smiles_score_list, gnn)
 
-		current_set = set(start_smiles_lst)
-		all_smiles_score_list = []
+
+		init_smiles_lst = start_smiles_lst + [i[0] for i in warmstart_smiles_score_lst[:50]]
+		current_set = set(init_smiles_lst)
 		patience = 0
 
 		while True:
@@ -47,7 +54,7 @@ class DST_Optimizer(BaseOptimizer):
 				old_scores = 0
 
 			next_set = set() 
-			print('Sampling from current state')
+			print('Sampling from current state') #### most time consuming 
 			for smiles in tqdm(current_set):
 				try:
 					if substr_num(smiles) < 3: #### short smiles

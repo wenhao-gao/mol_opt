@@ -99,14 +99,20 @@ def optimize_single_molecule_one_iterate_v2(smiles, gnn):
 	return smiles_set
 
 #### shrink learnable;   sampling
+from time import time 
 def optimize_single_molecule_one_iterate_v3(smiles, gnn, topk, epsilon):
 	if not is_valid(smiles):
 		return set()
+	t1 = time()
 	(is_nonleaf, is_leaf, is_extend), node_indicator, adjacency_mask, adjacency_weight, leaf_extend_idx_pair, leaf_nonleaf_lst = smiles2differentiable_graph_v2(smiles)
+	t2 = time()
 	differentiable_graph = gnn.update_molecule_v2((is_nonleaf, is_leaf, is_extend), node_indicator, adjacency_mask, adjacency_weight, leaf_extend_idx_pair, leaf_nonleaf_lst)
+	t3 = time() 
 	smiles_set = differentiable_graph2smiles_sample_v2(origin_smiles = smiles, differentiable_graph = differentiable_graph, 
 											 leaf_extend_idx_pair = leaf_extend_idx_pair, leaf_nonleaf_lst = leaf_nonleaf_lst, 
 											 topk = topk, epsilon = epsilon)
+	t4 = time() 
+	# print(int(t2-t1), int(t3-t2), int(t4-t3))
 	return smiles_set
 
 ## ablation study 
