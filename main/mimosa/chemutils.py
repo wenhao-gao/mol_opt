@@ -181,7 +181,10 @@ def smiles2word(smiles):
 
 ## is_valid_smiles 
 def is_valid(smiles):
-    word_lst = smiles2word(smiles)
+    try:
+        word_lst = smiles2word(smiles)
+    except:
+        return False 
     if word_lst is None: 
         return False 
     word_set = set(word_lst)
