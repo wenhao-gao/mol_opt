@@ -26,19 +26,14 @@ pip install PyTDC
 pip install networkx 
 pip install joblib 
 pip install nltk 
-```
-
-
-Install RDKit 
-
-```bash
 conda install -c rdkit rdkit 
 ```
 
-Install Dragonfly (our version), it is available here. 
+
+Install Dragonfly (our modified version), it is available in this folder. 
 
 ```bash
-cd dragonfly
+cd mol_opt/chembo/dragonfly
 python setup.py install 
 ```
 

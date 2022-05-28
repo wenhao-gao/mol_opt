@@ -12,6 +12,7 @@ pip install PyTDC
 pip install networkx 
 pip install joblib 
 pip install nltk 
+conda install -c rdkit rdkit 
 ```
 
 ```bash
