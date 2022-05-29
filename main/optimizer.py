@@ -325,6 +325,8 @@ class BaseOptimizer:
         self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
         # self.reset()
         run.finish()
+        self.reset()
+
 
     def production(self, oracle, config, num_runs=5, project="production"):
         seeds = [0, 1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]

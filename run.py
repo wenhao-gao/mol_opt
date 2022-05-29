@@ -22,7 +22,8 @@ def main():
     parser.add_argument('--max_oracle_calls', type=int, default=10000)
     parser.add_argument('--freq_log', type=int, default=100)
     parser.add_argument('--n_runs', type=int, default=5)
-    parser.add_argument('--seed', type=int, default=0)
+    # parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--seed', type=int, nargs="+", default=[0])
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
     parser.add_argument('--oracles', nargs="+", default=["QED"]) ### 
     parser.add_argument('--log_results', action='store_true')
@@ -88,7 +89,7 @@ def main():
     elif args.method == 'pasithea':
         from main.pasithea.run import Pasithea_Optimizer as Optimizer
     elif args.method == 'dst':
-        from main.dst.run import DST_Optimizer as Optimizer
+        from main.dst.run import DST_Optimizer as Optimizer        
     elif args.method == 'molgan':
         from main.molgan.run import MolGAN_Optimizer as Optimizer
     elif args.method == 'mars':
@@ -135,7 +136,10 @@ def main():
             optimizer = Optimizer(args=args)
 
             if args.task == "simple":
-                optimizer.optimize(oracle=oracle, config=config_default, seed=args.seed)
+                # optimizer.optimize(oracle=oracle, config=config_default, seed=args.seed) 
+                for seed in args.seed:
+                    print('seed', seed)
+                    optimizer.optimize(oracle=oracle, config=config_default, seed=seed)
             elif args.task == "production":
                 optimizer.production(oracle=oracle, config=config_default, num_runs=args.n_runs)
             else:
