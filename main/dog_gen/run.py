@@ -16,6 +16,12 @@ from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
 rdBase.DisableLog('rdApp.error')
 
+import sys 
+path_here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(path_here)
+sys.path.append(os.path.join(path_here, 'submodules/autoencoders'))
+sys.path.append(os.path.join(path_here, 'submodules/GNN'))
+
 
 from os import path
 from time import strftime, gmtime
@@ -23,7 +29,6 @@ import uuid
 import pickle
 import csv
 
-import numpy as np
 import torch
 from torch.utils import data
 from torch.utils.tensorboard import SummaryWriter
@@ -37,19 +42,6 @@ from syn_dags.utils import settings
 
 TB_LOGS_FILE = 'tb_logs'
 HC_RESULTS_FOLDER = 'hc_results'
-
-
-'''
-export PYTHONPATH=${PYTHONPATH}:${DIR}
-export PYTHONPATH=${PYTHONPATH}:${DIR}/submodules/autoencoders
-export PYTHONPATH=${PYTHONPATH}:${DIR}/submodules/GNN
-'''
-
-import os, sys 
-path_here = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(path_here)
-sys.path.append(os.path.join(path_here, 'submodules/autoencoders'))
-sys.path.append(os.path.join(path_here, 'submodules/GNN'))
 
 
 class Params:
@@ -72,11 +64,7 @@ class Params:
         self.log_for_reaction_predictor_path = path.join(path_here, "logs", f"reactions-{self.run_name}.log")
 
 
-
-# import main.graph_ga.crossover as co, main.graph_ga.mutate as mu
 from main.optimizer import BaseOptimizer
-
-
 
 class DoG_Gen_Optimizer(BaseOptimizer):
 
@@ -149,34 +137,9 @@ class DoG_Gen_Optimizer(BaseOptimizer):
 
         # # Run!
         print("Starting hill climber")
-        sorted_tts = hillclimber.run_hillclimbing(train_trees, tb_summary_writer)
+        sorted_tts = hillclimber.run_hillclimbing(train_trees, tb_summary_writer)  
+        ###### self.oracle.finish is implemented in "run_hillclimbing"  
 
-
-        ######## save and evaluation #######
-
-        # # # Save the molecules that were queried
-        # print(f"Best molecule found {params.property_predictor.best_seen}")
-        # # Store pickle of the datastructures
-        # out_data = {'seen_molecules': params.property_predictor.seen_molecules,
-        #                 'sorted_tts': sorted_tts,
-        #                 'opt_name': params.opt_name
-        #     }
-
-        # with open(path.join(HC_RESULTS_FOLDER, f'results_{params.run_name}.pick'), 'wb') as fo:
-        #     pickle.dump(out_data, fo)
-
-        # # Also get score and best molecule for top 100 and add into a tsv file
-        # best_molecules = sorted(out_data['seen_molecules'].items(), key=lambda x: x[1], reverse=True)
-        # smiles_score = [(elem[0], elem[1][0]) for elem in best_molecules]
-        # with open(path.join(HC_RESULTS_FOLDER, f'results_{params.run_name}.tsv'), 'w') as fo:
-        #     w = csv.writer(fo, dialect=csv.excel_tab)
-        #     w.writerows(smiles_score[:100])
-        # print(f"Done run of hillclimbing for {params.opt_name}")
-        # return out_data
-
-
-        # if self.finish:
-        #     break
 
 
 """

@@ -54,7 +54,9 @@ Unzip the `uspto.zip` (47M) folder in this folder and in `scripts/dataset_creati
 
 ## Pretrain 
 
-`mol_opt/main/dog_ae/scripts/dogae/train/train_dogae.py`
+Run `mol_opt/main/dog_ae/scripts/dogae/train/train_dogae.py`, where the dimension of latent variable of autoencoder is 25, for the molecular graph embedder (encoder), the hidden layer size is 80, embedding dimension is 50, number of layer is 4. 
+for DAG embedder, the hidden layer size is 50, number of layer is 7. 
+Decoder is a GRU, whose input size is 50, hidden size 200, num of layers is 3, dropout rate is 0.1. 
 
 
 Pretrained DoG-AE model is saved in `mol_opt/main/dog_ae/scripts/dogae/train/chkpts/dogae_weights.pth.pick`. 

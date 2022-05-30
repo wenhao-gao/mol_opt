@@ -1,4 +1,4 @@
-name: dog_gen
+name: dog_ae
 method: bayes
 metric:
   goal: maximize

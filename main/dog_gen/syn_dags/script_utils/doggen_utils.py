@@ -97,6 +97,7 @@ class DogGenHillclimber:
             sampled_clean_tts = self.filter_out_uninteresting_trees_and_clean(sampled_dirty_tts, sorted_tts)
             sorted_tts: typing.List[ScoredTupleTree] = self.score_new_trees_and_sort(sampled_clean_tts, sorted_tts)
             if self.parts.scorer.finish: 
+                print("max oracle calls hit, exit")
                 break 
             self._report_best(sorted_tts, tb_logger, round)
         return sorted_tts
