@@ -100,15 +100,15 @@ class DST_Optimizer(BaseOptimizer):
 
 
 
-			# early stopping
-			# if len(self.oracle) > 2000:
-			# 	self.sort_buffer()
-			# 	new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
-			# 	if new_scores == old_scores:
-			# 		patience += 1
-			# 		if patience >= self.args.patience:
-			# 			self.log_intermediate(finish=True)
-			# 			print('convergence criteria met, abort ...... ')
-			# 			break
-			# 	else:
-			# 		patience = 0
+			### early stopping
+			if len(self.oracle) > 2000:
+				self.sort_buffer()
+				new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+				if new_scores == old_scores:
+					patience += 1
+					if patience >= self.args.patience:
+						self.log_intermediate(finish=True)
+						print('convergence criteria met, abort ...... ')
+						break
+				else:
+					patience = 0
