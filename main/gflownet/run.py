@@ -145,6 +145,9 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
         else:
             args.floatX = torch.double
         dataset = Dataset(args, bpath, device, floatX=args.floatX)
+        dataset.replay_mode = 'prioritized' ##### model-based version 
+        print('use model-based version of gflownet')
+        assert dataset.replay_mode =='prioritized'
         print(args)
 
         mdp = dataset.mdp
