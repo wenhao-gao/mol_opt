@@ -156,7 +156,7 @@ class Dataset:
     def set_sampling_model(self, model, proxy_reward, sample_prob=0.5):
         self.sampling_model = model
         self.sampling_model_prob = sample_prob
-        self.proxy_reward = proxy_reward
+        self.proxy_reward = proxy_reward #### only used in self._get_reward
 
     def _get_sample_model(self):
         m = BlockMoleculeDataExtended()
@@ -367,6 +367,7 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
     if num_steps is None:
         num_steps = args.num_iterations + 1
 
+    ##### target_model 
     tau = args.bootstrap_tau
     if args.bootstrap_tau > 0:
         target_model = deepcopy(model)
@@ -375,7 +376,7 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
         exp_dir = f'{args.save_path}/{args.array}_{args.run}/'
         os.makedirs(exp_dir, exist_ok=True)
 
-
+    ##### proxy (oracle) is only used here, with model 
     dataset.set_sampling_model(model, proxy, sample_prob=args.sample_prob)
 
 
@@ -399,7 +400,7 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
                     gzip.open(f'{exp_dir}/train_info.pkl.gz', 'wb'))
     ########## save_stuff ###########
 
-
+    ####### initialize setup #########
     opt = torch.optim.Adam(model.parameters(), args.learning_rate, weight_decay=args.weight_decay,
                            betas=(args.opt_beta, args.opt_beta2),
                            eps=args.opt_epsilon)
@@ -434,13 +435,19 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
     do_nblocks_reg = False
     max_blocks = args.max_blocks
     leaf_coef = args.leaf_coef
+    ####### initialize setup #########
 
+
+
+    ######### main run ###########
     for i in range(num_steps):
         #### oracle #####
         if proxy.finish:
             return 
+
+        ####### 1. data ########
         if not debug_no_threads:
-            r = sampler()
+            r = sampler() ### sampler = dataset.start_samplers(8, mbsize)   see above. 
             for thread in dataset.sampler_threads:
                 if thread.failed:
                     stop_everything()
@@ -448,9 +455,13 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
                     return
             p, pb, a, r, s, d, mols = r
         else:
-            p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize))
-        # Since we sampled 'mbsize' trajectories, we're going to get
-        # roughly mbsize * H (H is variable) transitions
+            p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize)) #### dataset is fix during learning 
+        ####### 1. data ########
+
+
+
+        ####### 2. model ######
+        # Since we sampled 'mbsize' trajectories, we're going to get roughly mbsize * H (H is variable) transitions
         ntransitions = r.shape[0]
         # state outputs
         if tau > 0:
@@ -493,6 +504,8 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
         last_losses.append((loss.item(), term_loss.item(), flow_loss.item()))
         train_losses.append((loss.item(), _term_loss.item(), _flow_loss.item(),
                              term_loss.item(), flow_loss.item()))
+
+        ###### logging ###### 
         if not i % 50:
             train_infos.append((
                 _term_loss.data.cpu().numpy(),
@@ -506,16 +519,22 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
                 torch.autograd.grad(loss, stem_out_s, retain_graph=True)[0].data.cpu().numpy(),
                 torch.autograd.grad(loss, stem_out_p, retain_graph=True)[0].data.cpu().numpy(),
             ))
+        ###### logging ###### 
+
+        ###### optimizer #####
         if args.clip_grad > 0:
             torch.nn.utils.clip_grad_value_(model.parameters(),
                                            args.clip_grad)
         opt.step()
         model.training_steps = i + 1
+        ###### optimizer #####
+
+        ##### update target_model #######
         if tau > 0:
             for _a,b in zip(model.parameters(), target_model.parameters()):
                 b.data.mul_(1-tau).add_(tau*_a)
 
-
+        ##### logging ######
         if not i % 100:
             last_losses = [np.round(np.mean(i), 3) for i in zip(*last_losses)]
             samples = deepcopy(dataset.sampled_mols)
@@ -532,6 +551,8 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
 
             if not i % 1000 and do_save:
                 save_stuff()
+        ##### logging ######
+
 
     stop_everything()
     if do_save:

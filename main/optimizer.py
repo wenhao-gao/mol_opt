@@ -319,6 +319,7 @@ class BaseOptimizer:
         np.random.seed(seed)
         torch.manual_seed(seed)
         random.seed(seed)
+        self.seed = seed 
         self._optimize(oracle, config)
         if self.args.log_results:
             self.log_result()
