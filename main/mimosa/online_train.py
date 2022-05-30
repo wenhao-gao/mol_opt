@@ -29,12 +29,12 @@ def train_gnn(data, gnn, epoch=5):
 	for ep in tqdm(range(epoch)):
 		for i, smiles in tqdm(enumerate(train_generator)):
 			### 1. training
-			smiles = smiles[0]
+			smiles = smiles[0][0]
 			try:
 				graph_feature = smiles2feature(smiles)  ### smiles2feature: **randomly** mask one leaf node  
 				if graph_feature is None:
 					continue 
-				node_mat, adjacency_matrix, idx, label = graph_feature   
+				node_mat, adjacency_matrix, idx, label = graph_feature 
 			except:
 				continue 
 			# idx_lst, node_mat, substructure_lst, atomidx_2substridx, adjacency_matrix, leaf_extend_idx_pair = smiles2graph(smiles)
