@@ -496,13 +496,22 @@ class Pasithea_Optimizer(BaseOptimizer):
         directory += change_str('/{}'.format(prop))
         make_dir(directory)
 
+        patience = 0
+
         while True:
+
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
         
             print('Start dreaming ...')
             dream(self.oracle, args, largest_molecule_len, alphabet,
                 model, upperbound_dr, data, prop, lr_dream, num_dream, dream_num_epochs)
 
             if self.finish:
+                print('max oracle hit, abort ...... ')
                 break
 
             # prepare data
@@ -530,3 +539,15 @@ class Pasithea_Optimizer(BaseOptimizer):
                           data_train, prop_vals_train, data_test, prop_vals_test, 
                           lr_train, train_num_epochs, 1)
 
+            # early stopping
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
