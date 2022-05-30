@@ -205,7 +205,7 @@ class Dataset:
                     else:
                         samples.append((*zip(*self.mdp.parents(m)), 0, m, 0))
         p = self.mdp.mols2batch([self.mdp.mol2repr(i) for i in samples[-1][0]])
-        qp = self.sampling_model(p, None)
+        qp = self.sampling_model(p, None) #### sampling_model is model, see set_sampling_model above 
         qsa_p = self.sampling_model.index_output_by_action(
             p, qp[0], qp[1][:, 0],
             torch.tensor(samples[-1][1], device=self._device).long())
@@ -224,7 +224,7 @@ class Dataset:
             if len(self.online_mols) > self.max_online_mols:
                 self.online_mols = sorted(self.online_mols)[max(int(0.05 * self.max_online_mols), 1):]
         elif self.replay_mode == 'prioritized':
-            self.online_mols.append((abs(inflow - np.log(r)), m))
+            self.online_mols.append((abs(inflow - np.log(r)), m)) ##### sampling weight 
             if len(self.online_mols) > self.max_online_mols * 1.1:
                 self.online_mols = self.online_mols[-self.max_online_mols:]
 
@@ -239,19 +239,20 @@ class Dataset:
         return self.proxy_reward(smi)
 
     def sample(self, n):
-        if self.replay_mode == 'dataset':
+        if self.replay_mode == 'dataset': ##### random sampling from all 
             eidx = self.train_rng.randint(0, len(self.train_mols), n)
             samples = sum((self._get(i, self.train_mols) for i in eidx), [])
-        elif self.replay_mode == 'online':
+        elif self.replay_mode == 'online':  ##### random sampling from online 
             eidx = self.train_rng.randint(0, max(1,len(self.online_mols)), n)
             samples = sum((self._get(i, self.online_mols) for i in eidx), [])
-        elif self.replay_mode == 'prioritized':
+        elif self.replay_mode == 'prioritized': #### weight sampling. see _add_mol_to_online above 
             if not len(self.online_mols):
                 # _get will sample from the model
                 samples = sum((self._get(0, self.online_mols) for i in range(n)), [])
             else:
-                prio = np.float32([i[0] for i in self.online_mols])
-                eidx = self.train_rng.choice(len(self.online_mols), n, False, prio/prio.sum())
+                ##### weight sampling 
+                prio = np.float32([i[0] for i in self.online_mols])  #### sampling weight, see _add_mol_to_online above 
+                eidx = self.train_rng.choice(len(self.online_mols), n, False, prio/prio.sum()) 
                 samples = sum((self._get(i, self.online_mols) for i in eidx), [])
         return zip(*samples)
 
@@ -455,7 +456,7 @@ def train_model_with_proxy(args, model, proxy, dataset, num_steps=None, do_save=
                     return
             p, pb, a, r, s, d, mols = r
         else:
-            p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize)) #### dataset is fix during learning 
+            p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize)) #### see dataset.sample 
         ####### 1. data ########
 
 
