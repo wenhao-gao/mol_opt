@@ -1,5 +1,5 @@
 population_size: 50
 offspring_size: 500
-lamb: 2
-train_epoch: 5
+lamb: 0.1
+train_epoch: 3
 train_data_size: 800
