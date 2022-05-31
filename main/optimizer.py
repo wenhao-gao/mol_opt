@@ -1,17 +1,31 @@
-import json
 import os
-import joblib
 import yaml
 import random
 import torch
 import numpy as np
-from joblib import delayed
 from rdkit import Chem
 from rdkit.Chem import Draw
 import tdc
 from tdc.generation import MolGen
 import wandb
 from main.utils.chem import *
+
+
+class Objdict(dict):
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        if name in self:
+            del self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
 
 
 def top_auc(buffer, top_n, finish, freq_log, max_oracle_calls):

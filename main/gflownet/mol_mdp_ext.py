@@ -1,5 +1,4 @@
 from collections import defaultdict
-import os.path
 import numpy as np
 
 from utils.molMDP import BlockMoleculeData, MolMDP
