@@ -41,9 +41,6 @@ def main():
     path_main = os.path.dirname(os.path.realpath(__file__))
     path_main = os.path.join(path_main, "main", args.method)
 
-    if args.method == 'gflownet_al':
-        path_main = path_main[:-3]
-
     sys.path.append(path_main)
     
     print(args.method)
@@ -99,7 +96,7 @@ def main():
     elif args.method == 'gflownet':
         from main.gflownet.run import GFlowNet_Optimizer as Optimizer
     elif args.method == 'gflownet_al':
-        from main.gflownet.run import GFlowNet_AL_Optimizer as Optimizer
+        from main.gflownet_al.run import GFlowNet_AL_Optimizer as Optimizer
     elif args.method == 'moldqn':
         from main.moldqn.run import MolDQN_Optimizer as Optimizer
     elif args.method == 'reinvent':

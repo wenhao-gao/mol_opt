@@ -6,7 +6,6 @@ nemb: 256
 mbsize: 4
 min_blocks: 2
 max_blocks: 8
-num_iterations: 50000
 num_conv_steps: 10
 log_reg_c: 0.00000002
 sample_prob: 1.0
