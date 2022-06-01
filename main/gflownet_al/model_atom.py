@@ -43,7 +43,7 @@ class MPNNet_v2(nn.Module):
         self.num_conv_steps = num_conv_steps
         self.version = int(version[1:])
         self.dropout_rate = dropout_rate
-        print('v:', self.version)
+        # print('v:', self.version)
         assert 1<= self.version <= 6
 
         if self.version < 5:

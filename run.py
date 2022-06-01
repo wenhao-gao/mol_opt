@@ -166,7 +166,7 @@ def main():
     end_time = time()
     hours = (end_time - start_time) / 3600.0
     print('---- The whole process takes %.2f hours ----' % (hours))
-    print('If the program does not exit, press cnotrol+c.')
+    # print('If the program does not exit, press control+c.')
 
 
 if __name__ == "__main__":

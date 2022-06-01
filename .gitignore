@@ -195,3 +195,9 @@ main/SynNet/tests
 
 *.txt
 dream_results
+
+# GFlowNet
+gflownet_models
+
+
+

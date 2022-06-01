@@ -4,10 +4,9 @@ proxy_weight_decay: 0.000001
 proxy_mbsize: 64
 proxy_opt_beta: 0.9
 proxy_nemb: 64
-proxy_num_iterations: 10
-num_init_examples: 2000
-num_outer_loop_iters: 25
-num_samples: 200
+proxy_num_iterations: 5 # Proxy training number
+num_init_examples: 1000 # Number of random samples to train proxy
+num_samples: 500 # Number of new samples each loop
 proxy_num_conv_steps: 12
 proxy_repr_type: 'atom_graph'
 proxy_model_version: 'v2'
@@ -20,7 +19,7 @@ nemb: 256
 mbsize: 4
 min_blocks: 2
 max_blocks: 8
-num_iterations: 50000
+num_iterations: 100 # Number of inner iterations to run within a loop
 num_conv_steps: 10
 log_reg_c: 0.00000002
 sample_prob: 1.0

@@ -14,7 +14,6 @@ os.makedirs(tmp_dir, exist_ok=True)
 class Dataset:
 
     def __init__(self, args, bpath, device, floatX=torch.double):
-        self.test_split_rng = np.random.RandomState(142857)
         self.train_rng = np.random.RandomState(int(time.time()))
         self.train_mols = []
         self.test_mols = []
@@ -25,7 +24,7 @@ class Dataset:
         self._device = device
         self.seen_molecules = set()
         self.stop_event = threading.Event()
-        self.target_norm = [-8.6, 1.10]
+        # self.target_norm = [-8.6, 1.10]
         self.sampling_model = None
         self.sampling_model_prob = 0
         self.floatX = floatX
@@ -167,7 +166,8 @@ class Dataset:
         smi = m.smiles
         if smi in self.train_mols_map:
             return self.train_mols_map[smi].reward
-        return self.r2r(normscore=self.proxy_reward(m))
+        return self.proxy_reward(m)
+        # return self.r2r(normscore=self.proxy_reward(m))
 
     def sample(self, n):
         if self.replay_mode == 'dataset':
@@ -175,6 +175,7 @@ class Dataset:
             samples = sum((self._get(i, self.train_mols) for i in eidx), [])
         elif self.replay_mode == 'online':
             eidx = self.train_rng.randint(0, max(1,len(self.online_mols)), n)
+            # import ipdb; ipdb.set_trace()
             samples = sum((self._get(i, self.online_mols) for i in eidx), [])
         elif self.replay_mode == 'prioritized':
             if not len(self.online_mols):
@@ -204,11 +205,11 @@ class Dataset:
         d = torch.tensor(d, device=self._device).to(self.floatX)
         return (p, p_batch, a, r, s, d, mols, *o)
 
-    def r2r(self, dockscore=None, normscore=None):
-        if dockscore is not None:
-            normscore = 4-(min(0, dockscore)-self.target_norm[0])/self.target_norm[1]
-        normscore = max(self.R_min, normscore)
-        return (normscore/self.reward_norm) ** self.reward_exp
+    # def r2r(self, dockscore=None, normscore=None):
+    #     if dockscore is not None:
+    #         normscore = 4-(min(0, dockscore)-self.target_norm[0])/self.target_norm[1]
+    #     normscore = max(self.R_min, normscore)
+    #     return (normscore/self.reward_norm) ** self.reward_exp
 
 
     def start_samplers(self, n, mbsize):

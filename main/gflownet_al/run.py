@@ -27,6 +27,7 @@ from main.gflownet_al.train_proxy import Dataset as _ProxyDataset
 from main.gflownet_al.gflownet import Dataset as GenModelDataset
 from main.optimizer import BaseOptimizer, Objdict
 
+from ipdb import set_trace
 
 class ProxyDataset(_ProxyDataset):
     def add_samples(self, samples):
@@ -57,6 +58,7 @@ class Proxy:
                 layer.reset_parameters()
 
     def train(self, dataset):
+        print('Training proxy model ...')
         self.reset()
         stop_event = threading.Event()
         best_model = self.proxy
@@ -73,18 +75,13 @@ class Proxy:
 
         def stop_everything():
             stop_event.set()
-            print('joining')
+            # print('joining')
             dataset.stop_samplers_and_join()
 
         train_losses = []
-        test_losses = []
-        time_start = time.time()
-        time_last_check = time.time()
+        # time_last_check = time.time()
 
-        max_early_stop_tolerance = 5
-        early_stop_tol = max_early_stop_tolerance
-
-        for i in range(self.args.proxy_num_iterations+1):
+        for i in range(self.args.proxy_num_iterations):
             if not debug_no_threads:
                 r = sampler()
                 for thread in dataset.sampler_threads:
@@ -97,7 +94,7 @@ class Proxy:
                 p, pb, a, r, s, d = dataset.sample2batch(dataset.sample(mbsize))
 
             # state outputs
-            stem_out_s, mol_out_s = self.proxy(s, None, do_stems=False)
+            _, mol_out_s = self.proxy(s, None, do_stems=False)
             loss = (mol_out_s[:, 0] - r).pow(2).mean()
             loss.backward()
             last_losses.append((loss.item(),))
@@ -106,45 +103,39 @@ class Proxy:
             opt.zero_grad()
             self.proxy.training_steps = i + 1
 
-            if not i % 1000:
-                last_losses = [np.round(np.mean(i), 3) for i in zip(*last_losses)]
-                print(i, last_losses)
-                print('time:', time.time() - time_last_check)
-                time_last_check = time.time()
-                last_losses = []
+            # if not i % 1000:
+            #     last_losses = [np.round(np.mean(i), 3) for i in zip(*last_losses)]
+                # print(i, last_losses)
+                # print('time:', time.time() - time_last_check)
+                # last_losses = []
 
-                if i % 5000:
-                    continue
+                # if i % 5000:
+                #     continue
 
-                if 0:
-                    continue
+                # if 0:
+                #     continue
+                # total_test_loss = 0
+                # total_test_n = 0
 
-                t0 = time.time()
-                total_test_loss = 0
-                total_test_n = 0
-
-                for s, r in dataset.itertest(max(mbsize, 128)):
-                    with torch.no_grad():
-                        stem_o, mol_o = self.proxy(s, None, do_stems=False)
-                        loss = (mol_o[:, 0] - r).pow(2)
-                        total_test_loss += loss.sum().item()
-                        total_test_n += loss.shape[0]
-                test_loss = total_test_loss / total_test_n
-                if test_loss < best_test_loss:
-                    best_test_loss = test_loss
-                    best_model = deepcopy(self.proxy)
-                    best_model.to('cpu')
-                    early_stop_tol = max_early_stop_tolerance
-                else:
-                    early_stop_tol -= 1
-                    print('test loss:', test_loss)
-                    print('test took:', time.time() - t0)
-                    test_losses.append(test_loss)
+                # for s, r in dataset.itertest(max(mbsize, 128)):
+                #     with torch.no_grad():
+                #         stem_o, mol_o = self.proxy(s, None, do_stems=False)
+                #         loss = (mol_o[:, 0] - r).pow(2)
+                #         total_test_loss += loss.sum().item()
+                #         total_test_n += loss.shape[0]
+                # test_loss = total_test_loss / (total_test_n + 1e-8)
+                # if test_loss < best_test_loss:
+                #     best_test_loss = test_loss
+                #     best_model = deepcopy(self.proxy)
+                #     best_model.to('cpu')
+                #     early_stop_tol = max_early_stop_tolerance
+                # else:
+                #     early_stop_tol -= 1
+                #     test_losses.append(test_loss)
 
         stop_everything()
         self.proxy = deepcopy(best_model)
         self.proxy.to(self.device)
-        print('Done.')
 
     def __call__(self, m):
         m = self.mdp.mols2batch([self.mdp.mol2repr(m)])
@@ -180,6 +171,7 @@ def make_model(args, mdp, is_proxy=False):
 
 _stop = [None]
 def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=True):
+    print('Training generative model ...')
     debug_no_threads = False
     device = torch.device('cuda')
 
@@ -231,7 +223,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
     last_losses = []
 
     def stop_everything():
-        print('joining')
+        # print('joining')
         dataset.stop_samplers_and_join()
     _stop[0] = stop_everything
 
@@ -240,7 +232,6 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
     test_infos = []
     train_infos = []
     time_start = time.time()
-    time_last_check = time.time()
 
     log_reg_c = args.log_reg_c
     clip_loss = tf([args.clip_loss])
@@ -255,11 +246,12 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
             for thread in dataset.sampler_threads:
                 if thread.failed:
                     stop_everything()
-                    pdb.post_mortem(thread.exception.__traceback__)
+                    # pdb.post_mortem(thread.exception.__traceback__)
                     return
             p, pb, a, r, s, d, mols = r
         else:
             p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize))
+
         # Since we sampled 'mbsize' trajectories, we're going to get
         # roughly mbsize * H (H is variable) transitions
         ntransitions = r.shape[0]
@@ -275,7 +267,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         qsa_p = model.index_output_by_action(p, stem_out_p, mol_out_p[:, 0], a)
         # then sum the parents' contribution, this is the inflow
         exp_inflow = (torch.zeros((ntransitions,), device=device, dtype=dataset.floatX)
-                      .index_add_(0, pb, torch.exp(qsa_p))) # pb is the parents' batch index
+                    .index_add_(0, pb, torch.exp(qsa_p))) # pb is the parents' batch index
         inflow = torch.log(exp_inflow + log_reg_c)
         # sum the state's Q(s,a), this is the outflow
         exp_outflow = model.sum_output(s, torch.exp(stem_out_s), torch.exp(mol_out_s[:, 0]))
@@ -303,7 +295,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         _flow_loss = (_losses * (1-d)).sum() / ((1-d).sum() + 1e-20)
         last_losses.append((loss.item(), term_loss.item(), flow_loss.item()))
         train_losses.append((loss.item(), _term_loss.item(), _flow_loss.item(),
-                             term_loss.item(), flow_loss.item()))
+                            term_loss.item(), flow_loss.item()))
         if not i % 50:
             train_infos.append((
                 _term_loss.data.cpu().numpy(),
@@ -319,7 +311,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
             ))
         if args.clip_grad > 0:
             torch.nn.utils.clip_grad_value_(model.parameters(),
-                                           args.clip_grad)
+                                        args.clip_grad)
         opt.step()
         model.training_steps = i + 1
         if tau > 0:
@@ -329,9 +321,6 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
 
         if not i % 100:
             last_losses = [np.round(np.mean(i), 3) for i in zip(*last_losses)]
-            print(i, last_losses)
-            print('time:', time.time() - time_last_check)
-            time_last_check = time.time()
             last_losses = []
 
             if not i % 1000 and do_save:
@@ -346,49 +335,73 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
                             'train_infos': train_infos}
 
 
-def sample_and_update_dataset(args, model, proxy_dataset, generator_dataset, oracle):
-    print("Sampling")
+def sample_and_update_dataset(args, model, proxy_dataset, generator_dataset, oracle, initial=False):
     mdp = generator_dataset.mdp
     nblocks = mdp.num_blocks
     sampled_mols = []
     rews = []
     smis = []
-    while len(sampled_mols) < args.num_samples:
-        mol = BlockMoleculeDataExtended()
-        for i in range(args.max_blocks):
-            s = mdp.mols2batch([mdp.mol2repr(mol)])
-            stem_o, mol_o = model(s)
-            logits = torch.cat([stem_o.flatten(), mol_o.flatten()])
-            if i < args.min_blocks:
-                logits[-1] = -20
-            cat = Categorical(logits=logits)
-            act = cat.sample().item()
-            if act == logits.shape[0] - 1:
-                break
-            else:
-                act = (act % nblocks, act // nblocks)
-                mol = mdp.add_block_to(mol, block_idx=act[0], stem_idx=act[1])
-            if not len(mol.stems):
-                break
-        if mol.mol is None:
-            continue
-        smis.append(mol.smiles)
-        sampled_mols.append(mol)
+    if initial:
+        print("Initializing the datasets ...")
+        while len(sampled_mols) < args.num_init_examples:
+            mol = BlockMoleculeDataExtended()
+            for i in range(args.max_blocks):
+                s = mdp.mols2batch([mdp.mol2repr(mol)])
+                stem_o, mol_o = model(s)
+                logits = torch.cat([stem_o.flatten(), mol_o.flatten()])
+                if i < args.min_blocks:
+                    logits[-1] = -20
+                cat = Categorical(logits=logits)
+                act = cat.sample().item()
+                if act == logits.shape[0] - 1:
+                    break
+                else:
+                    act = (act % nblocks, act // nblocks)
+                    mol = mdp.add_block_to(mol, block_idx=act[0], stem_idx=act[1])
+                if not len(mol.stems):
+                    break
+            if mol.mol is None:
+                continue
+            smis.append(mol.smiles)
+            sampled_mols.append(mol)
+    else:
+        print("Sampling molecules and updating datasets ...")
+        while len(sampled_mols) < args.num_samples:
+            mol = BlockMoleculeDataExtended()
+            for i in range(args.max_blocks):
+                s = mdp.mols2batch([mdp.mol2repr(mol)])
+                stem_o, mol_o = model(s)
+                logits = torch.cat([stem_o.flatten(), mol_o.flatten()])
+                if i < args.min_blocks:
+                    logits[-1] = -20
+                cat = Categorical(logits=logits)
+                act = cat.sample().item()
+                if act == logits.shape[0] - 1:
+                    break
+                else:
+                    act = (act % nblocks, act // nblocks)
+                    mol = mdp.add_block_to(mol, block_idx=act[0], stem_idx=act[1])
+                if not len(mol.stems):
+                    break
+            if mol.mol is None:
+                continue
+            smis.append(mol.smiles)
+            sampled_mols.append(mol)
     
-    rews = oracle(sampled_mols)
+    rews = oracle(smis)
     for i in range(len(sampled_mols)):
         sampled_mols[i].reward = rews[i]
 
-    print("Computing distances")
+    # print("Computing distances")
     dists =[]
     for m1, m2 in zip(sampled_mols, sampled_mols[1:] + sampled_mols[:1]):
         dist = DataStructs.FingerprintSimilarity(Chem.RDKFingerprint(m1.mol), Chem.RDKFingerprint(m2.mol))
         dists.append(dist)
-    print("Get batch rewards")
+    # print("Get batch rewards")
     rewards = []
     for m in sampled_mols:
         rewards.append(m.reward)
-    print("Add to dataset")
+    # print("Add to dataset")
     proxy_dataset.add_samples(sampled_mols)
     return proxy_dataset, rews, smis, {
         'dists': dists, 'rewards': rewards, 'reward_mean': np.mean(rewards), 'reward_max': np.max(rewards),
@@ -413,81 +426,122 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
         repr_type = config.repr_type
         rews = []
         smis = []
+        rew_max = 0
 
         config.repr_type = proxy_repr_type
         config.replay_mode = "dataset"
         proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
 
-        # starting_examples = np.random.choice(self.all_smiles, config.num_init_examples)
-        # starting_scores = self.oracle(starting_examples)
-
-        # proxy_dataset
-        dpath = os.path.join(path_here, 'data/docked_mols.h5')
-        proxy_dataset.load_h5(dpath, config, num_examples=config.num_init_examples)
-
-
-        rews.append(proxy_dataset.rews)
-        smis.append([mol.smiles for mol in proxy_dataset.train_mols])
-        rew_max = np.max(proxy_dataset.rews)
-        print(np.max(proxy_dataset.rews))
         exp_dir = f'{config.save_path}/proxy_{config.array}_{config.run}/'
         os.makedirs(exp_dir, exist_ok=True)
 
-        print(len(proxy_dataset.train_mols), 'train mols')
-        print(len(proxy_dataset.test_mols), 'test mols')
-        print(config)
         proxy = Proxy(config, bpath, device)
-        mdp = proxy_dataset.mdp
         train_metrics = []
         metrics = []
+
+        #### Ramdom sample and pretrain ####
+        config.sample_prob = 0
+        config.repr_type = proxy_repr_type
+        config.replay_mode = "dataset"
+        config.reward_exp = 1
+        config.reward_norm = 1
+        gen_model_dataset = GenModelDataset(config, bpath, device)
+        model = make_model(config, gen_model_dataset.mdp)
+
+        if config.floatX == 'float64':
+            model = model.double()
+        model.to(device)
+        # sample molecule batch for generator and update dataset with docking scores for sampled batch
+        _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle, initial=True)
+        
+        proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
+        proxy_dataset.train_mols.extend(_proxy_dataset.train_mols)
+        proxy_dataset.test_mols.extend(_proxy_dataset.test_mols)
+        mdp = proxy_dataset.mdp
+        print(len(proxy_dataset.train_mols), 'train mols')
+        print(len(proxy_dataset.test_mols), 'test mols')
         proxy.train(proxy_dataset)
+        #### Ramdom sample and pretrain ####
 
-        for i in range(config.num_outer_loop_iters):
+        patience = 0
+        i = 0
+
+        while True:
+
+            i += 1
+            
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
+
             print(f"Starting step: {i}")
+            try:
             # Initialize model and dataset for training generator
-            config.sample_prob = 1
-            config.repr_type = repr_type
-            config.replay_mode = "online"
-            gen_model_dataset = GenModelDataset(config, bpath, device)
-            model = make_model(config, gen_model_dataset.mdp)
+                config.sample_prob = 1
+                config.repr_type = repr_type
+                config.replay_mode = "online"
+                gen_model_dataset = GenModelDataset(config, bpath, device)
+                model = make_model(config, gen_model_dataset.mdp)
 
-            if config.floatX == 'float64':
-                model = model.double()
-            model.to(device)
-            # train model with with proxy
-            print(f"Training model: {i}")
-            model, gen_model_dataset, training_metrics = train_generative_model(config, model, proxy, gen_model_dataset, do_save=False)
+                if config.floatX == 'float64':
+                    model = model.double()
+                model.to(device)
+                # train model with with proxy
+            
+                model, gen_model_dataset, training_metrics = train_generative_model(config, model, proxy, gen_model_dataset, do_save=False)
+            
 
-            print(f"Sampling mols: {i}")
-            # sample molecule batch for generator and update dataset with docking scores for sampled batch
-            _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle)
-            print(f"Batch Metrics: dists_mean: {batch_metrics['dists_mean']}, dists_sum: {batch_metrics['dists_sum']}, reward_mean: {batch_metrics['reward_mean']}, reward_max: {batch_metrics['reward_max']}")
-            rews.append(r)
-            smis.append(s)
-            config.sample_prob = 0
-            config.repr_type = proxy_repr_type
-            config.replay_mode = "dataset"
-            config.reward_exp = 1
-            config.reward_norm = 1
+                # print(f"Sampling mols: {i}")
+                # sample molecule batch for generator and update dataset with docking scores for sampled batch
+                _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle)
 
-            train_metrics.append(training_metrics)
-            metrics.append(batch_metrics)
+                if self.finish:
+                    print('max oracle hit, abort ...... ')
+                    break 
 
-            proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
-            proxy_dataset.train_mols.extend(_proxy_dataset.train_mols)
-            proxy_dataset.test_mols.extend(_proxy_dataset.test_mols)
+                rews.append(r)
+                smis.append(s)
+                config.sample_prob = 0
+                config.repr_type = proxy_repr_type
+                config.replay_mode = "dataset"
+                config.reward_exp = 1
+                config.reward_norm = 1
 
-            proxy = Proxy(config, bpath, device)
-            mdp = proxy_dataset.mdp
+                train_metrics.append(training_metrics)
+                metrics.append(batch_metrics)
 
-            pickle.dump({'train_metrics': train_metrics,
-                        'batch_metrics': metrics,
-                        'rews': rews,
-                        'smis': smis,
-                        'rew_max': rew_max,
-                        'args': config},
-                        gzip.open(f'{exp_dir}/info.pkl.gz', 'wb'))
+                proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
+                proxy_dataset.train_mols.extend(_proxy_dataset.train_mols)
+                proxy_dataset.test_mols.extend(_proxy_dataset.test_mols)
 
-            print(f"Updating proxy: {i}")
-            # update proxy with new data
-            proxy.train(proxy_dataset)
+                proxy = Proxy(config, bpath, device)
+                mdp = proxy_dataset.mdp
+
+                pickle.dump({'train_metrics': train_metrics,
+                            'batch_metrics': metrics,
+                            'rews': rews,
+                            'smis': smis,
+                            'rew_max': rew_max,
+                            'args': config},
+                            gzip.open(f'{exp_dir}/info.pkl.gz', 'wb'))
+
+                # update proxy with new data
+                proxy.train(proxy_dataset)
+
+            except:
+                pass
+
+            # early stopping
+            if len(self.oracle) > 800:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
