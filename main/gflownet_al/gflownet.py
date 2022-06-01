@@ -96,14 +96,19 @@ class Dataset:
         for t in range(max_blocks):
             s = self.mdp.mols2batch([self.mdp.mol2repr(m)])
             s_o, m_o = self.sampling_model(s)
+            # print(f"s : {s}")
+            # print(f"s_o : {s_o}")
+            # print(f"m_o : {m_o}")
+            # import ipdb; ipdb.set_trace()
             ## fix from run 330 onwards
             if t < self.min_blocks:
                 m_o = m_o * 0 - 1000 # prevent assigning prob to stop
                                      # when we can't stop
             ##
             logits = torch.cat([m_o.reshape(-1), s_o.reshape(-1)])
-            cat = torch.distributions.Categorical(
-                logits=logits)
+            # import ipdb; ipdb.set_trace()
+            # print(logits)
+            cat = torch.distributions.Categorical(logits=logits)
             action = cat.sample().item()
             if self.random_action_prob > 0 and self.train_rng.uniform() < self.random_action_prob:
                 action = self.train_rng.randint(int(t < self.min_blocks), logits.shape[0])

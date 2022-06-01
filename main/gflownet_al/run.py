@@ -351,7 +351,11 @@ def sample_and_update_dataset(args, model, proxy_dataset, generator_dataset, ora
                 logits = torch.cat([stem_o.flatten(), mol_o.flatten()])
                 if i < args.min_blocks:
                     logits[-1] = -20
-                cat = Categorical(logits=logits)
+
+                try:
+                    cat = Categorical(logits=logits)
+                except:
+                    set_trace()
                 act = cat.sample().item()
                 if act == logits.shape[0] - 1:
                     break
@@ -374,7 +378,10 @@ def sample_and_update_dataset(args, model, proxy_dataset, generator_dataset, ora
                 logits = torch.cat([stem_o.flatten(), mol_o.flatten()])
                 if i < args.min_blocks:
                     logits[-1] = -20
-                cat = Categorical(logits=logits)
+                try:
+                    cat = Categorical(logits=logits)
+                except:
+                    set_trace()
                 act = cat.sample().item()
                 if act == logits.shape[0] - 1:
                     break
@@ -477,64 +484,63 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
                 old_scores = 0
 
             print(f"Starting step: {i}")
-            try:
+            # try:
             # Initialize model and dataset for training generator
-                config.sample_prob = 1
-                config.repr_type = repr_type
-                config.replay_mode = "online"
-                gen_model_dataset = GenModelDataset(config, bpath, device)
-                model = make_model(config, gen_model_dataset.mdp)
+            config.sample_prob = 1
+            config.repr_type = repr_type
+            config.replay_mode = "online"
+            gen_model_dataset = GenModelDataset(config, bpath, device)
+            model = make_model(config, gen_model_dataset.mdp)
 
-                if config.floatX == 'float64':
-                    model = model.double()
-                model.to(device)
-                # train model with with proxy
-            
-                model, gen_model_dataset, training_metrics = train_generative_model(config, model, proxy, gen_model_dataset, do_save=False)
-            
+            if config.floatX == 'float64':
+                model = model.double()
+            model.to(device)
+            # train model with with proxy
+        
+            # set_trace()
+            model, gen_model_dataset, training_metrics = train_generative_model(config, model, proxy, gen_model_dataset, do_save=False)
+        
+            # sample molecule batch for generator and update dataset with docking scores for sampled batch
+            _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle)
 
-                # print(f"Sampling mols: {i}")
-                # sample molecule batch for generator and update dataset with docking scores for sampled batch
-                _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle)
+            if self.finish:
+                print('max oracle hit, abort ...... ')
+                break 
 
-                if self.finish:
-                    print('max oracle hit, abort ...... ')
-                    break 
+            rews.append(r)
+            smis.append(s)
+            config.sample_prob = 0
+            config.repr_type = proxy_repr_type
+            config.replay_mode = "dataset"
+            config.reward_exp = 1
+            config.reward_norm = 1
 
-                rews.append(r)
-                smis.append(s)
-                config.sample_prob = 0
-                config.repr_type = proxy_repr_type
-                config.replay_mode = "dataset"
-                config.reward_exp = 1
-                config.reward_norm = 1
+            train_metrics.append(training_metrics)
+            metrics.append(batch_metrics)
 
-                train_metrics.append(training_metrics)
-                metrics.append(batch_metrics)
+            proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
+            proxy_dataset.train_mols.extend(_proxy_dataset.train_mols)
+            proxy_dataset.test_mols.extend(_proxy_dataset.test_mols)
 
-                proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
-                proxy_dataset.train_mols.extend(_proxy_dataset.train_mols)
-                proxy_dataset.test_mols.extend(_proxy_dataset.test_mols)
+            proxy = Proxy(config, bpath, device)
+            mdp = proxy_dataset.mdp
 
-                proxy = Proxy(config, bpath, device)
-                mdp = proxy_dataset.mdp
+            pickle.dump({'train_metrics': train_metrics,
+                        'batch_metrics': metrics,
+                        'rews': rews,
+                        'smis': smis,
+                        'rew_max': rew_max,
+                        'args': config},
+                        gzip.open(f'{exp_dir}/info.pkl.gz', 'wb'))
 
-                pickle.dump({'train_metrics': train_metrics,
-                            'batch_metrics': metrics,
-                            'rews': rews,
-                            'smis': smis,
-                            'rew_max': rew_max,
-                            'args': config},
-                            gzip.open(f'{exp_dir}/info.pkl.gz', 'wb'))
+            # update proxy with new data
+            proxy.train(proxy_dataset)
 
-                # update proxy with new data
-                proxy.train(proxy_dataset)
-
-            except:
-                pass
+            # except:
+            #     pass
 
             # early stopping
-            if len(self.oracle) > 800:
+            if len(self.oracle) > 100:
                 self.sort_buffer()
                 new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
                 if new_scores == old_scores:

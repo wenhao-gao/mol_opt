@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-model="mimosa"
+model="gflownet_al"
 
 nohup python -u run.py ${model} \
     --n_jobs 16 --task tune --n_runs 100 --wandb online \
