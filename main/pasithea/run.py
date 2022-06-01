@@ -462,8 +462,10 @@ class Pasithea_Optimizer(BaseOptimizer):
         upperbound_dr = config['upperbound_dr']
         prop = config['property_value']
 
-        os.system('rm -rf dream_results')
-        directory = change_str('dream_results/{}_{}/{}/{}'.format(data_parameters_str,
+        # os.system('rm -rf dream_results')
+        os.system('rm -rf ' + path_here + '/dream_results_' + oracle.name)   
+        ###### to make sure that multiple oracles can be run together 
+        directory = change_str(path_here + '/dream_results_{}/{}_{}/{}/{}'.format(oracle.name, data_parameters_str,
                                        training_parameters_str,
                                        upperbound_tr,
                                        lr_train))
