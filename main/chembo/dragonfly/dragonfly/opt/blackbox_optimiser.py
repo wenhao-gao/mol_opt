@@ -226,7 +226,10 @@ class BlackboxOptimiser(ExperimentDesigner):
 
   def _child_run_experiments_initialise(self):
     """ Handles any initialisation before running experiments. """
-    self._opt_method_optimise_initalise()
+    self._opt_method_optimise_initalise()  
+    #### 1. gp_bandit -> yes
+    #### 2. blackbox_optimiser: no
+    #### 3. multiobjective_optimizer: no
 
   def _opt_method_optimise_initalise(self):
     """ Any routine to run for a method just before optimisation routine. """

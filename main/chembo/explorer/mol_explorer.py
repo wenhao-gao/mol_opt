@@ -142,11 +142,11 @@ class RandomExplorer(object):
         top_val = self.fitness_func([top_pt])
         return top_val, top_pt, self.history
 
-    def get_best(self, k):
+    def get_best(self, k): #### used in run 
         top = sorted(self.pool, key=lambda mol: self.fitness_func([mol]))[-k:]
         return top
 
-    def _initialize_history(self):
+    def _initialize_history(self): #### used in run 
         n_init = len(self.pool)
         max_over_pool = np.max([self.fitness_func([mol]) for mol in self.pool])
         self.history = {

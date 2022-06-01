@@ -131,7 +131,7 @@ class GPBandit(GPBandit_):
         logging.info(f'Length of initial pool {len(initial_pool)}, should be equal to init_capital.')
         if self.acq_opt_method == 'rand_explorer':
             self.acq_optimizer = RandomExplorer(initial_pool=initial_pool,
-                                                max_pool_size=self.options.max_pool_size)
+                                                max_pool_size=self.options.max_pool_size) #### random initialize 
         else:
             raise NotImplementedError("Acq opt method {} not implemented.".format(self.acq_opt_method))
 

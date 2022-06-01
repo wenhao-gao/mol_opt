@@ -151,10 +151,11 @@ class Chemist:
             options=self.options,
             reporter=self.reporter,
             domain_dist_computers=self.domain_dist_computers, 
-        )
+        ) ### is sub-class of **BlackboxOptimiser**, instead of multi-objective optimizer 
         print('create optimizer, before optimization')
-        # exit()
-        return optimiser.optimise(max_capital) ### two optimise correspond the same core function
+        # exit()  ### Q: initial pool is called before or after exit?  after. 
+        return optimiser.optimise(max_capital) ### two optimise correspond the same core function, 
+
 
     # def get_raw_domain_point_from_processed(self, opt_point):
     #     return self.func_caller.get_raw_domain_point_from_processed(opt_point)

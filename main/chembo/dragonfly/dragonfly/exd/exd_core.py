@@ -460,10 +460,10 @@ class ExperimentDesigner(object):
 
   def run_experiment_initialise(self):
     """ Initialisation before running initialisation. """
-    self._print_method_description()
-    self.initialise_capital()
-    self.perform_initial_queries()
-    self._child_run_experiments_initialise()
+    self._print_method_description()   #### only print
+    self.initialise_capital()      ##### count time 
+    self.perform_initial_queries()   ##### 
+    self._child_run_experiments_initialise()   #####  blackbox-optimizer line 227
     self._print_header()
 
   def _child_run_experiments_initialise(self):
@@ -617,7 +617,7 @@ class ExperimentDesigner(object):
     """ Initialisation for ask-tell interface. """
     self.initialise_capital()
     self.first_qinfos = []
-    self.perform_initial_queries()
+    self.perform_initial_queries() #### looks like it load initial smiles pool
     self._child_run_experiments_initialise()
 
   def ask(self, n_points=None):
@@ -704,10 +704,13 @@ class ExperimentDesigner(object):
     """ This is the main loop which executes the experiments in a loop. """
 
     print('-------------- begin dragonfly -------------')
-    # exit()
 
     self.add_capital(max_capital)
-    self.run_experiment_initialise()
+    # exit() ####  Q: initial pool before or after exit? A: after
+    self.run_experiment_initialise() ##### initialize smiles pool 
+    # exit() ####  Q: initial pool before or after exit? A: before
+
+
 
     # Main loop --------------------
     while not self._terminate_now():
