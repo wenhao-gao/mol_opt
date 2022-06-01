@@ -11,7 +11,10 @@ import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
 import torch
+from torch.distributions.categorical import Categorical
 from copy import deepcopy
+from rdkit import Chem
+from rdkit import DataStructs
 
 from mol_mdp_ext import MolMDPExtended, BlockMoleculeDataExtended
 import model_atom, model_block, model_fingerprint
@@ -20,288 +23,181 @@ path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 from rdkit import rdBase
 rdBase.DisableLog('rdApp.error')
-
+from main.gflownet_al.train_proxy import Dataset as _ProxyDataset
+from main.gflownet_al.gflownet import Dataset as GenModelDataset
 from main.optimizer import BaseOptimizer, Objdict
 
 
-class Dataset:
+class ProxyDataset(_ProxyDataset):
+    def add_samples(self, samples):
+        for m in samples:
+            self.train_mols.append(m)
 
-    def __init__(self, config, bpath, device, floatX=torch.double):
-        self.train_mols = []
-        self.test_mols = []
-        self.train_mols_map = {}
+tmp_dir = '/tmp/molexp/'
+os.makedirs(tmp_dir, exist_ok=True)
+
+
+class Proxy:
+    def __init__(self, args, bpath, device):
+        self.args = args
+        # eargs = pickle.load(gzip.open(f'{args.proxy_path}/info.pkl.gz'))['args']
+        # params = pickle.load(gzip.open(f'{args.proxy_path}/best_params.pkl.gz'))
         self.mdp = MolMDPExtended(bpath)
-        self.mdp.post_init(device, config.repr_type, include_nblocks=config.include_nblocks)
-        self.mdp.build_translation_table()
-        self._device = device
-        self.seen_molecules = set()
-        self.stop_event = threading.Event()
-        self.sampling_model = None
-        self.sampling_model_prob = 0
-        self.floatX = floatX
-        self.mdp.floatX = self.floatX
-        #######
-        # This is the "result", here a list of (reward, BlockMolDataExt, info...) tuples
-        self.sampled_mols = []
+        self.mdp.post_init(device, args.proxy_repr_type)
+        self.mdp.floatX = torch.double
+        self.proxy = make_model(args, self.mdp, is_proxy=True)
+        # for a,b in zip(self.proxy.parameters(), params):
+        #     a.data = torch.tensor(b, dtype=self.mdp.floatX)
+        self.proxy.to(device)
+        self.device = device
 
-        get = lambda x, d: getattr(config, x) if hasattr(config, x) else d
-        self.min_blocks = get('min_blocks', 2)
-        self.max_blocks = get('max_blocks', 10)
-        self.mdp._cue_max_blocks = self.max_blocks
-        self.replay_mode = get('replay_mode', 'dataset')
-        self.random_action_prob = get('random_action_prob', 0)
-        self.R_min = get('R_min', 1e-8)
-        self.do_wrong_thing = get('do_wrong_thing', False)
+    def reset(self):
+        for layer in self.proxy.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
 
-        self.online_mols = []
-        self.max_online_mols = 1000
+    def train(self, dataset):
+        self.reset()
+        stop_event = threading.Event()
+        best_model = self.proxy
+        best_test_loss = 1000
+        opt = torch.optim.Adam(self.proxy.parameters(), self.args.proxy_learning_rate, betas=(self.args.proxy_opt_beta, 0.999),
+                                weight_decay=self.args.proxy_weight_decay)
+        debug_no_threads = False
+        mbsize = self.args.mbsize
 
+        if not debug_no_threads:
+            sampler = dataset.start_samplers(8, mbsize)
 
-    def _get(self, i, dset):
-        if ((self.sampling_model_prob > 0 and # don't sample if we don't have to
-             np.random.uniform() < self.sampling_model_prob)
-            or len(dset) < 32):
-                return self._get_sample_model()
-        # Sample trajectories by walking backwards from the molecules in our dataset
+        last_losses = []
 
-        # Handle possible multithreading issues when independent threads
-        # add/substract from dset:
-        while True:
-            try:
-                m = dset[i]
-            except IndexError:
-                i = np.random.randint(0, len(dset))
-                continue
-            break
-        if not isinstance(m, BlockMoleculeDataExtended):
-            m = m[-1]
-        r = m.reward
-        done = 1
-        samples = []
-        # a sample is a tuple (parents(s), parent actions, reward(s), s, done)
-        # an action is (blockidx, stemidx) or (-1, x) for 'stop'
-        # so we start with the stop action, unless the molecule is already
-        # a "terminal" node (if it has no stems, no actions).
-        if len(m.stems):
-            samples.append(((m,), ((-1, 0),), r, m, done))
-            r = done = 0
-        while len(m.blocks): # and go backwards
-            parents, actions = zip(*self.mdp.parents(m))
-            samples.append((parents, actions, r, m, done))
-            r = done = 0
-            m = parents[np.random.randint(len(parents))]
-        return samples
+        def stop_everything():
+            stop_event.set()
+            print('joining')
+            dataset.stop_samplers_and_join()
 
-    def set_sampling_model(self, model, proxy_reward, sample_prob=0.5):
-        self.sampling_model = model
-        self.sampling_model_prob = sample_prob
-        self.proxy_reward = proxy_reward #### only used in self._get_reward
+        train_losses = []
+        test_losses = []
+        time_start = time.time()
+        time_last_check = time.time()
 
-    def _get_sample_model(self):
-        m = BlockMoleculeDataExtended()
-        samples = []
-        max_blocks = self.max_blocks
-        trajectory_stats = []
-        for t in range(max_blocks):
-            s = self.mdp.mols2batch([self.mdp.mol2repr(m)])
-            s_o, m_o = self.sampling_model(s)
-            ## fix from run 330 onwards
-            if t < self.min_blocks:
-                m_o = m_o * 0 - 1000 # prevent assigning prob to stop
-                                     # when we can't stop
-            ##
-            logits = torch.cat([m_o.reshape(-1), s_o.reshape(-1)])
-            cat = torch.distributions.Categorical(
-                logits=logits)
-            action = cat.sample().item()
-            if self.random_action_prob > 0 and np.random.uniform() < self.random_action_prob:
-                action = np.random.randint(int(t < self.min_blocks), logits.shape[0])
+        max_early_stop_tolerance = 5
+        early_stop_tol = max_early_stop_tolerance
 
-            q = torch.cat([m_o.reshape(-1), s_o.reshape(-1)])
-            trajectory_stats.append((q[action].item(), action, torch.logsumexp(q, 0).item()))
-            if t >= self.min_blocks and action == 0:
-                r = self._get_reward(m)
-                samples.append(((m,), ((-1,0),), r, m, 1))
-                break
+        for i in range(self.args.proxy_num_iterations+1):
+            if not debug_no_threads:
+                r = sampler()
+                for thread in dataset.sampler_threads:
+                    if thread.failed:
+                        stop_event.set()
+                        stop_everything()
+                        pdb.post_mortem(thread.exception.__traceback__)
+                s, r = r
             else:
-                action = max(0, action-1)
-                action = (action % self.mdp.num_blocks, action // self.mdp.num_blocks)
-                m_old = m
-                m = self.mdp.add_block_to(m, *action)
-                if len(m.blocks) and not len(m.stems) or t == max_blocks - 1:
-                    # can't add anything more to this mol so let's make it
-                    # terminal. Note that this node's parent isn't just m,
-                    # because this is a sink for all parent transitions
-                    r = self._get_reward(m)
-                    if self.do_wrong_thing:
-                        samples.append(((m_old,), (action,), r, m, 1))
-                    else:
-                        samples.append((*zip(*self.mdp.parents(m)), r, m, 1))
-                    break
+                p, pb, a, r, s, d = dataset.sample2batch(dataset.sample(mbsize))
+
+            # state outputs
+            stem_out_s, mol_out_s = self.proxy(s, None, do_stems=False)
+            loss = (mol_out_s[:, 0] - r).pow(2).mean()
+            loss.backward()
+            last_losses.append((loss.item(),))
+            train_losses.append((loss.item(),))
+            opt.step()
+            opt.zero_grad()
+            self.proxy.training_steps = i + 1
+
+            if not i % 1000:
+                last_losses = [np.round(np.mean(i), 3) for i in zip(*last_losses)]
+                print(i, last_losses)
+                print('time:', time.time() - time_last_check)
+                time_last_check = time.time()
+                last_losses = []
+
+                if i % 5000:
+                    continue
+
+                if 0:
+                    continue
+
+                t0 = time.time()
+                total_test_loss = 0
+                total_test_n = 0
+
+                for s, r in dataset.itertest(max(mbsize, 128)):
+                    with torch.no_grad():
+                        stem_o, mol_o = self.proxy(s, None, do_stems=False)
+                        loss = (mol_o[:, 0] - r).pow(2)
+                        total_test_loss += loss.sum().item()
+                        total_test_n += loss.shape[0]
+                test_loss = total_test_loss / total_test_n
+                if test_loss < best_test_loss:
+                    best_test_loss = test_loss
+                    best_model = deepcopy(self.proxy)
+                    best_model.to('cpu')
+                    early_stop_tol = max_early_stop_tolerance
                 else:
-                    if self.do_wrong_thing:
-                        samples.append(((m_old,), (action,), 0, m, 0))
-                    else:
-                        samples.append((*zip(*self.mdp.parents(m)), 0, m, 0))
-        p = self.mdp.mols2batch([self.mdp.mol2repr(i) for i in samples[-1][0]])
-        qp = self.sampling_model(p, None) #### sampling_model is model, see set_sampling_model above 
-        qsa_p = self.sampling_model.index_output_by_action(
-            p, qp[0], qp[1][:, 0],
-            torch.tensor(samples[-1][1], device=self._device).long())
-        inflow = torch.logsumexp(qsa_p.flatten(), 0).item()
-        self.sampled_mols.append((r, m, trajectory_stats, inflow))
-        if self.replay_mode == 'online' or self.replay_mode == 'prioritized':
-            m.reward = r
-            self._add_mol_to_online(r, m, inflow)
-        return samples
+                    early_stop_tol -= 1
+                    print('test loss:', test_loss)
+                    print('test took:', time.time() - t0)
+                    test_losses.append(test_loss)
 
-    def _add_mol_to_online(self, r, m, inflow):
-        if self.replay_mode == 'online':
-            r = r + np.random.normal() * 0.01
-            if len(self.online_mols) < self.max_online_mols or r > self.online_mols[0][0]:
-                self.online_mols.append((r, m))
-            if len(self.online_mols) > self.max_online_mols:
-                self.online_mols = sorted(self.online_mols)[max(int(0.05 * self.max_online_mols), 1):]
-        elif self.replay_mode == 'prioritized':
-            self.online_mols.append((abs(inflow - np.log(r)), m)) ##### sampling weight 
-            if len(self.online_mols) > self.max_online_mols * 1.1:
-                self.online_mols = self.online_mols[-self.max_online_mols:]
+        stop_everything()
+        self.proxy = deepcopy(best_model)
+        self.proxy.to(self.device)
+        print('Done.')
 
-    def _get_reward(self, m):
-        rdmol = m.mol
-        if rdmol is None:
-            return self.R_min
-        smi = m.smiles
-        if smi in self.train_mols_map:
-            return self.train_mols_map[smi].reward
-        return self.proxy_reward(smi)
-
-    def sample(self, n):
-        if self.replay_mode == 'dataset': ##### random sampling from all 
-            eidx = np.random.randint(0, len(self.train_mols), n)
-            samples = sum((self._get(i, self.train_mols) for i in eidx), [])
-        elif self.replay_mode == 'online':  ##### random sampling from online 
-            eidx = np.random.randint(0, max(1,len(self.online_mols)), n)
-            samples = sum((self._get(i, self.online_mols) for i in eidx), [])
-        elif self.replay_mode == 'prioritized': #### weight sampling. see _add_mol_to_online above 
-            if not len(self.online_mols):
-                # _get will sample from the model
-                samples = sum((self._get(0, self.online_mols) for i in range(n)), [])
-            else:
-                ##### weight sampling 
-                prio = np.float32([i[0] for i in self.online_mols])  #### sampling weight, see _add_mol_to_online above 
-                eidx = np.random.choice(len(self.online_mols), n, False, prio/prio.sum()) 
-                samples = sum((self._get(i, self.online_mols) for i in eidx), [])
-        return zip(*samples)
-
-    def sample2batch(self, mb):
-        p, a, r, s, d, *o = mb
-        mols = (p, s)
-        # The batch index of each parent
-        p_batch = torch.tensor(sum([[i]*len(p) for i,p in enumerate(p)], []),
-                               device=self._device).long()
-        # Convert all parents and states to repr. Note that this
-        # concatenates all the parent lists, which is why we need
-        # p_batch
-        p = self.mdp.mols2batch(list(map(self.mdp.mol2repr, sum(p, ()))))
-        s = self.mdp.mols2batch([self.mdp.mol2repr(i) for i in s])
-        # Concatenate all the actions (one per parent per sample)
-        a = torch.tensor(sum(a, ()), device=self._device).long()
-        # rewards and dones
-        r = torch.tensor(r, device=self._device).to(self.floatX)
-        d = torch.tensor(d, device=self._device).to(self.floatX)
-        return (p, p_batch, a, r, s, d, mols, *o)
-
-    def start_samplers(self, n, mbsize):
-        self.ready_events = [threading.Event() for i in range(n)]
-        self.resume_events = [threading.Event() for i in range(n)]
-        self.results = [None] * n
-        def f(idx):
-            while not self.stop_event.is_set():
-                try:
-                    self.results[idx] = self.sample2batch(self.sample(mbsize))
-                except Exception as e:
-                    print("Exception while sampling:")
-                    print(e)
-                    self.sampler_threads[idx].failed = True
-                    self.sampler_threads[idx].exception = e
-                    self.ready_events[idx].set()
-                    break
-                self.ready_events[idx].set()
-                self.resume_events[idx].clear()
-                self.resume_events[idx].wait()
-        self.sampler_threads = [threading.Thread(target=f, args=(i,)) for i in range(n)]
-        [setattr(i, 'failed', False) for i in self.sampler_threads]
-        [i.start() for i in self.sampler_threads]
-        round_robin_idx = [0]
-        def get():
-            while True:
-                idx = round_robin_idx[0]
-                round_robin_idx[0] = (round_robin_idx[0] + 1) % n
-                if self.ready_events[idx].is_set():
-                    r = self.results[idx]
-                    self.ready_events[idx].clear()
-                    self.resume_events[idx].set()
-                    return r
-                elif round_robin_idx[0] == 0:
-                    time.sleep(0.001)
-        return get
-
-    def stop_samplers_and_join(self):
-        self.stop_event.set()
-        if hasattr(self, 'sampler_threads'):
-          while any([i.is_alive() for i in self.sampler_threads]):
-            [i.set() for i in self.resume_events]
-            [i.join(0.05) for i in self.sampler_threads]
+    def __call__(self, m):
+        m = self.mdp.mols2batch([self.mdp.mol2repr(m)])
+        return self.proxy(m, do_stems=False)[1].item()
 
 
-def make_model(config, mdp, out_per_mol=1):
-    if config.repr_type == 'block_graph':
-        model = model_block.GraphAgent(nemb=config.nemb,
+def make_model(args, mdp, is_proxy=False):
+    repr_type = args.proxy_repr_type if is_proxy else args.repr_type
+    nemb = args.proxy_nemb if is_proxy else args.nemb
+    num_conv_steps = args.proxy_num_conv_steps if is_proxy else args.num_conv_steps
+    model_version = args.proxy_model_version if is_proxy else args.model_version
+    if repr_type == 'block_graph':
+        model = model_block.GraphAgent(nemb=nemb,
                                        nvec=0,
                                        out_per_stem=mdp.num_blocks,
-                                       out_per_mol=out_per_mol,
-                                       num_conv_steps=config.num_conv_steps,
+                                       out_per_mol=1,
+                                       num_conv_steps=num_conv_steps,
                                        mdp_cfg=mdp,
-                                       version=config.model_version)
-    elif config.repr_type == 'atom_graph':
-        model = model_atom.MolAC_GCN(nhid=config.nemb,
+                                       version='v4')
+    elif repr_type == 'atom_graph':
+        model = model_atom.MolAC_GCN(nhid=nemb,
                                      nvec=0,
                                      num_out_per_stem=mdp.num_blocks,
-                                     num_out_per_mol=out_per_mol,
-                                     num_conv_steps=config.num_conv_steps,
-                                     version=config.model_version,
-                                     do_nblocks=(hasattr(config,'include_nblocks')
-                                                 and config.include_nblocks), dropout_rate=0.1)
-    elif config.repr_type == 'morgan_fingerprint':
+                                     num_out_per_mol=1,
+                                     num_conv_steps=num_conv_steps,
+                                     version=model_version,
+                                     dropout_rate=args.proxy_dropout)
+    elif repr_type == 'morgan_fingerprint':
         raise ValueError('reimplement me')
-        model = model_fingerprint.MFP_MLP(config.nemb, 3, mdp.num_blocks, 1)
+        model = model_fingerprint.MFP_MLP(args.nemb, 3, mdp.num_blocks, 1)
     return model
 
 
 _stop = [None]
-def train_model_with_proxy(config, model, proxy, dataset, num_steps=None, do_save=True):
-    ##### proxy is self.oracle 
+def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=True):
     debug_no_threads = False
     device = torch.device('cuda')
 
     if num_steps is None:
-        num_steps = config.num_iterations + 1
+        num_steps = args.num_iterations + 1
 
-    ##### target_model 
-    tau = config.bootstrap_tau
-    if config.bootstrap_tau > 0:
+    tau = args.bootstrap_tau
+    if args.bootstrap_tau > 0:
         target_model = deepcopy(model)
 
     if do_save:
-        exp_dir = f'{config.save_path}/run_{time.time()}/'
+        exp_dir = f'{args.save_path}/{args.array}_{args.run}/'
         os.makedirs(exp_dir, exist_ok=True)
 
-    ##### proxy (oracle) is only used here, with model 
-    dataset.set_sampling_model(model, proxy, sample_prob=config.sample_prob)
+    model = model.double()
+    proxy.proxy = proxy.proxy.double()
+    dataset.set_sampling_model(model, proxy, sample_prob=args.sample_prob)
 
-
-    ########## save_stuff ###########
     def save_stuff():
         pickle.dump([i.data.cpu().numpy() for i in model.parameters()],
                     gzip.open(f'{exp_dir}/params.pkl.gz', 'wb'))
@@ -314,24 +210,20 @@ def train_model_with_proxy(config, model, proxy, dataset, num_steps=None, do_sav
                      'test_infos': test_infos,
                      'time_start': time_start,
                      'time_now': time.time(),
-                     'args': config,},
+                     'args': args,},
                     gzip.open(f'{exp_dir}/info.pkl.gz', 'wb'))
 
         pickle.dump(train_infos,
                     gzip.open(f'{exp_dir}/train_info.pkl.gz', 'wb'))
-    ########## save_stuff ###########
 
-    ####### initialize setup #########
-    opt = torch.optim.Adam(model.parameters(), config.learning_rate, weight_decay=config.weight_decay,
-                           betas=(config.opt_beta, config.opt_beta2),
-                           eps=config.opt_epsilon)
 
-    if config.floatX == 'float32':
-        tf = lambda x: torch.tensor(x, device=device).to(torch.float)
-    else:
-        tf = lambda x: torch.tensor(x, device=device).to(torch.double)
+    opt = torch.optim.Adam(model.parameters(), args.learning_rate, weight_decay=args.weight_decay,
+                           betas=(args.opt_beta, args.opt_beta2),
+                           eps=args.opt_epsilon)
 
-    mbsize = config.mbsize
+    tf = lambda x: torch.tensor(x, device=device).to(torch.float64 if args.floatX else torch.float32)
+
+    mbsize = args.mbsize
 
     if not debug_no_threads:
         sampler = dataset.start_samplers(8, mbsize)
@@ -348,21 +240,18 @@ def train_model_with_proxy(config, model, proxy, dataset, num_steps=None, do_sav
     test_infos = []
     train_infos = []
     time_start = time.time()
+    time_last_check = time.time()
 
-    log_reg_c = config.log_reg_c
-    clip_loss = tf([config.clip_loss])
-    balanced_loss = config.balanced_loss
+    log_reg_c = args.log_reg_c
+    clip_loss = tf([args.clip_loss])
+    balanced_loss = args.balanced_loss
     do_nblocks_reg = False
-    max_blocks = config.max_blocks
-    leaf_coef = config.leaf_coef
-    ####### initialize setup #########
+    max_blocks = args.max_blocks
+    leaf_coef = args.leaf_coef
 
-    ######### main run ###########
     for i in range(num_steps):
-
-        ####### 1. data ########
         if not debug_no_threads:
-            r = sampler() ### sampler = dataset.start_samplers(8, mbsize)   see above. 
+            r = sampler()
             for thread in dataset.sampler_threads:
                 if thread.failed:
                     stop_everything()
@@ -370,11 +259,9 @@ def train_model_with_proxy(config, model, proxy, dataset, num_steps=None, do_sav
                     return
             p, pb, a, r, s, d, mols = r
         else:
-            p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize)) #### see dataset.sample 
-        ####### 1. data ########
-
-        ####### 2. model ######
-        # Since we sampled 'mbsize' trajectories, we're going to get roughly mbsize * H (H is variable) transitions
+            p, pb, a, r, s, d, mols = dataset.sample2batch(dataset.sample(mbsize))
+        # Since we sampled 'mbsize' trajectories, we're going to get
+        # roughly mbsize * H (H is variable) transitions
         ntransitions = r.shape[0]
         # state outputs
         if tau > 0:
@@ -417,8 +304,6 @@ def train_model_with_proxy(config, model, proxy, dataset, num_steps=None, do_sav
         last_losses.append((loss.item(), term_loss.item(), flow_loss.item()))
         train_losses.append((loss.item(), _term_loss.item(), _flow_loss.item(),
                              term_loss.item(), flow_loss.item()))
-
-        ###### logging ###### 
         if not i % 50:
             train_infos.append((
                 _term_loss.data.cpu().numpy(),
@@ -432,28 +317,83 @@ def train_model_with_proxy(config, model, proxy, dataset, num_steps=None, do_sav
                 torch.autograd.grad(loss, stem_out_s, retain_graph=True)[0].data.cpu().numpy(),
                 torch.autograd.grad(loss, stem_out_p, retain_graph=True)[0].data.cpu().numpy(),
             ))
-        ###### logging ###### 
-
-        ###### optimizer #####
-        if config.clip_grad > 0:
+        if args.clip_grad > 0:
             torch.nn.utils.clip_grad_value_(model.parameters(),
-                                            config.clip_grad)
+                                           args.clip_grad)
         opt.step()
         model.training_steps = i + 1
-        ###### optimizer #####
-
-        ##### update target_model #######
         if tau > 0:
             for _a,b in zip(model.parameters(), target_model.parameters()):
                 b.data.mul_(1-tau).add_(tau*_a)
 
-        if not i % 1000 and do_save:
-            save_stuff()
+
+        if not i % 100:
+            last_losses = [np.round(np.mean(i), 3) for i in zip(*last_losses)]
+            print(i, last_losses)
+            print('time:', time.time() - time_last_check)
+            time_last_check = time.time()
+            last_losses = []
+
+            if not i % 1000 and do_save:
+                save_stuff()
 
     stop_everything()
     if do_save:
         save_stuff()
-    return model
+    return model, dataset, {'train_losses': train_losses,
+                            'test_losses': test_losses,
+                            'test_infos': test_infos,
+                            'train_infos': train_infos}
+
+
+def sample_and_update_dataset(args, model, proxy_dataset, generator_dataset, oracle):
+    print("Sampling")
+    mdp = generator_dataset.mdp
+    nblocks = mdp.num_blocks
+    sampled_mols = []
+    rews = []
+    smis = []
+    while len(sampled_mols) < args.num_samples:
+        mol = BlockMoleculeDataExtended()
+        for i in range(args.max_blocks):
+            s = mdp.mols2batch([mdp.mol2repr(mol)])
+            stem_o, mol_o = model(s)
+            logits = torch.cat([stem_o.flatten(), mol_o.flatten()])
+            if i < args.min_blocks:
+                logits[-1] = -20
+            cat = Categorical(logits=logits)
+            act = cat.sample().item()
+            if act == logits.shape[0] - 1:
+                break
+            else:
+                act = (act % nblocks, act // nblocks)
+                mol = mdp.add_block_to(mol, block_idx=act[0], stem_idx=act[1])
+            if not len(mol.stems):
+                break
+        if mol.mol is None:
+            continue
+        smis.append(mol.smiles)
+        sampled_mols.append(mol)
+    
+    rews = oracle(sampled_mols)
+    for i in range(len(sampled_mols)):
+        sampled_mols[i].reward = rews[i]
+
+    print("Computing distances")
+    dists =[]
+    for m1, m2 in zip(sampled_mols, sampled_mols[1:] + sampled_mols[:1]):
+        dist = DataStructs.FingerprintSimilarity(Chem.RDKFingerprint(m1.mol), Chem.RDKFingerprint(m2.mol))
+        dists.append(dist)
+    print("Get batch rewards")
+    rewards = []
+    for m in sampled_mols:
+        rewards.append(m.reward)
+    print("Add to dataset")
+    proxy_dataset.add_samples(sampled_mols)
+    return proxy_dataset, rews, smis, {
+        'dists': dists, 'rewards': rewards, 'reward_mean': np.mean(rewards), 'reward_max': np.max(rewards),
+        'dists_mean': np.mean(dists), 'dists_sum': np.sum(dists)
+    }
 
 
 class GFlowNet_AL_Optimizer(BaseOptimizer):
@@ -471,19 +411,21 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
 
         proxy_repr_type = config.proxy_repr_type
         repr_type = config.repr_type
-        reward_exp = config.reward_exp
-        reward_norm = config.reward_norm
         rews = []
         smis = []
-        actors = [_SimDockLet.remote(tmp_dir)
-                        for i in range(10)]
-        pool = ray.util.ActorPool(actors)
+
         config.repr_type = proxy_repr_type
         config.replay_mode = "dataset"
-        config.reward_exp = 1
-        config.reward_norm = 1
-        proxy_dataset = ProxyDataset(args, bpath, device, floatX=torch.float)
-        proxy_dataset.load_h5("data/docked_mols.h5", config, num_examples=config.num_init_examples)
+        proxy_dataset = ProxyDataset(config, bpath, device, floatX=torch.float)
+
+        # starting_examples = np.random.choice(self.all_smiles, config.num_init_examples)
+        # starting_scores = self.oracle(starting_examples)
+
+        # proxy_dataset
+        dpath = os.path.join(path_here, 'data/docked_mols.h5')
+        proxy_dataset.load_h5(dpath, config, num_examples=config.num_init_examples)
+
+
         rews.append(proxy_dataset.rews)
         smis.append([mol.smiles for mol in proxy_dataset.train_mols])
         rew_max = np.max(proxy_dataset.rews)
@@ -494,7 +436,6 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
         print(len(proxy_dataset.train_mols), 'train mols')
         print(len(proxy_dataset.test_mols), 'test mols')
         print(config)
-        # import pdb;pdb.set_trace()
         proxy = Proxy(config, bpath, device)
         mdp = proxy_dataset.mdp
         train_metrics = []
@@ -506,8 +447,6 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
             # Initialize model and dataset for training generator
             config.sample_prob = 1
             config.repr_type = repr_type
-            config.reward_exp = reward_exp
-            config.reward_norm = reward_norm
             config.replay_mode = "online"
             gen_model_dataset = GenModelDataset(config, bpath, device)
             model = make_model(config, gen_model_dataset.mdp)
@@ -521,7 +460,7 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
 
             print(f"Sampling mols: {i}")
             # sample molecule batch for generator and update dataset with docking scores for sampled batch
-            _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, pool)
+            _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle)
             print(f"Batch Metrics: dists_mean: {batch_metrics['dists_mean']}, dists_sum: {batch_metrics['dists_sum']}, reward_mean: {batch_metrics['reward_mean']}, reward_max: {batch_metrics['reward_max']}")
             rews.append(r)
             smis.append(s)

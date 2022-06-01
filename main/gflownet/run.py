@@ -194,6 +194,7 @@ class Dataset:
                 eidx = np.random.choice(len(self.online_mols), n, False, prio/prio.sum()) 
                 samples = sum((self._get(i, self.online_mols) for i in eidx), [])
         return zip(*samples)
+        # return samples
 
     def sample2batch(self, mb):
         p, a, r, s, d, *o = mb
@@ -214,6 +215,7 @@ class Dataset:
         return (p, p_batch, a, r, s, d, mols, *o)
 
     def start_samplers(self, n, mbsize):
+        # import ipdb; ipdb.set_trace()
         self.ready_events = [threading.Event() for i in range(n)]
         self.resume_events = [threading.Event() for i in range(n)]
         self.results = [None] * n

@@ -1,3 +1,17 @@
+proxy_learning_rate: 2.5e-4
+proxy_dropout: 0.0
+proxy_weight_decay: 0.000001
+proxy_mbsize: 64
+proxy_opt_beta: 0.9
+proxy_nemb: 64
+proxy_num_iterations: 10
+num_init_examples: 2000
+num_outer_loop_iters: 25
+num_samples: 200
+proxy_num_conv_steps: 12
+proxy_repr_type: 'atom_graph'
+proxy_model_version: 'v2'
+progress: False
 learning_rate: 0.0005
 opt_beta: 0.9
 opt_beta2: 0.999
@@ -25,3 +39,5 @@ save_path: 'gflownet_models/'
 proxy_path: './data/pretrained_proxy'
 floatX: 'float64'
 balanced_loss: True 
+run: 0
+array: ''
