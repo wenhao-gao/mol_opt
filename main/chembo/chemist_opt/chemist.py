@@ -154,7 +154,7 @@ class Chemist:
         ) ### is sub-class of **BlackboxOptimiser**, instead of multi-objective optimizer 
         print('create optimizer, before optimization')
         # exit()  ### Q: initial pool is called before or after exit?  after. 
-        return optimiser.optimise(max_capital) ### two optimise correspond the same core function, 
+        return optimiser.optimise(max_capital) ### use blackbox instead of multiobjective
 
 
     # def get_raw_domain_point_from_processed(self, opt_point):

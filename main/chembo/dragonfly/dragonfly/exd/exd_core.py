@@ -300,7 +300,7 @@ class ExperimentDesigner(object):
       # the initial set.
       pass
     else:
-      # Set the initial capital
+      print('###### Set the initial capital #######')
       if self.options.init_capital == 'default':
         self.init_capital = np.clip(5 * self.domain.get_dim(),
                                     max(5.0, 0.025 * self.available_capital),
@@ -311,25 +311,36 @@ class ExperimentDesigner(object):
         self.init_capital = float(self.options.init_capital_frac) * self.available_capital
       else:
         self.init_capital = None
-      # Set the function to return the initial qinfos
+      print('# Set the function to return the initial qinfos')
       if hasattr(self.options, 'get_initial_qinfos') and \
          self.options.get_initial_qinfos is not None:
-        get_initial_qinfos = self.options.get_initial_qinfos
+        # print('--- get_initial_qinfos1 ----')
+        get_initial_qinfos = self.options.get_initial_qinfos ##### hit this 
       else:
-        get_initial_qinfos = self._get_initial_qinfos
-      # Send out the initial queries to the worker manager
+        # print('--- get_initial_qinfos2 ----')
+        get_initial_qinfos = self._get_initial_qinfos ### not this 
+      print("##### Send out the initial queries to the worker manager ######")
       if self.init_capital is not None:
         initial_qinfos_w_init_capital = []
         _num_tries_for_init_pool_sampling = 0
         points = 0
         while True:
+          print('####### while loop --- select initial pool ' + str(points) + ' ########')
           if len(initial_qinfos_w_init_capital) == 0:
             if self.options.capital_type == 'return_value':
               num_initial_queries_w_init_capital = int(self.init_capital)
             else:
               num_initial_queries_w_init_capital = int(2 * self.init_capital)
-            initial_qinfos_w_init_capital = \
-              get_initial_qinfos(num_initial_queries_w_init_capital)
+            print('########### get_initial_qinfos begin ########')
+            print("------- num_initial_queries_w_init_capital --------", num_initial_queries_w_init_capital) ### 20, initial_pool_size 
+            from time import time 
+            seed = int(str(time())[-5:])
+            import random 
+            random.seed(seed)
+            initial_qinfos_w_init_capital = get_initial_qinfos(num_initial_queries_w_init_capital * 10)
+            random.shuffle(initial_qinfos_w_init_capital)
+            initial_qinfos_w_init_capital = initial_qinfos_w_init_capital[:num_initial_queries_w_init_capital]
+            print('########### get_initial_qinfos end ########')
           if len(initial_qinfos_w_init_capital) == 0:
             _num_tries_for_init_pool_sampling += 1
             if _num_tries_for_init_pool_sampling % 10 == 0:
@@ -339,13 +350,17 @@ class ExperimentDesigner(object):
                     'this problem persists.')%(_num_tries_for_init_pool_sampling))
             continue
           qinfo = initial_qinfos_w_init_capital.pop(0)
+          # print('---- qinfo', qinfo, '-----')
           if self.ask_tell_mode:
+            # print('---- ask_tell_mode', '-----')
             self.first_qinfos.append(qinfo)
             points += 1
             if points > self.init_capital:
               break
           else:
+            # print('---- not ask_tell_mode', '-----')
             self.step_idx += 1
+            # print('---- _wait_for_a_free_worker', '-----')
             self._wait_for_a_free_worker()
             if self._terminate_initialisation():
               cap_frac = (np.nan if self.available_capital <= 0 else
@@ -353,7 +368,10 @@ class ExperimentDesigner(object):
               self.reporter.writeln('Capital spent on initialisation: %0.4f(%0.4f).'%(
                   self.get_curr_spent_capital(), cap_frac))
               break
-            self._dispatch_single_experiment_to_worker_manager(qinfo)
+            # print('---- _dispatch_single_experiment_to_worker_manager', '-----')
+            self._dispatch_single_experiment_to_worker_manager(qinfo) ##### call oracle 
+            # print('---- _dispatch_single_experiment_to_worker_manager done', '-----')
+
       else:
         num_init_evals = int(self.options.num_init_evals)
         if num_init_evals > 0:
@@ -462,7 +480,8 @@ class ExperimentDesigner(object):
     """ Initialisation before running initialisation. """
     self._print_method_description()   #### only print
     self.initialise_capital()      ##### count time 
-    self.perform_initial_queries()   ##### 
+    self.perform_initial_queries()   ##### initial pool selection 
+    print("------- initial queries done ---------")
     self._child_run_experiments_initialise()   #####  blackbox-optimizer line 227
     self._print_header()
 

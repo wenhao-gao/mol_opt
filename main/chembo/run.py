@@ -1,8 +1,3 @@
-"""
-Runner of the Chemist optimization.
-Can be used as a usage example.
-"""
-
 import os
 import sys
 # sys.path.append('../..')
