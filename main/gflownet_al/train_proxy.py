@@ -7,12 +7,8 @@ import numpy as np
 from tqdm import tqdm
 import torch
 from mol_mdp_ext import BlockMoleculeDataExtended
-
 tmp_dir = "/tmp/molexp"
-
 os.makedirs(tmp_dir, exist_ok=True)
-
-
 from main.gflownet_al.gflownet import Dataset as _Dataset
 
 

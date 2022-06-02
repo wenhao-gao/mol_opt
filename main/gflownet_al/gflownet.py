@@ -163,7 +163,6 @@ class Dataset:
             if len(self.online_mols) > self.max_online_mols * 1.1:
                 self.online_mols = self.online_mols[-self.max_online_mols:]
 
-
     def _get_reward(self, m):
         rdmol = m.mol
         if rdmol is None:
@@ -171,8 +170,11 @@ class Dataset:
         smi = m.smiles
         if smi in self.train_mols_map:
             return self.train_mols_map[smi].reward
-        return self.proxy_reward(m)
+        return self.r2r_normalize(self.proxy_reward(m))
         # return self.r2r(normscore=self.proxy_reward(m))
+
+    def r2r_normalize(self, r):
+        return max(self.R_min, r)
 
     def sample(self, n):
         if self.replay_mode == 'dataset':

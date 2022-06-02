@@ -81,7 +81,7 @@ class Proxy:
         train_losses = []
         # time_last_check = time.time()
 
-        for i in range(self.args.proxy_num_iterations):
+        for i in tqdm(range(self.args.proxy_num_iterations)):
             if not debug_no_threads:
                 r = sampler()
                 for thread in dataset.sampler_threads:
@@ -255,7 +255,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         # Since we sampled 'mbsize' trajectories, we're going to get
         # roughly mbsize * H (H is variable) transitions
         ntransitions = r.shape[0]
-        r = torch.maximum(r, torch.zeros_like(r))     ##### fix the bug: R should be non-negative
+        # r = torch.maximum(r, torch.zeros_like(r))     ##### fix the bug: R should be non-negative
         # state outputs
         if tau > 0:
             with torch.no_grad():
