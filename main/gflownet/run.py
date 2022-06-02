@@ -175,7 +175,7 @@ class Dataset:
         smi = m.smiles
         if smi in self.train_mols_map:
             return self.train_mols_map[smi].reward
-        return self.proxy_reward(smi)
+        return max(self.R_min, self.proxy_reward(smi))
 
     def sample(self, n):
         if self.replay_mode == 'dataset': ##### random sampling from all 

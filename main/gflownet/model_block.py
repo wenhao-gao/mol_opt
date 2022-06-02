@@ -13,7 +13,7 @@ class GraphAgent(nn.Module):
 
     def __init__(self, nemb, nvec, out_per_stem, out_per_mol, num_conv_steps, mdp_cfg, version='v1'):
         super().__init__()
-        print(version)
+        # print(version)
         if version == 'v5': version = 'v4'
         self.version = version
         self.embeddings = nn.ModuleList([
