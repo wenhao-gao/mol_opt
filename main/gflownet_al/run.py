@@ -26,7 +26,7 @@ rdBase.DisableLog('rdApp.error')
 from main.gflownet_al.train_proxy import Dataset as _ProxyDataset
 from main.gflownet_al.gflownet import Dataset as GenModelDataset
 from main.optimizer import BaseOptimizer, Objdict
-
+from tqdm import tqdm 
 from ipdb import set_trace
 
 class ProxyDataset(_ProxyDataset):
@@ -208,7 +208,6 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         pickle.dump(train_infos,
                     gzip.open(f'{exp_dir}/train_info.pkl.gz', 'wb'))
 
-
     opt = torch.optim.Adam(model.parameters(), args.learning_rate, weight_decay=args.weight_decay,
                            betas=(args.opt_beta, args.opt_beta2),
                            eps=args.opt_epsilon)
@@ -233,14 +232,15 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
     train_infos = []
     time_start = time.time()
 
-    log_reg_c = args.log_reg_c
+    log_reg_c = args.log_reg_c ### 0.00000002 
     clip_loss = tf([args.clip_loss])
     balanced_loss = args.balanced_loss
     do_nblocks_reg = False
     max_blocks = args.max_blocks
-    leaf_coef = args.leaf_coef
+    leaf_coef = args.leaf_coef 
 
-    for i in range(num_steps):
+
+    for i in tqdm(range(num_steps)):
         if not debug_no_threads:
             r = sampler()
             for thread in dataset.sampler_threads:
@@ -255,6 +255,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         # Since we sampled 'mbsize' trajectories, we're going to get
         # roughly mbsize * H (H is variable) transitions
         ntransitions = r.shape[0]
+        r = torch.maximum(r, torch.zeros_like(r))     ##### fix the bug: R should be non-negative
         # state outputs
         if tau > 0:
             with torch.no_grad():
@@ -268,16 +269,23 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         # then sum the parents' contribution, this is the inflow
         exp_inflow = (torch.zeros((ntransitions,), device=device, dtype=dataset.floatX)
                     .index_add_(0, pb, torch.exp(qsa_p))) # pb is the parents' batch index
-        inflow = torch.log(exp_inflow + log_reg_c)
+        inflow = torch.log(exp_inflow + log_reg_c) ### correct 
         # sum the state's Q(s,a), this is the outflow
         exp_outflow = model.sum_output(s, torch.exp(stem_out_s), torch.exp(mol_out_s[:, 0]))
         # include reward and done multiplier, then take the log
         # we're guarenteed that r > 0 iff d = 1, so the log always works
-        outflow_plus_r = torch.log(log_reg_c + r + exp_outflow * (1-d))
+        # print('r', r, 'exp_outflow', exp_outflow, 'd', d, 'log_reg_c', log_reg_c) 
+        ##### r [0.00, -0.0035,  0.0, -0.0159, 0.0,], ***** that caused bugs, R should be non-negative 
+        ##### d [0,1,0,0,1,1,1,....]
+
+        outflow_plus_r = torch.log(log_reg_c + r + exp_outflow * (1-d)) ### with nan 
+        # print('inflow', inflow,)  
+        # print('outflow_plus_r', outflow_plus_r)
         if do_nblocks_reg:
             losses = _losses = ((inflow - outflow_plus_r) / (s.nblocks * max_blocks)).pow(2)
         else:
             losses = _losses = (inflow - outflow_plus_r).pow(2)
+
         if clip_loss > 0:
             ld = losses.detach()
             losses = losses / ld * torch.minimum(ld, clip_loss)
@@ -296,6 +304,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         last_losses.append((loss.item(), term_loss.item(), flow_loss.item()))
         train_losses.append((loss.item(), _term_loss.item(), _flow_loss.item(),
                             term_loss.item(), flow_loss.item()))
+
         if not i % 50:
             train_infos.append((
                 _term_loss.data.cpu().numpy(),
@@ -312,7 +321,7 @@ def train_generative_model(args, model, proxy, dataset, num_steps=None, do_save=
         if args.clip_grad > 0:
             torch.nn.utils.clip_grad_value_(model.parameters(),
                                         args.clip_grad)
-        opt.step()
+        opt.step()  ##### generate nan 
         model.training_steps = i + 1
         if tau > 0:
             for _a,b in zip(model.parameters(), target_model.parameters()):
@@ -496,10 +505,10 @@ class GFlowNet_AL_Optimizer(BaseOptimizer):
                 model = model.double()
             model.to(device)
             # train model with with proxy
-        
+
             # set_trace()
             model, gen_model_dataset, training_metrics = train_generative_model(config, model, proxy, gen_model_dataset, do_save=False)
-        
+
             # sample molecule batch for generator and update dataset with docking scores for sampled batch
             _proxy_dataset, r, s, batch_metrics = sample_and_update_dataset(config, model, proxy_dataset, gen_model_dataset, self.oracle)
 
