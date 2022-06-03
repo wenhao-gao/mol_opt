@@ -6,7 +6,7 @@ nemb: 256
 mbsize: 4
 min_blocks: 2
 max_blocks: 8
-num_conv_steps: 10
+num_conv_steps: 3
 log_reg_c: 0.00000002
 sample_prob: 1.0
 R_min: 0.0001
@@ -16,7 +16,7 @@ clip_loss: 0.0
 replay_mode: 'online'
 bootstrap_tau: 0.0
 weight_decay: 0.0 
-random_action_prob: 0.05
+random_action_prob: 0
 repr_type: 'block_graph'
 include_nblocks: False
 model_version: 'v4'
