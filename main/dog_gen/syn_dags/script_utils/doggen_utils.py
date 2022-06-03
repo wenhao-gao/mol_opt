@@ -33,7 +33,6 @@ class ScoredTupleTree:
 
 @dataclass
 class DogGenHillclimbingParams:
-    n_rounds: int = 30
     n_samples_per_round: int = 7000
     n_samples_to_keep_per_round: int = 1500
     n_epochs_for_finetuning: int = 2
@@ -84,7 +83,10 @@ class DogGenHillclimber:
         sorted_tts: typing.List[ScoredTupleTree] = self.score_new_trees_and_sort(sampled_clean_tts, sorted_tts)
         self._report_best(sorted_tts, tb_logger, 0)
 
-        for round in range(self.hparams.n_rounds):
+        round = 0
+        
+        while True:
+            round += 1
             print(f"# Starting round {round}")
             print('## Setting up new batch for training...')
             new_batch_for_fine_tuning = [e.tuple_tree for e in sorted_tts[:self.hparams.n_samples_to_keep_per_round]]
@@ -148,8 +150,8 @@ class DogGenHillclimber:
         existing_tree_scores = copy.copy(existing_tree_scores)
         # scores = self.parts.scorer.evaluate_molecules([e[0] for e in new_tts])
         try:
-            scores = self.parts.scorer([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
-            # scores = self.parts.scorer.evaluate_molecules([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
+            # scores = self.parts.scorer([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
+            scores = self.parts.scorer.evaluate_molecules([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
         except:
             scores = np.array(self.parts.scorer([e[0] for e in new_tts]))  
 

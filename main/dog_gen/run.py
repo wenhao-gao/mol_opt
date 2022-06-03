@@ -121,14 +121,16 @@ class DoG_Gen_Optimizer(BaseOptimizer):
                                    num_workers=params.num_dataloader_workers, collate_fn=collate_func,
                                    shuffle=True)
 
-        ''' ### original setup, here we have 10k oracle budget, so i tune them smaller. 
-        n_rounds: int = 30
-        n_samples_per_round: int = 7000
-        n_samples_to_keep_per_round: int = 1500
-        '''
-
         # # Now put this together for hillclimber constructor arguments
-        hparams = doggen_utils.DogGenHillclimbingParams(config['n_rounds'], config['n_samples_per_round'], config['n_samples_to_keep_per_round'])
+        hparams = doggen_utils.DogGenHillclimbingParams(
+            n_samples_per_round = config.n_samples_per_round, 
+            n_samples_to_keep_per_round = config.n_samples_to_keep_per_round,
+            n_epochs_for_finetuning = config.n_epochs_for_finetuning,
+            batch_size = config.batch_size,
+            sample_batch_size = config.sample_batch_size,
+            learning_rate = config.learning_rate
+        )
+
         #### oracle is params.property_predictor 
         parts = doggen_utils.DogGenHillclimberParts(model, self.oracle,
                                                     set(other_parts['mol_to_graph_idx_for_reactants'].keys()), rng,
@@ -140,5 +142,4 @@ class DoG_Gen_Optimizer(BaseOptimizer):
         # # Run!
         print("Starting hill climber")
         sorted_tts = hillclimber.run_hillclimbing(train_trees, tb_summary_writer)  
-        ###### self.oracle.finish is implemented in "run_hillclimbing"  
-
+        print("Done!")
