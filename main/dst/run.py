@@ -5,11 +5,16 @@ sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
 from chemutils import * 
+from module import * 
 from inference_utils import * 
 from tqdm import tqdm
 from chemutils import smiles2graph, vocabulary 
 from online_train import train_gnn
 from random import shuffle 
+import random 
+
+device = torch.device('cpu')
+# device = torch.device('cuda:0')
 
 class DST_Optimizer(BaseOptimizer):
 
@@ -21,8 +26,15 @@ class DST_Optimizer(BaseOptimizer):
 
 		self.oracle.assign_evaluator(oracle)
 
-		model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
-		gnn = torch.load(model_ckpt)
+		#### load the pretrained model
+		# model_ckpt = os.path.join(path_here, "pretrained_model/gnn_init.ckpt")
+		# gnn = torch.load(model_ckpt)
+		gnn = GCN(nfeat = 50, nhid = 100, n_out = 1, num_layer = 2)
+		gnn = gnn.to(device)
+		gnn.device = device
+		# print("gnn device", next(gnn.parameters()).device)
+		# print(next(gnn.gc1.parameters()).device)
+		# print(next(gnn.gcs[0].parameters()).device)
 		all_smiles_score_list = []
 
 		population_size = config['population_size']
@@ -37,13 +49,14 @@ class DST_Optimizer(BaseOptimizer):
 		random.seed(self.seed)
 
 		#### screening zinc first to obtain warm start 
+		random.seed(self.seed)
 		shuffle(self.all_smiles)
 		warmstart_smiles_lst = self.all_smiles[:2000] 
 		warmstart_smiles_score = self.oracle(warmstart_smiles_lst)
 		warmstart_smiles_score_lst = list(zip(warmstart_smiles_lst, warmstart_smiles_score))
 		warmstart_smiles_score_lst.sort(key=lambda x:x[1], reverse = True)  #### [(smiles1, score1), (smiles2, score2), ... ] 
 		all_smiles_score_list.extend(warmstart_smiles_score_lst)
-		train_gnn(all_smiles_score_list, gnn)
+		train_gnn(all_smiles_score_list, gnn, )
 		print('##### train GNN ######')
 
 
@@ -66,14 +79,21 @@ class DST_Optimizer(BaseOptimizer):
 			next_set = set() 
 			print('Sampling from current state') #### most time consuming 
 			for smiles in tqdm(current_set):
-				try:
-					if substr_num(smiles) < 3: #### short smiles
-						smiles_set = optimize_single_molecule_one_iterate(smiles, gnn)  ### optimize_single_molecule_one_iterate_v2
-					else:
-						smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon)
-					next_set = next_set.union(smiles_set)
-				except:
-					pass 
+				if substr_num(smiles) < 3: #### short smiles
+					# try:
+					if True:
+						smiles_set = optimize_single_molecule_one_iterate(smiles, gnn, )  ### optimize_single_molecule_one_iterate_v2
+					# print('------ optimize dst success A -------')
+					# except:
+					# 	continue 
+				else:
+					# try:
+					if True:
+						smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon, )
+					# print('------ optimize dst success B -------')
+					# except:
+					# 	continue
+				next_set = next_set.union(smiles_set)
 
 			smiles_lst = list(next_set)
 			shuffle(smiles_lst)
@@ -88,7 +108,7 @@ class DST_Optimizer(BaseOptimizer):
 			###### train GNN online 
 			print('##### train GNN online ######')
 			all_smiles_score_list.extend(list(zip(smiles_lst, score_lst)))
-			train_gnn(all_smiles_score_list, gnn)
+			train_gnn(all_smiles_score_list, gnn, )
 				
 			smiles_score_lst = [(smiles, score) for smiles, score in zip(smiles_lst, score_lst)]
 			smiles_score_lst.sort(key=lambda x:x[1], reverse=True)

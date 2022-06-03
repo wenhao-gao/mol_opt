@@ -13,7 +13,7 @@ class GCN(nn.Module):
     def __init__(self, nfeat, nhid, n_out, num_layer):
         super(GCN, self).__init__()
         self.gc1 = GraphConvolution(in_features = nfeat, out_features = nhid)
-        self.gcs = [GraphConvolution(in_features = nhid, out_features = nhid) for i in range(num_layer)]
+        self.gcs = nn.ModuleList([GraphConvolution(in_features = nhid, out_features = nhid) for i in range(num_layer)])
         self.gc2 = GraphConvolution(in_features = nhid, out_features = n_out)
         # self.dropout = dropout
         from chemutils import vocabulary 
@@ -51,6 +51,8 @@ class GCN(nn.Module):
         node_mat, adj, weight = node_mat.to(self.device), adj.to(self.device), weight.to(self.device)
         x = self.embedding(node_mat)
         x = F.relu(self.gc1(x,adj))
+        # print(x.device, adj.device, next(self.gcs[0].parameters()).device)
+
         for gc in self.gcs:
             x = F.relu(gc(x,adj))
         x = self.gc2(x, adj)
@@ -88,17 +90,77 @@ class GCN(nn.Module):
         return pred.item() 
 
 
+    # def update_molecule(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np):
+    #     node_mask = torch.BoolTensor(node_mask_np).to(self.device)
+    #     node_indicator_np2, adjacency_weight_np2 = deepcopy(node_indicator_np), deepcopy(adjacency_weight_np)
+
+    #     pred_lst = []
+    #     # for i in tqdm(range(5000)): ### 5k 10k
+    #     for i in range(5000): ### 5k 10k
+
+    #         # node_indicator = Variable(torch.FloatTensor(node_indicator_np2), requires_grad = True).to(self.device)
+    #         # adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2), requires_grad = True).to(self.device)
+    #         # print("node_indicator", node_indicator.shape, adjacency_weight.shape)
+    #         node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+    #         adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+    #         adjacency_weight.requires_grad = True 
+    #         node_indicator.requires_grad = True
+    #         opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
+
+    #         normalized_node_mat = torch.softmax(node_indicator, 1)
+    #         normalized_adjacency_weight = torch.sigmoid(adjacency_weight)
+    #         node_weight = torch.sum(normalized_adjacency_weight, 1)
+    #         node_weight = torch.clamp(node_weight, max=1) 
+    #         node_weight[node_mask] = 1 
+    #         pred_y = self.forward(normalized_node_mat, normalized_adjacency_weight, node_weight)
+
+    #         # target_y = Variable(torch.Tensor([max(sigmoid(pred_y.item()) + 0.05, 1.0)])[0], requires_grad=True)
+    #         target_y = Variable(torch.Tensor([1.0])[0]).to(self.device)
+    #         cost = self.criteria(pred_y, target_y)
+    #         opt_mol.zero_grad()
+    #         cost.backward()
+    #         opt_mol.step()
+
+
+    #         node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
+    #         node_indicator_np2[node_mask_np,:] = node_indicator_np[node_mask_np,:]
+    #         adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
+
+    #         if i%500==0:
+    #             pred_lst.append(pred_y.item())
+
+    #     # print('prediction', pred_lst)
+    #     # return node_indicator, adjacency_weight  ### torch.FloatTensor 
+    #     return node_indicator_np2, adjacency_weight_np2  #### np.array 
+
+
     def update_molecule(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np):
         node_mask = torch.BoolTensor(node_mask_np).to(self.device)
+        adjacency_mask = torch.BoolTensor(adjacency_mask_np).to(self.device)
         node_indicator_np2, adjacency_weight_np2 = deepcopy(node_indicator_np), deepcopy(adjacency_weight_np)
 
         pred_lst = []
+
+        node_indicator_fix = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+        # node_indicator_fix.requires_grad = True
+        adjacency_weight_fix = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+        # adjacency_weight_fix.requires_grad = True 
+
+
+
+
+        node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+        adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+        adjacency_weight.requires_grad = True 
+        node_indicator.requires_grad = True
+        opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
+
         # for i in tqdm(range(5000)): ### 5k 10k
         for i in range(5000): ### 5k 10k
 
-            node_indicator = Variable(torch.FloatTensor(node_indicator_np2), requires_grad = True).to(self.device)
-            adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2), requires_grad = True).to(self.device)
-            opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
+            # node_indicator = Variable(torch.FloatTensor(node_indicator_np2), requires_grad = True).to(self.device)
+            # adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2), requires_grad = True).to(self.device)
+            # print("node_indicator", node_indicator.shape, adjacency_weight.shape)
 
             normalized_node_mat = torch.softmax(node_indicator, 1)
             normalized_adjacency_weight = torch.sigmoid(adjacency_weight)
@@ -108,65 +170,79 @@ class GCN(nn.Module):
             pred_y = self.forward(normalized_node_mat, normalized_adjacency_weight, node_weight)
 
             # target_y = Variable(torch.Tensor([max(sigmoid(pred_y.item()) + 0.05, 1.0)])[0], requires_grad=True)
-            target_y = Variable(torch.Tensor([1.0])[0])
+            target_y = Variable(torch.Tensor([1.0])[0]).to(self.device)
             cost = self.criteria(pred_y, target_y)
             opt_mol.zero_grad()
             cost.backward()
             opt_mol.step()
 
-            node_indicator_np2, adjacency_weight_np2 = node_indicator.detach().numpy(), adjacency_weight.detach().numpy()
-            node_indicator_np2[node_mask_np,:] = node_indicator_np[node_mask_np,:]
-            adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
+            node_indicator.requires_grad = False
+            node_indicator[node_mask,:] = node_indicator_fix[node_mask,:]
+            node_indicator.requires_grad = True
+            adjacency_weight.requires_grad = False
+            adjacency_weight[adjacency_mask] = adjacency_weight_fix[adjacency_mask]
+            adjacency_weight.requires_grad = True
 
             if i%500==0:
                 pred_lst.append(pred_y.item())
+
+
+        node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
+        node_indicator_np2[node_mask_np,:] = node_indicator_np[node_mask_np,:]
+        adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
 
         # print('prediction', pred_lst)
         # return node_indicator, adjacency_weight  ### torch.FloatTensor 
         return node_indicator_np2, adjacency_weight_np2  #### np.array 
 
-    def update_molecule_interpret(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np):
-        node_mask = torch.BoolTensor(node_mask_np).to(self.device)
-        node_indicator_np2, adjacency_weight_np2 = deepcopy(node_indicator_np), deepcopy(adjacency_weight_np)
 
-        pred_lst = []
-        # for i in tqdm(range(5000)): ### 5k 10k
-        for i in range(5000): ### 5k 10k
+    # def update_molecule_interpret(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np):
+    #     node_mask = torch.BoolTensor(node_mask_np).to(self.device)
+    #     node_indicator_np2, adjacency_weight_np2 = deepcopy(node_indicator_np), deepcopy(adjacency_weight_np)
 
-            node_indicator = Variable(torch.FloatTensor(node_indicator_np2), requires_grad = True).to(self.device)
-            adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2), requires_grad = True).to(self.device)
-            opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
+    #     pred_lst = []
+    #     # for i in tqdm(range(5000)): ### 5k 10k
+    #     for i in range(5000): ### 5k 10k
 
-            normalized_node_mat = torch.softmax(node_indicator, 1)
-            normalized_adjacency_weight = torch.sigmoid(adjacency_weight)
-            node_weight = torch.sum(normalized_adjacency_weight, 1)
-            node_weight = torch.clamp(node_weight, max=1) 
-            node_weight[node_mask] = 1 
-            pred_y = self.forward(normalized_node_mat, normalized_adjacency_weight, node_weight)
+    #         # node_indicator = Variable(torch.FloatTensor(node_indicator_np2), requires_grad = True).to(self.device)
+    #         # adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2), requires_grad = True).to(self.device)
+    #         # print("node_indicator", node_indicator.shape, adjacency_weight.shape)
+    #         node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+    #         adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+    #         adjacency_weight.requires_grad = True 
+    #         node_indicator.requires_grad = True
+    #         opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
 
-            # target_y = Variable(torch.Tensor([max(sigmoid(pred_y.item()) + 0.05, 1.0)])[0], requires_grad=True)
-            target_y = Variable(torch.Tensor([1.0])[0])
-            cost = self.criteria(pred_y, target_y)
-            opt_mol.zero_grad()
-            cost.backward()
-            opt_mol.step()
+    #         normalized_node_mat = torch.softmax(node_indicator, 1)
+    #         normalized_adjacency_weight = torch.sigmoid(adjacency_weight)
+    #         node_weight = torch.sum(normalized_adjacency_weight, 1)
+    #         node_weight = torch.clamp(node_weight, max=1) 
+    #         node_weight[node_mask] = 1 
+    #         pred_y = self.forward(normalized_node_mat, normalized_adjacency_weight, node_weight)
 
-            if i==0:
-                node_indicator_grad = node_indicator.grad.detach().numpy()
-                adjacency_weight_grad = adjacency_weight.grad.detach().numpy() 
-            # print(node_indicator.grad.shape)
-            # print(adjacency_weight.grad.shape)
+    #         # target_y = Variable(torch.Tensor([max(sigmoid(pred_y.item()) + 0.05, 1.0)])[0], requires_grad=True)
+    #         target_y = Variable(torch.Tensor([1.0])[0]).to(self.device)
+    #         cost = self.criteria(pred_y, target_y)
+    #         opt_mol.zero_grad()
+    #         cost.backward()
+    #         opt_mol.step()
 
-            node_indicator_np2, adjacency_weight_np2 = node_indicator.detach().numpy(), adjacency_weight.detach().numpy()
-            node_indicator_np2[node_mask_np,:] = node_indicator_np[node_mask_np,:]
-            adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
+    #         if i==0:
+    #             node_indicator_grad = node_indicator.grad.detach().numpy()
+    #             adjacency_weight_grad = adjacency_weight.grad.detach().numpy() 
+    #         # print(node_indicator.grad.shape)
+    #         # print(adjacency_weight.grad.shape)
 
-            if i%500==0:
-                pred_lst.append(pred_y.item())
+    #         node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
+    #         node_indicator_np2[node_mask_np,:] = node_indicator_np[node_mask_np,:]
+    #         adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
 
-        # print('prediction', pred_lst)
-        # return node_indicator, adjacency_weight  ### torch.FloatTensor 
-        return node_indicator_np2, adjacency_weight_np2, node_indicator_grad, adjacency_weight_grad  #### np.array 
+    #         if i%500==0:
+    #             pred_lst.append(pred_y.item())
+
+    #     # print('prediction', pred_lst)
+    #     # return node_indicator, adjacency_weight  ### torch.FloatTensor 
+    #     return node_indicator_np2, adjacency_weight_np2, node_indicator_grad, adjacency_weight_grad  #### np.array 
 
 
     def update_molecule_v2(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np, 
@@ -186,8 +262,11 @@ class GCN(nn.Module):
         # for i in tqdm(range(5000)): ### 5k 10k
         for i in range(5000): ### 5k 10k
 
-            node_indicator = Variable(torch.FloatTensor(node_indicator_np2), requires_grad = True).to(self.device)
-            adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2), requires_grad = True).to(self.device)
+            node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+            adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+            adjacency_weight.requires_grad = True 
+            node_indicator.requires_grad = True
+            # print("node_indicator", node_indicator.shape, adjacency_weight.shape)
             opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
 
             normalized_node_mat = torch.softmax(node_indicator, 1)
@@ -202,13 +281,13 @@ class GCN(nn.Module):
             pred_y = self.forward(normalized_node_mat, normalized_adjacency_weight, node_weight)
 
             # target_y = Variable(torch.Tensor([max(sigmoid(pred_y.item()) + 0.05, 1.0)])[0], requires_grad=True)
-            target_y = Variable(torch.Tensor([1.0])[0])
+            target_y = Variable(torch.Tensor([1.0])[0]).to(self.device)
             cost = self.criteria(pred_y, target_y)
             opt_mol.zero_grad()
             cost.backward()
             opt_mol.step()
 
-            node_indicator_np2, adjacency_weight_np2 = node_indicator.detach().numpy(), adjacency_weight.detach().numpy()
+            node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
             node_indicator_np2[is_nonleaf_np,:] = node_indicator_np[is_nonleaf_np,:]
             adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
 
@@ -224,17 +303,19 @@ class GCN(nn.Module):
     def learn(self, node_mat, adj, weight, target):
         pred_y = self.forward(node_mat, adj, weight)
         pred_y = pred_y.view(-1)
+        target = target.to(self.device)
         cost = self.criteria(pred_y, target)
         self.opt.zero_grad() 
         cost.backward() 
         self.opt.step() 
-        return cost.data.numpy(), pred_y.data.numpy() 
+        return cost.cpu().data.numpy(), pred_y.cpu().data.numpy() 
 
     def valid(self, node_mat, adj, weight, target):
         pred_y = self.forward(node_mat, adj, weight)
         pred_y = pred_y.view(-1)
+        target = target.to(self.device)
         cost = self.criteria(pred_y, target)
-        return cost.data.numpy(), pred_y.data.numpy() 
+        return cost.cpu().data.numpy(), pred_y.cpu().data.numpy() 
 
     
 class GCNSum(GCN): 
