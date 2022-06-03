@@ -147,8 +147,6 @@ class GCN(nn.Module):
         # adjacency_weight_fix.requires_grad = True 
 
 
-
-
         node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
         adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
         adjacency_weight.requires_grad = True 
@@ -245,13 +243,58 @@ class GCN(nn.Module):
     #     return node_indicator_np2, adjacency_weight_np2, node_indicator_grad, adjacency_weight_grad  #### np.array 
 
 
+    # def update_molecule_v2(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np, 
+    #                              leaf_extend_idx_pair, leaf_nonleaf_lst):
+    #     (is_nonleaf_np, is_leaf_np, is_extend_np) = node_mask_np
+    #     is_nonleaf = torch.BoolTensor(is_nonleaf_np).to(self.device)
+    #     is_leaf = torch.BoolTensor(is_leaf_np).to(self.device)
+    #     is_extend = torch.BoolTensor(is_extend_np).to(self.device)
+    #     node_indicator_np2, adjacency_weight_np2 = deepcopy(node_indicator_np), deepcopy(adjacency_weight_np)
+
+    #     pred_lst = []
+    #     # for i in tqdm(range(5000)): ### 5k 10k
+    #     for i in range(5000): ### 5k 10k
+
+    #         node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+    #         adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+    #         adjacency_weight.requires_grad = True 
+    #         node_indicator.requires_grad = True
+    #         # print("node_indicator", node_indicator.shape, adjacency_weight.shape)
+    #         opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
+
+    #         normalized_node_mat = torch.softmax(node_indicator, 1)
+    #         normalized_adjacency_weight = torch.sigmoid(adjacency_weight)  ### [0,1]
+    #         node_weight = torch.sum(normalized_adjacency_weight, 1)
+    #         node_weight = torch.clamp(node_weight, max=1)
+    #         ### support shrink 
+    #         node_weight[is_nonleaf] = 1 
+    #         node_weight[is_leaf] = torch.cat([normalized_adjacency_weight[x,y].unsqueeze(0) for x,y in leaf_nonleaf_lst])
+    #         node_weight[is_extend] *= node_weight[is_leaf]
+
+    #         pred_y = self.forward(normalized_node_mat, normalized_adjacency_weight, node_weight)
+
+    #         # target_y = Variable(torch.Tensor([max(sigmoid(pred_y.item()) + 0.05, 1.0)])[0], requires_grad=True)
+    #         target_y = Variable(torch.Tensor([1.0])[0]).to(self.device)
+    #         cost = self.criteria(pred_y, target_y)
+    #         opt_mol.zero_grad()
+    #         cost.backward()
+    #         opt_mol.step()
+
+    #         node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
+    #         node_indicator_np2[is_nonleaf_np,:] = node_indicator_np[is_nonleaf_np,:]
+    #         adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
+
+    #         ###### early stop 
+    #         pred_lst.append(pred_y.item())
+    #         if i%20==0 and len(pred_lst) > 500 and np.mean(pred_lst[-100:]) < np.mean(pred_lst[-200:-100]): 
+    #             print("... early stop when optimizing DST for a smiles ...")
+    #             break 
+    #     # return node_indicator, adjacency_weight  ### torch.FloatTensor 
+    #     return node_indicator_np2, adjacency_weight_np2  #### np.array 
+
+
     def update_molecule_v2(self, node_mask_np, node_indicator_np, adjacency_mask_np, adjacency_weight_np, 
                                  leaf_extend_idx_pair, leaf_nonleaf_lst):
-        """ 
-
-        TODO: 
-            add early stop to save time 
-        """
         (is_nonleaf_np, is_leaf_np, is_extend_np) = node_mask_np
         is_nonleaf = torch.BoolTensor(is_nonleaf_np).to(self.device)
         is_leaf = torch.BoolTensor(is_leaf_np).to(self.device)
@@ -259,15 +302,19 @@ class GCN(nn.Module):
         node_indicator_np2, adjacency_weight_np2 = deepcopy(node_indicator_np), deepcopy(adjacency_weight_np)
 
         pred_lst = []
+
+        adjacency_mask = torch.BoolTensor(adjacency_mask_np).to(self.device)
+        node_indicator_fix = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+        adjacency_weight_fix = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+
+        node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
+        adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
+        adjacency_weight.requires_grad = True 
+        node_indicator.requires_grad = True
+        opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
+
         # for i in tqdm(range(5000)): ### 5k 10k
         for i in range(5000): ### 5k 10k
-
-            node_indicator = Variable(torch.FloatTensor(node_indicator_np2)).to(self.device)
-            adjacency_weight = Variable(torch.FloatTensor(adjacency_weight_np2)).to(self.device)
-            adjacency_weight.requires_grad = True 
-            node_indicator.requires_grad = True
-            # print("node_indicator", node_indicator.shape, adjacency_weight.shape)
-            opt_mol = torch.optim.Adam([node_indicator, adjacency_weight], lr=1e-3, betas=(0.9, 0.99))
 
             normalized_node_mat = torch.softmax(node_indicator, 1)
             normalized_adjacency_weight = torch.sigmoid(adjacency_weight)  ### [0,1]
@@ -287,17 +334,30 @@ class GCN(nn.Module):
             cost.backward()
             opt_mol.step()
 
-            node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
-            node_indicator_np2[is_nonleaf_np,:] = node_indicator_np[is_nonleaf_np,:]
-            adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
+            node_indicator.requires_grad = False
+            node_indicator[is_nonleaf,:] = node_indicator_fix[is_nonleaf,:]
+            node_indicator.requires_grad = True 
+            adjacency_weight.requires_grad = False
+            adjacency_weight[adjacency_mask] = adjacency_weight_fix[adjacency_mask]
+            adjacency_weight.requires_grad = True 
 
             ###### early stop 
             pred_lst.append(pred_y.item())
             if i%20==0 and len(pred_lst) > 500 and np.mean(pred_lst[-100:]) < np.mean(pred_lst[-200:-100]): 
                 print("... early stop when optimizing DST for a smiles ...")
                 break 
+
+        node_indicator_np2, adjacency_weight_np2 = node_indicator.cpu().detach().numpy(), adjacency_weight.cpu().detach().numpy()
+        node_indicator_np2[is_nonleaf_np,:] = node_indicator_np[is_nonleaf_np,:]
+        adjacency_weight_np2[adjacency_mask_np] = adjacency_weight_np[adjacency_mask_np]
+
         # return node_indicator, adjacency_weight  ### torch.FloatTensor 
         return node_indicator_np2, adjacency_weight_np2  #### np.array 
+
+
+
+
+
 
 
     def learn(self, node_mat, adj, weight, target):

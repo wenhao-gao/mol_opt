@@ -116,7 +116,7 @@ def optimize_single_molecule_one_iterate_v3(smiles, gnn, topk, epsilon):
 											 leaf_extend_idx_pair = leaf_extend_idx_pair, leaf_nonleaf_lst = leaf_nonleaf_lst, 
 											 topk = topk, epsilon = epsilon)
 	t4 = time() 
-	# print(int(t2-t1), int(t3-t2), int(t4-t3))
+	# print(str(t2-t1)[:6], str(t3-t2)[:6], str(t4-t3)[:6]) ### 0.0073 9.1089 0.0639, update DST is most time-consuming 
 	return smiles_set
 
 ## ablation study 
