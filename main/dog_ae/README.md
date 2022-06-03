@@ -39,7 +39,8 @@ Setup the Molecular Transformer<sup>[1](#refMolTran)</sup> as a server using [Sc
 We have several steps as following:
 
     a. Install the conda environment: `conda env create -f conda_dogae_gpu.yml`  
-    b. Activate it: `conda activate dogae_py3.7_pt1.4`  
+    b. Install PyTDC, wandb, botorch in the environment.
+    c. Activate it: `conda activate dogae_py3.7_pt1.4`  
     d. Make sure you have cloned the submodules of this repo, i.e. `git submodule init` and `git submodule update`  
 
 

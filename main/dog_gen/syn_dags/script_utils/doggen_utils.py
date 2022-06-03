@@ -148,7 +148,8 @@ class DogGenHillclimber:
         existing_tree_scores = copy.copy(existing_tree_scores)
         # scores = self.parts.scorer.evaluate_molecules([e[0] for e in new_tts])
         try:
-            scores = self.parts.scorer.evaluate_molecules([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
+            scores = self.parts.scorer([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
+            # scores = self.parts.scorer.evaluate_molecules([e[0] for e in new_tts]) #### smiles_list, output is np.array([xx, xxx, xxxx, ...]) 
         except:
             scores = np.array(self.parts.scorer([e[0] for e in new_tts]))  
 

@@ -16,7 +16,6 @@ from rdkit.Chem.rdchem import Mol
 from tdc import Oracle
 rdBase.DisableLog('rdApp.error')
 
-
 from os import path
 from time import strftime, gmtime
 import uuid
@@ -56,17 +55,16 @@ from syn_dags.script_utils import dogae_utils
 from syn_dags.utils import misc
 from syn_dags.data import synthesis_trees
 
-
 from botorch.models import SingleTaskGP
 from botorch.fit import fit_gpytorch_model
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 
+from main.optimizer import BaseOptimizer
 
 TB_LOGS_FILE = 'tb_logs'
 HC_RESULTS_FOLDER = 'hc_results'
-
 
 
 class Params:
@@ -94,11 +92,6 @@ class Params:
         print(f"Tuple tree path (where we pick starting points from)  is {self.tuple_tree_path}")
 
 
-
-from main.optimizer import BaseOptimizer
-
-
-
 class DoG_AE_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
@@ -114,10 +107,13 @@ class DoG_AE_Optimizer(BaseOptimizer):
 
         randomstate = np.random.randint(1000)
         rng = np.random.RandomState(randomstate)
-        # torch.manual_seed(6514564)
 
         # Model!
-        log_path = path.join("logs", f"reactions-{params.run_name}.log")
+        log_path = path.join(path_here, "logs")
+        if not os.path.exists(log_path):
+            os.mkdir(log_path)
+        log_path = path.join(log_path, f"reactions-{params.run_name}.log")
+        # log_path = path.join("logs", f"reactions-{params.run_name}.log")
         model, collate_func, *_ = dogae_utils.load_dogae_model(params.device, log_path,
                                                                weight_path=params.weight_path)
 
@@ -125,7 +121,6 @@ class DoG_AE_Optimizer(BaseOptimizer):
         tuple_trees = train_utils.load_tuple_trees(params.tuple_tree_path, rng)
         indices_chosen = rng.choice(len(tuple_trees), params.num_starting_locations, replace=False)
         tuple_trees = [tuple_trees[i] for i in indices_chosen]
-        # tuple_trees = tuple_trees[:2000]
 
         # Get the first embeddings
         pred_batch_largest_first, new_orders = collate_func(tuple_trees)
@@ -139,14 +134,12 @@ class DoG_AE_Optimizer(BaseOptimizer):
         print(initial_embeddings.shape) ##### [50, 25]
         last_z = initial_embeddings.detach().clone()
         train_X = last_z 
-        # train_X = torch.cat(train_X, dim=0)
-        # train_X = train_X.detach()
         smiles_list = [i[0] for i in tuple_trees]
         y = self.oracle(smiles_list)
         train_Y = torch.FloatTensor(y).view(-1,1) 
 
-
         patience = 0
+    
         while True:
 
             if len(self.oracle) > 100:
@@ -168,21 +161,13 @@ class DoG_AE_Optimizer(BaseOptimizer):
                 bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
                 z, _ = optimize_acqf(UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,)
 
-                # new_smiles = vae_model.decoder_z(z)  ### model 
-                # mol = smiles_to_rdkit_mol(new_smiles) 
                 new_out, _ = model.decode_from_z_no_grad(z, sample_x=False) 
                 ### new_out is list of syn_dags.data.synthesis_trees.SynthesisTree 
                 new_smiles = new_out[0].root_smi
-                # print(z, new_out)
                 print(new_smiles)
 
 
-                new_score = self.oracle(new_smiles)
-
-                # if new_score == 0:
-                #     # new_smiles = choice(smiles_lst)
-                #     new_score = self.oracle(new_smiles)             
-
+                new_score = self.oracle(new_smiles)           
                 new_score = torch.FloatTensor([new_score]).view(-1,1)
 
                 train_X = torch.cat([train_X, z], dim = 0)
@@ -197,7 +182,7 @@ class DoG_AE_Optimizer(BaseOptimizer):
                 new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
                 if new_scores == old_scores:
                     patience += 1
-                    if patience >= self.args.patience * 2:
+                    if patience >= self.args.patience:
                         self.log_intermediate(finish=True)
                         print('convergence criteria met, abort ...... ')
                         break
@@ -207,12 +192,5 @@ class DoG_AE_Optimizer(BaseOptimizer):
             if self.finish:
                 print('max oracle hit, abort ...... ')
                 break 
-
-
-"""
-    /project/molecular_data/graphnn/mol_opt/main/dog_gen/syn_dags/script_utils/doggen_utils.py
-"""
-
-
 
 
