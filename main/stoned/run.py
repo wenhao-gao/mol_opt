@@ -1,21 +1,21 @@
-import os, torch
+import os
 import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
+from ipdb import set_trace
 
 import selfies
 import numpy as np 
 import random
 from rdkit.Chem import MolFromSmiles as smi2mol
 from rdkit.Chem import MolToSmiles as mol2smi
-from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.DataStructs.cDataStructs import TanimotoSimilarity
 from selfies import encoder, decoder 
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
+
 
 def get_ECFP4(mol):
     ''' Return rdkit ECFP4 fingerprint object for mol
@@ -27,7 +27,6 @@ def get_ECFP4(mol):
     rdkit ECFP4 fingerprint object for mol
     '''
     return AllChem.GetMorganFingerprint(mol, 2)
-
 
 
 def sanitize_smiles(smi):
@@ -47,6 +46,7 @@ def sanitize_smiles(smi):
         return (mol, smi_canon, True)
     except:
         return (None, None, False)
+
 
 def mutate_selfie(selfie, max_molecules_len, write_fail_cases=False):
     '''Return a mutated selfie string (only one mutation on slefie is performed)
@@ -146,44 +146,35 @@ def get_selfie_chars(selfie):
     return chars_selfie
 
 
-
-
-class stoned_selfies_Optimizer(BaseOptimizer):
+class Stoned_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
-        self.model_name = "stoned_selfies"
+        self.model_name = "stoned"
 
     def _optimize(self, oracle, config):
+
         self.oracle.assign_evaluator(oracle)
-        starting_smile = random.choice(self.all_smiles)
-        # starting_smile     = 'CC1=C(C2=C(CCC(O2)(C)COC3=CC=C(C=C3)CC4C(=O)NC(=O)S4)C(=C1O)C)C'
-        len_random_struct  = len(get_selfie_chars(encoder(starting_smile))) # Length of the starting SELFIE structure 
 
-        # celebx = 'CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F' 
-        starting_selfie = encoder(starting_smile)
-        starting_selfie_chars = get_selfie_chars(starting_selfie)
-        max_molecules_len = len(starting_selfie_chars)
-        
+        population = np.random.choice(self.all_smiles, size=config['generation_size']).tolist()
+        population = [encoder(smi) for smi in population]
+        len_random_struct = max([len(get_selfie_chars(s)) for s in population])
 
-        # Random selfie initiation: 
-        alphabet = list(selfies.get_semantic_robust_alphabet()) # 34 SELFIE characters 
-        selfie = ''
-        for i in range(random.randint(1, len_random_struct)): # max_molecules_len = max random selfie string length 
-            selfie = selfie + np.random.choice(alphabet, size=1)[0]
-        starting_selfie = [selfie]
-        print('Starting SELFIE: ', starting_selfie)
+        patience = 0 
 
-        # Initial set of molecules 
-        population = np.random.choice(starting_selfie, size=config['generation_size']).tolist() # All molecules are in SELFIES representation
-        old_scores = 0 
-        for gen_ in range(config['num_generations']): 
+        while True:
+
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
+
+            fitness = self.oracle([decoder(i) for i in population])
 
             if self.finish:
                 print('max oracle hit, abort ...... ')
                 break
-
-            fitness = self.oracle([decoder(i) for i in population])
 
             #    Step 1: Keep the best molecule:  Keep the best member & mutate the rest
             best_idx = np.argmax(fitness)
@@ -200,7 +191,6 @@ class stoned_selfies_Optimizer(BaseOptimizer):
             # Define new population for the next generation 
             population = new_population[:]
 
-
             ### early stopping
             if len(self.oracle) > 2000:
                 self.sort_buffer()
@@ -215,11 +205,4 @@ class stoned_selfies_Optimizer(BaseOptimizer):
                     patience = 0
 
                 old_scores = new_scores
-
-
-
-
-
-
-
 
