@@ -1,0 +1,14 @@
+name: stoned_selfies
+method: random
+metric:
+  goal: maximize
+  name: avg_auc
+parameters:
+  population_size:
+    values: [10, 25, 50, 100]
+  topk:
+    values: [3, 5, 10]
+  lamb:
+    values: [0.1, 0.5, 1, 2, 10]
+  epsilon: 
+    values: [0.5, 0.7, 1.0]
