@@ -6,15 +6,25 @@ sys.path.append('.')
 from main.optimizer import BaseOptimizer
 from chemutils import * 
 from module import * 
+import inference_utils 
 from inference_utils import * 
 from tqdm import tqdm
 from chemutils import smiles2graph, vocabulary 
 from online_train import train_gnn
 from random import shuffle 
 import random 
+# import multiprocessing as mp
+import multiprocess as mp
+num_cores = mp.cpu_count()
+num_cores = min(num_cores, 5)
+pool = mp.Pool(num_cores)
+from time import time 
 
 device = torch.device('cpu')
-# device = torch.device('cuda:0')
+# device = torch.device('cuda:0')  #### 4X slower than cpu
+
+
+
 
 class DST_Optimizer(BaseOptimizer):
 
@@ -63,6 +73,7 @@ class DST_Optimizer(BaseOptimizer):
 		init_smiles_lst = start_smiles_lst + [i[0] for i in warmstart_smiles_score_lst[:50]]
 		current_set = set(init_smiles_lst)
 		patience = 0
+		old_scores = 0
 
 		while True:
 
@@ -78,22 +89,36 @@ class DST_Optimizer(BaseOptimizer):
 
 			next_set = set() 
 			print('Sampling from current state') #### most time consuming 
-			for smiles in tqdm(current_set):
-				if substr_num(smiles) < 3: #### short smiles
-					# try:
-					if True:
-						smiles_set = optimize_single_molecule_one_iterate(smiles, gnn, )  ### optimize_single_molecule_one_iterate_v2
-					# print('------ optimize dst success A -------')
-					# except:
-					# 	continue 
-				else:
-					# try:
-					if True:
-						smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon, )
-					# print('------ optimize dst success B -------')
-					# except:
-					# 	continue
-				next_set = next_set.union(smiles_set)
+
+			########## new version, parallel 
+			t1 = time()
+			current_list = list(current_set)
+			current_list = [(i, gnn, topk, epsilon) for i in current_list]
+			results = pool.map(inference_utils.optimize_dst, current_list)
+			for i in results:
+				next_set = next_set.union(i)
+			t2 = time() 
+			print('Sampling from current state takes', str((t2-t1)/60)[:5], 'minutes') #### most time consuming 
+			########## new version, parallel 
+
+			########## old version, sequential 
+			# for smiles in tqdm(current_set):
+			# 	if substr_num(smiles) < 3: #### short smiles
+			# 		# try:
+			# 		if True:
+			# 			smiles_set = optimize_single_molecule_one_iterate(smiles, gnn, )  ### optimize_single_molecule_one_iterate_v2
+			# 		# print('------ optimize dst success A -------')
+			# 		# except:
+			# 		# 	continue 
+			# 	else:
+			# 		# try:
+			# 		if True:
+			# 			smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon, )
+			# 		# print('------ optimize dst success B -------')
+			# 		# except:
+			# 		# 	continue
+			# 	next_set = next_set.union(smiles_set)
+			########## old version, sequential 
 
 			smiles_lst = list(next_set)
 			shuffle(smiles_lst)
@@ -121,7 +146,7 @@ class DST_Optimizer(BaseOptimizer):
 
 
 			### early stopping
-			if len(self.oracle) > 2000:
+			if len(self.oracle) > 500:
 				self.sort_buffer()
 				new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
 				if new_scores == old_scores:
@@ -132,3 +157,5 @@ class DST_Optimizer(BaseOptimizer):
 						break
 				else:
 					patience = 0
+
+
