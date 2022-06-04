@@ -113,7 +113,6 @@ class DoG_AE_Optimizer(BaseOptimizer):
         if not os.path.exists(log_path):
             os.mkdir(log_path)
         log_path = path.join(log_path, f"reactions-{params.run_name}.log")
-        # log_path = path.join("logs", f"reactions-{params.run_name}.log")
         model, collate_func, *_ = dogae_utils.load_dogae_model(params.device, log_path,
                                                                weight_path=params.weight_path)
 
