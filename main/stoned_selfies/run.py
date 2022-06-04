@@ -146,8 +146,6 @@ def get_selfie_chars(selfie):
     return chars_selfie
 
 
-starting_smile     = 'CC1=C(C2=C(CCC(O2)(C)COC3=CC=C(C=C3)CC4C(=O)NC(=O)S4)C(=C1O)C)C'
-len_random_struct  = len(get_selfie_chars(encoder(starting_smile))) # Length of the starting SELFIE structure
 
 
 class stoned_selfies_Optimizer(BaseOptimizer):
@@ -158,6 +156,9 @@ class stoned_selfies_Optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
+
+        starting_smile     = 'CC1=C(C2=C(CCC(O2)(C)COC3=CC=C(C=C3)CC4C(=O)NC(=O)S4)C(=C1O)C)C'
+        len_random_struct  = len(get_selfie_chars(encoder(starting_smile))) # Length of the starting SELFIE structure 
 
         # celebx = 'CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F' 
         starting_selfie = encoder(starting_smile)
@@ -172,14 +173,11 @@ class stoned_selfies_Optimizer(BaseOptimizer):
             selfie = selfie + np.random.choice(alphabet, size=1)[0]
         starting_selfie = [selfie]
         print('Starting SELFIE: ', starting_selfie)
-        
-        generation_size = 500
-        num_generations = 10000
 
         # Initial set of molecules 
-        population = np.random.choice(starting_selfie, size=500).tolist() # All molecules are in SELFIES representation
+        population = np.random.choice(starting_selfie, size=config.generation_size).tolist() # All molecules are in SELFIES representation
         
-        for gen_ in range(num_generations): 
+        for gen_ in range(config.num_generations): 
 
             if self.finish:
                 print('max oracle hit, abort ...... ')
@@ -193,7 +191,7 @@ class stoned_selfies_Optimizer(BaseOptimizer):
                         
             #    Step 2: Get mutated selfies 
             new_population = []
-            for i in range(generation_size-1): 
+            for i in range(config.generation_size-1): 
                 # selfie_mutated, _ = mutate_selfie(best_selfie, max_molecules_len, write_fail_cases=True)
                 selfie_mutated, _ = mutate_selfie(best_selfie, len_random_struct, write_fail_cases=True) # 100 == max_mol_len allowen in mutation
                 new_population.append(selfie_mutated)

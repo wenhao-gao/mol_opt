@@ -1,5 +1,2 @@
-population_size: 50
-lamb: 2
-topk: 2
-epsilon: 0.7
-pool_size: 500 
+generation_size: 500
+num_generations: 10000
