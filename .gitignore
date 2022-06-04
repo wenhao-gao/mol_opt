@@ -200,4 +200,5 @@ dream_results
 gflownet_models
 
 
-
+tb_logs
+*__MACOSX*
