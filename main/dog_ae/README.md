@@ -4,6 +4,8 @@ This is the autoencoder (AE) version of DoG. We simplify the [original version](
  by John Bradshaw, Brooks Paige, Matt J. Kusner, Marwin H. S. Segler, José Miguel Hernández-Lobato (https://arxiv.org/abs/2012.11522).
  
 
+ Note: to avoid interfering with DoG-Gen, the default port number is changed to 5001, please set up the Molecular Transformer server accordingly or change the port number in `synthesis-dags-config.ini`.
+
 ## Install 
 
 We need to install two conda environments, 
