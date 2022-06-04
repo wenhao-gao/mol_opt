@@ -1,18 +1,12 @@
 name: dog_gen
-method: bayes
+method: grid
 metric:
   goal: maximize
   name: avg_auc
 parameters:
-  population_size:
-    distribution: int_uniform
-    min: 50
-    max: 200
-  offspring_size:
-    distribution: int_uniform
-    min: 50
-    max: 300
-  mutation_rate:
-    distribution: uniform
-    min: 0
-    max: 0.1
+  n_samples_per_round:
+    values: [500, 1000, 3000]
+  n_samples_to_keep_per_round:
+    values: [1000, 2000]
+  n_epochs_for_finetuning:
+    values: [1, 2, 5, 10]

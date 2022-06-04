@@ -18,10 +18,11 @@ rdBase.DisableLog('rdApp.error')
 
 import sys 
 path_here = os.path.dirname(os.path.realpath(__file__))
+path_dogae = '/'.join(path_here.split('/')[:-1])
+path_dogae = os.path.join(path_dogae, 'dog_ae')
 sys.path.append(path_here)
 sys.path.append(os.path.join(path_here, 'submodules/autoencoders'))
 sys.path.append(os.path.join(path_here, 'submodules/GNN'))
-
 
 from os import path
 from time import strftime, gmtime
@@ -40,6 +41,8 @@ from syn_dags.script_utils import doggen_utils
 from syn_dags.script_utils import opt_utils
 from syn_dags.utils import settings
 
+from main.optimizer import BaseOptimizer
+
 TB_LOGS_FILE = 'tb_logs'
 HC_RESULTS_FOLDER = 'hc_results'
 
@@ -48,8 +51,8 @@ class Params:
     def __init__(self, task_name, weight_path: str):
         self.device = settings.torch_device()
 
-        self.train_tree_path = os.path.join(path_here, "scripts/dataset_creation/data/uspto-train-depth_and_tree_tuples.pick")
-        self.valid_tree_path = os.path.join(path_here, "scripts/dataset_creation/data/uspto-valid-depth_and_tree_tuples.pick")
+        self.train_tree_path = os.path.join(path_dogae, "scripts/dataset_creation/data/uspto-train-depth_and_tree_tuples.pick")
+        self.valid_tree_path = os.path.join(path_dogae, "scripts/dataset_creation/data/uspto-valid-depth_and_tree_tuples.pick")
 
         self.weight_path = weight_path
         self.num_dataloader_workers = 4
@@ -61,10 +64,11 @@ class Params:
         print(f"Run name is {self.run_name}\n\n")
         self.property_predictor = opt_utils.get_task('qed')   #### qed, sas, ....
 
+        if not path.exists(path.join(path_here, "logs")):
+            os.mkdir(path.join(path_here, "logs"))
+
         self.log_for_reaction_predictor_path = path.join(path_here, "logs", f"reactions-{self.run_name}.log")
 
-
-from main.optimizer import BaseOptimizer
 
 class DoG_Gen_Optimizer(BaseOptimizer):
 
@@ -77,9 +81,7 @@ class DoG_Gen_Optimizer(BaseOptimizer):
         self.oracle.assign_evaluator(oracle)
 
         rng = np.random.RandomState(5156)
-        torch.manual_seed(5115)
 
-        # weight_path = 'chkpts/doggen_weights.pth.pick'
         weight_path = os.path.join(path_here, 'scripts/dog_gen/chkpts/doggen_weights.pth.pick')
         params = Params('optimize', weight_path)
 
@@ -119,14 +121,16 @@ class DoG_Gen_Optimizer(BaseOptimizer):
                                    num_workers=params.num_dataloader_workers, collate_fn=collate_func,
                                    shuffle=True)
 
-        ''' ### original setup, here we have 10k oracle budget, so i tune them smaller. 
-        n_rounds: int = 30
-        n_samples_per_round: int = 7000
-        n_samples_to_keep_per_round: int = 1500
-        '''
-
         # # Now put this together for hillclimber constructor arguments
-        hparams = doggen_utils.DogGenHillclimbingParams(config['n_rounds'], config['n_samples_per_round'], config['n_samples_to_keep_per_round'])
+        hparams = doggen_utils.DogGenHillclimbingParams(
+            n_samples_per_round = config.n_samples_per_round, 
+            n_samples_to_keep_per_round = config.n_samples_to_keep_per_round,
+            n_epochs_for_finetuning = config.n_epochs_for_finetuning,
+            batch_size = config.batch_size,
+            sample_batch_size = config.sample_batch_size,
+            learning_rate = config.learning_rate
+        )
+
         #### oracle is params.property_predictor 
         parts = doggen_utils.DogGenHillclimberParts(model, self.oracle,
                                                     set(other_parts['mol_to_graph_idx_for_reactants'].keys()), rng,
@@ -138,13 +142,4 @@ class DoG_Gen_Optimizer(BaseOptimizer):
         # # Run!
         print("Starting hill climber")
         sorted_tts = hillclimber.run_hillclimbing(train_trees, tb_summary_writer)  
-        ###### self.oracle.finish is implemented in "run_hillclimbing"  
-
-
-
-"""
-    /project/molecular_data/graphnn/mol_opt/main/dog_gen/syn_dags/script_utils/doggen_utils.py
-
-"""
-
-
+        print("Done!")

@@ -4,6 +4,8 @@ This is the autoencoder (AE) version of DoG. We simplify the [original version](
  by John Bradshaw, Brooks Paige, Matt J. Kusner, Marwin H. S. Segler, José Miguel Hernández-Lobato (https://arxiv.org/abs/2012.11522).
  
 
+ Note: to avoid interfering with DoG-Gen, the default port number is changed to 5001, please set up the Molecular Transformer server accordingly or change the port number in `synthesis-dags-config.ini`.
+
 ## Install 
 
 We need to install two conda environments, 
@@ -39,7 +41,8 @@ Setup the Molecular Transformer<sup>[1](#refMolTran)</sup> as a server using [Sc
 We have several steps as following:
 
     a. Install the conda environment: `conda env create -f conda_dogae_gpu.yml`  
-    b. Activate it: `conda activate dogae_py3.7_pt1.4`  
+    b. Install PyTDC, wandb, botorch in the environment.
+    c. Activate it: `conda activate dogae_py3.7_pt1.4`  
     d. Make sure you have cloned the submodules of this repo, i.e. `git submodule init` and `git submodule update`  
 
 

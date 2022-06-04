@@ -25,12 +25,12 @@ def collate_fn(batch_lst):
 	return [element[0] for element in batch_lst], [element[1] for element in batch_lst]
 
 
-def train_gnn(data, gnn):
+def train_gnn(data, gnn, device = torch.device('cpu')):
 	"""
 		data: List [(smiles, value), (smiles, value), ....]
 		gnn: torch.nn.Module 
 	"""
-	device = 'cpu'
+	# device = 'cpu'
 	shuffle(data)
 	train_data = data[:int(len(data)*0.8)]
 	valid_data = data[int(len(data)*0.8):]

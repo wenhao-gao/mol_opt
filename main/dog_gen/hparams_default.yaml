@@ -1,3 +1,6 @@
-n_rounds: 10
 n_samples_per_round: 3000
 n_samples_to_keep_per_round: 1000
+n_epochs_for_finetuning: 2
+batch_size: 64
+sample_batch_size: 200
+learning_rate: 0.001

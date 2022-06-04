@@ -73,8 +73,8 @@ def main():
         from main.chembo.run import ChemBOoptimizer as Optimizer 
     elif args.method == 'gpbo':
         from main.gpbo.run import GPBO_Optimizer as Optimizer
-    elif args.method == 'dog_gen':
-        from main.dog_gen.run import DoG_Gen_Optimizer as Optimizer 
+    elif args.method == 'stoned': 
+        from main.stoned.run import Stoned_Optimizer as Optimizer
     elif args.method == "selfies_vae":
         from main.selfies_vae.run import SELFIES_VAEBO_Optimizer as Optimizer
     elif args.method == "smiles_vae":

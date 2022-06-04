@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-model="gflownet_al"
+model="stoned"
 
 nohup python -u run.py ${model} \
     --n_jobs 16 --task tune --n_runs 20 --wandb online \

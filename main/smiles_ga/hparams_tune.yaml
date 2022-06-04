@@ -5,8 +5,8 @@ metric:
   name: avg_auc
 parameters:
   gene_size: 
-    values: [200, 300, 400]
+    values: [200, 100, 300]
   population_size: 
-    values: [50, 100, 200, 300]
+    values: [100, 50, 200]
   n_mutations: 
-    values: [100, 200, 300]
+    values: [300, 500, 800]
