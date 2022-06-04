@@ -156,8 +156,8 @@ class stoned_selfies_Optimizer(BaseOptimizer):
 
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
-
-        starting_smile     = 'CC1=C(C2=C(CCC(O2)(C)COC3=CC=C(C=C3)CC4C(=O)NC(=O)S4)C(=C1O)C)C'
+        starting_smile = random.choice(self.all_smiles)
+        # starting_smile     = 'CC1=C(C2=C(CCC(O2)(C)COC3=CC=C(C=C3)CC4C(=O)NC(=O)S4)C(=C1O)C)C'
         len_random_struct  = len(get_selfie_chars(encoder(starting_smile))) # Length of the starting SELFIE structure 
 
         # celebx = 'CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F' 
@@ -175,9 +175,9 @@ class stoned_selfies_Optimizer(BaseOptimizer):
         print('Starting SELFIE: ', starting_selfie)
 
         # Initial set of molecules 
-        population = np.random.choice(starting_selfie, size=config.generation_size).tolist() # All molecules are in SELFIES representation
-        
-        for gen_ in range(config.num_generations): 
+        population = np.random.choice(starting_selfie, size=config['generation_size']).tolist() # All molecules are in SELFIES representation
+        old_scores = 0 
+        for gen_ in range(config['num_generations']): 
 
             if self.finish:
                 print('max oracle hit, abort ...... ')
@@ -191,7 +191,7 @@ class stoned_selfies_Optimizer(BaseOptimizer):
                         
             #    Step 2: Get mutated selfies 
             new_population = []
-            for i in range(config.generation_size-1): 
+            for i in range(config['generation_size']-1): 
                 # selfie_mutated, _ = mutate_selfie(best_selfie, max_molecules_len, write_fail_cases=True)
                 selfie_mutated, _ = mutate_selfie(best_selfie, len_random_struct, write_fail_cases=True) # 100 == max_mol_len allowen in mutation
                 new_population.append(selfie_mutated)
@@ -201,10 +201,20 @@ class stoned_selfies_Optimizer(BaseOptimizer):
             population = new_population[:]
 
 
+            ### early stopping
+            if len(self.oracle) > 2000:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
 
-
-
-
+                old_scores = new_scores
 
 
 
