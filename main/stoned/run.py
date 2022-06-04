@@ -4,7 +4,6 @@ path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
 from main.optimizer import BaseOptimizer
-from ipdb import set_trace
 
 import selfies
 import numpy as np 
@@ -183,8 +182,7 @@ class Stoned_Optimizer(BaseOptimizer):
             #    Step 2: Get mutated selfies 
             new_population = []
             for i in range(config['generation_size']-1): 
-                # selfie_mutated, _ = mutate_selfie(best_selfie, max_molecules_len, write_fail_cases=True)
-                selfie_mutated, _ = mutate_selfie(best_selfie, len_random_struct, write_fail_cases=True) # 100 == max_mol_len allowen in mutation
+                selfie_mutated, _ = mutate_selfie(best_selfie, len_random_struct, write_fail_cases=True) 
                 new_population.append(selfie_mutated)
             new_population.append(best_selfie)
         
