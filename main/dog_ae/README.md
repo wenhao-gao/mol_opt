@@ -71,7 +71,7 @@ Pretrained DoG-AE model is saved in `mol_opt/main/dog_ae/scripts/dogae/train/chk
 
 Open a new shell, and run the following code and leave it open: 
 ```bash
-conda activate activate mtransformer_py3.6_pt0.4
+conda activate mtransformer_py3.6_pt0.4
 cd MolecularTransformer 
 CUDA_VISIBLE_DEVICES="0,1" python server.py --config available_models/mtransformer_example_server.conf.json
 ```
