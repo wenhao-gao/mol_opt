@@ -8,13 +8,10 @@ import torch
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from sklearn.neighbors import BallTree
-from dgl.nn.pytorch.glob import AvgPooling
-from dgllife.utils import mol_to_bigraph, PretrainAtomFeaturizer, PretrainBondFeaturizer
+# from dgl.nn.pytorch.glob import AvgPooling
+# from dgllife.utils import mol_to_bigraph, PretrainAtomFeaturizer, PretrainBondFeaturizer
 from syn_net.models.mlp import MLP
 from syn_net.utils.data_utils import SyntheticTree
-
-
-np.random.seed(6)
 
 
 # general functions
@@ -114,36 +111,36 @@ def get_reaction_mask(smi, rxns):
 
     return reaction_mask, available_list
 
-def graph_construction_and_featurization(smiles):
-    """
-    Constructs graphs from SMILES and featurizes them.
+# def graph_construction_and_featurization(smiles):
+#     """
+#     Constructs graphs from SMILES and featurizes them.
 
-    Args:
-        smiles (list of str): Contains SMILES of molecules to embed.
+#     Args:
+#         smiles (list of str): Contains SMILES of molecules to embed.
 
-    Returns:
-        graphs (list of DGLGraph): List of graphs constructed and featurized.
-        success (list of bool): Indicators for whether the SMILES string can be
-            parsed by RDKit.
-    """
-    graphs = []
-    success = []
-    for smi in tqdm(smiles):
-        try:
-            mol = Chem.MolFromSmiles(smi)
-            if mol is None:
-                success.append(False)
-                continue
-            g = mol_to_bigraph(mol, add_self_loop=True,
-                                node_featurizer=PretrainAtomFeaturizer(),
-                                edge_featurizer=PretrainBondFeaturizer(),
-                                canonical_atom_order=False)
-            graphs.append(g)
-            success.append(True)
-        except:
-            success.append(False)
+#     Returns:
+#         graphs (list of DGLGraph): List of graphs constructed and featurized.
+#         success (list of bool): Indicators for whether the SMILES string can be
+#             parsed by RDKit.
+#     """
+#     graphs = []
+#     success = []
+#     for smi in tqdm(smiles):
+#         try:
+#             mol = Chem.MolFromSmiles(smi)
+#             if mol is None:
+#                 success.append(False)
+#                 continue
+#             g = mol_to_bigraph(mol, add_self_loop=True,
+#                                 node_featurizer=PretrainAtomFeaturizer(),
+#                                 edge_featurizer=PretrainBondFeaturizer(),
+#                                 canonical_atom_order=False)
+#             graphs.append(g)
+#             success.append(True)
+#         except:
+#             success.append(False)
 
-    return graphs, success
+#     return graphs, success
 
 def one_hot_encoder(dim, space):
     """
@@ -161,34 +158,34 @@ def one_hot_encoder(dim, space):
     vec[0, dim] = 1
     return vec
 
-def get_mol_embedding(smi, model, device='cpu', readout=AvgPooling()):
-    """
-    Computes the molecular graph embedding for the input SMILES.
+# def get_mol_embedding(smi, model, device='cpu', readout=AvgPooling()):
+#     """
+#     Computes the molecular graph embedding for the input SMILES.
 
-    Args:
-        smi (str): SMILES of molecule to embed.
-        model (dgllife.model, optional): Pre-trained NN model to use for
-            computing the embedding.
-        device (str, optional): Indicates the device to run on. Defaults to 'cpu'.
-        readout (dgl.nn.pytorch.glob, optional): Readout function to use for
-            computing the graph embedding. Defaults to readout.
+#     Args:
+#         smi (str): SMILES of molecule to embed.
+#         model (dgllife.model, optional): Pre-trained NN model to use for
+#             computing the embedding.
+#         device (str, optional): Indicates the device to run on. Defaults to 'cpu'.
+#         readout (dgl.nn.pytorch.glob, optional): Readout function to use for
+#             computing the graph embedding. Defaults to readout.
 
-    Returns:
-        torch.Tensor: Learned embedding for the input molecule.
-    """
-    mol = Chem.MolFromSmiles(smi)
-    g = mol_to_bigraph(mol, add_self_loop=True,
-                       node_featurizer=PretrainAtomFeaturizer(),
-                       edge_featurizer=PretrainBondFeaturizer(),
-                       canonical_atom_order=False)
-    bg = g.to(device)
-    nfeats = [bg.ndata.pop('atomic_number').to(device),
-              bg.ndata.pop('chirality_type').to(device)]
-    efeats = [bg.edata.pop('bond_type').to(device),
-              bg.edata.pop('bond_direction_type').to(device)]
-    with torch.no_grad():
-        node_repr = model(bg, nfeats, efeats)
-    return readout(bg, node_repr).detach().cpu().numpy()[0]
+#     Returns:
+#         torch.Tensor: Learned embedding for the input molecule.
+#     """
+#     mol = Chem.MolFromSmiles(smi)
+#     g = mol_to_bigraph(mol, add_self_loop=True,
+#                        node_featurizer=PretrainAtomFeaturizer(),
+#                        edge_featurizer=PretrainBondFeaturizer(),
+#                        canonical_atom_order=False)
+#     bg = g.to(device)
+#     nfeats = [bg.ndata.pop('atomic_number').to(device),
+#               bg.ndata.pop('chirality_type').to(device)]
+#     efeats = [bg.edata.pop('bond_type').to(device),
+#               bg.edata.pop('bond_direction_type').to(device)]
+#     with torch.no_grad():
+#         node_repr = model(bg, nfeats, efeats)
+#     return readout(bg, node_repr).detach().cpu().numpy()[0]
 
 def mol_fp(smi, _radius=2, _nBits=4096):
     """
@@ -261,38 +258,38 @@ def nn_search(_e, _tree, _k=1):
     dist, ind = _tree.query(_e, k=_k)
     return dist[0][0], ind[0][0]
 
-def graph_construction_and_featurization(smiles):
-    """
-    Constructs graphs from SMILES and featurizes them.
+# def graph_construction_and_featurization(smiles):
+#     """
+#     Constructs graphs from SMILES and featurizes them.
 
-    Args:
-        smiles (list of str): SMILES of molecules, for embedding computation.
+#     Args:
+#         smiles (list of str): SMILES of molecules, for embedding computation.
 
-    Returns:
-        graphs (list of DGLGraph): List of graphs constructed and featurized.
-        success (list of bool): Indicators for whether the SMILES string can be
-            parsed by RDKit.
-    """
-    graphs  = []
-    success = []
-    for smi in tqdm(smiles):
-        try:
-            mol = Chem.MolFromSmiles(smi)
-            if mol is None:
-                success.append(False)
-                continue
-            g = mol_to_bigraph(mol, add_self_loop=True,
-                               node_featurizer=PretrainAtomFeaturizer(),
-                               edge_featurizer=PretrainBondFeaturizer(),
-                               canonical_atom_order=False)
-            graphs.append(g)
-            success.append(True)
-        except:
-            success.append(False)
+#     Returns:
+#         graphs (list of DGLGraph): List of graphs constructed and featurized.
+#         success (list of bool): Indicators for whether the SMILES string can be
+#             parsed by RDKit.
+#     """
+#     graphs  = []
+#     success = []
+#     for smi in tqdm(smiles):
+#         try:
+#             mol = Chem.MolFromSmiles(smi)
+#             if mol is None:
+#                 success.append(False)
+#                 continue
+#             g = mol_to_bigraph(mol, add_self_loop=True,
+#                                node_featurizer=PretrainAtomFeaturizer(),
+#                                edge_featurizer=PretrainBondFeaturizer(),
+#                                canonical_atom_order=False)
+#             graphs.append(g)
+#             success.append(True)
+#         except:
+#             success.append(False)
 
-    return graphs, success
+#     return graphs, success
 
-def set_embedding(z_target, state, nbits, _mol_embedding=get_mol_embedding):
+def set_embedding(z_target, state, nbits, _mol_embedding=mol_fp):
     """
     Computes embeddings for all molecules in the input space.
 
@@ -302,8 +299,7 @@ def set_embedding(z_target, state, nbits, _mol_embedding=get_mol_embedding):
             initial state.
         nbits (int): Length of fingerprint.
         _mol_embedding (Callable, optional): Function to use for computing the
-            embeddings of the first and second molecules in the state. Defaults
-            to `get_mol_embedding`.
+            embeddings of the first and second molecules in the state.
 
     Returns:
         np.ndarray: Embedding consisting of the concatenation of the target

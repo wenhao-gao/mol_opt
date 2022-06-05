@@ -183,22 +183,14 @@ molpal_out
 results
 main/gflownet/results
 main/gflownet/__pycache__
+gflownet_models
+tb_logs
+*__MACOSX*
 
 
 
 # SynNet
-main/SynNet/st_hb
-main/SynNet/st_hb.tar.gz
-main/SynNet/reactions_hb.json.gz
-main/SynNet/tests
 
-
+# Pasithea
 *.txt
 dream_results
-
-# GFlowNet
-gflownet_models
-
-tb_logs
-*__MACOSX*
-

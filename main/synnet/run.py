@@ -12,7 +12,7 @@ import sys
 path_here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_here)
 sys.path.append('.')
-from main.optimizer import BaseOptimizer
+from main.optimizer import BaseOptimizer, Objdict
 
 from syn_net.utils.ga_utils import crossover, mutation
 import multiprocessing as mp
@@ -45,13 +45,12 @@ def fitness(embs, _pool, obj):
         trees (list): Contains the synthetic trees generated from the input
             embeddings.
     """
-    # print(embs.shape, 'fitness:embs.shape') #### [x, 4096]
-    # results = _pool.map(decode.func, embs)
+    results = _pool.map(decode.func, embs)
     print("fitness decode finished")
     ### debug mode: without pool (parallel)
-    results = []
-    for emb in embs:
-        results.append(decode.func(emb))
+    # results = []
+    # for emb in embs:
+    #     results.append(decode.func(emb))
     ### debug mode 
 
     smiles  = [r[0] for r in results]
@@ -89,10 +88,6 @@ def num_mut_per_ele_scheduler(n, total):
     Returns:
         int: Number of bits to mutate.
     """
-    # if n < total/2:
-    #     return 256
-    # else:
-    #     return 512
     return 24
 
 def mut_probability_scheduler(n, total):
@@ -114,7 +109,7 @@ def mut_probability_scheduler(n, total):
 
 
 
-class SynNetoptimizer(BaseOptimizer):
+class SynNet_Optimizer(BaseOptimizer):
 
     def __init__(self, args=None):
         super().__init__(args)
@@ -123,27 +118,30 @@ class SynNetoptimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+        config = Objdict(config)
 
         if config['restart']:
-            population = np.load(config['input_file'])
-            print(f"Starting with {len(population)} fps from {config['input_file']}")
+            population = np.load(config.input_file)
+            print(f"Starting with {len(population)} fps from {config.input_file}")
         else:
-            if config['input_file'] is None:
-                population = np.ceil(np.random.random(size=(config['num_population'], config['nbits'])) * 2 - 1)
-                print(f"Starting with {config['num_population']} fps with {config['nbits']} bits")
-            else:
-                starting_smiles = pd.read_csv(config['input_file']).sample(config['num_population'])
+            try:
+                starting_smiles = pd.read_csv(config.input_file).sample(config.num_population)
                 starting_smiles = starting_smiles['smiles'].tolist()
                 population = np.array(
                     [mol_fp(smi, config['radius'], config['nbits']) for smi in starting_smiles]
                 )
                 # print(population.shape, 'population shape ------')
                 # population = population.reshape((population.shape[0], population.shape[2]))
-                print(f"Starting with {len(starting_smiles)} fps from {config['input_file']}")
+                print(f"Starting with {len(starting_smiles)} fps from {config.input_file}")
+            except:
+                starting_smiles = self.all_smiles[:config.num_population]
+                population = np.array(
+                    [mol_fp(smi, config.radius, config.nbits) for smi in starting_smiles]
+                )
+                # population = np.ceil(np.random.random(size=(config['num_population'], config['nbits'])) * 2 - 1)
+                print(f"Starting with {config.num_population} fps with {config.nbits} bits")
 
-        # population = population[:5] #### debug mode 
-
-        with mp.Pool(processes=config['ncpu']) as pool:
+        with mp.Pool(processes=config.ncpu) as pool:
             scores, mols, trees = fitness(embs=population,
                                           _pool=pool,
                                           obj=self.oracle)
@@ -153,33 +151,43 @@ class SynNetoptimizer(BaseOptimizer):
         mols       = [mols[i] for i in score_x[::-1]]
         scores     = scores[score_x[::-1]]
         print(f"Initial: {scores.mean():.3f} +/- {scores.std():.3f}")
-        print(f"Scores: {scores}")
-        print(f"Top-3 Smiles: {mols[:3]}")
-        print()
 
         recent_scores = []
-        for n in tqdm(range(config['num_gen'])):
+        patience = 0 
 
-            if self.finish:
-                break 
+        dist_            = "softmax_linear"
+        num_mut_per_ele_ = config.num_mut_per_ele
+        mut_probability_ = config.mut_probability
+
+        while True:
+
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
 
             t = time.time()
 
-            dist_            = distribution_schedule(n, config['num_gen'])
-            num_mut_per_ele_ = num_mut_per_ele_scheduler(n, config['num_gen'])
-            mut_probability_ = mut_probability_scheduler(n, config['num_gen'])
+            # dist_            = distribution_schedule(n, config.num_gen)
+            # num_mut_per_ele_ = num_mut_per_ele_scheduler(n, config.num_gen)
+            # mut_probability_ = mut_probability_scheduler(n, config.num_gen)
 
             offspring = crossover(parents=population,
-                                  offspring_size=config['num_offspring'],
+                                  offspring_size=config.num_offspring,
                                   distribution=dist_)
             offspring = mutation(offspring_crossover=offspring,
                                  num_mut_per_ele=num_mut_per_ele_,
                                  mut_probability=mut_probability_)
 
             new_population = np.unique(np.concatenate([population, offspring], axis=0), axis=0)
-            with mp.Pool(processes=config['ncpu']) as pool:
+
+            with mp.Pool(processes=config.ncpu) as pool:
                 new_scores, new_mols, trees = fitness(new_population, pool, self.oracle)
 
+            if self.finish:
+                print('max oracle hit, abort ...... ')
+                break 
 
             new_scores = np.array(new_scores)
             scores = []
@@ -187,7 +195,7 @@ class SynNetoptimizer(BaseOptimizer):
 
             parent_idx = 0
             indices_to_print = []
-            while parent_idx < config['num_population']:
+            while parent_idx < config.num_population:
                 max_score_idx = np.where(new_scores == np.max(new_scores))[0][0]
                 if new_mols[max_score_idx] not in mols:
                     indices_to_print.append(max_score_idx)
@@ -201,15 +209,23 @@ class SynNetoptimizer(BaseOptimizer):
 
             scores = np.array(scores)
             print(f"Generation {n+1}: {scores.mean():.3f} +/- {scores.std():.3f}")
-            print(f"Scores: {scores}")
-            print(f"Top-3 Smiles: {mols[:3]}")
             print(f"Consumed time: {(time.time() - t):.3f} s")
-            print()
-            for i in range(3):
-                trees[indices_to_print[i]]._print()
-            print()
 
             recent_scores.append(scores.mean())
             if len(recent_scores) > 10:
                 del recent_scores[0]
 
+            ### early stopping
+            if len(self.oracle) > 2000:
+                self.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
+
+                old_scores = new_scores

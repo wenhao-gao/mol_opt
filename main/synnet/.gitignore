@@ -175,9 +175,12 @@ nohup.out
 *.ckpt
 *_old*
 results
-synth_net/params
+# synth_net/params
 
 # Old files set to be deleted
 tmp/
 scripts/oracle
 temp.py
+
+
+
