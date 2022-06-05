@@ -84,10 +84,18 @@ class DogGenHillclimber:
         self._report_best(sorted_tts, tb_logger, 0)
 
         round = 0
+        patience = 0
         
         while True:
             round += 1
             print(f"# Starting round {round}")
+
+            if len(self.parts.scorer) > 100:
+                self.parts.scorer.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.parts.scorer.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
+
             print('## Setting up new batch for training...')
             new_batch_for_fine_tuning = [e.tuple_tree for e in sorted_tts[:self.hparams.n_samples_to_keep_per_round]]
 
@@ -102,6 +110,20 @@ class DogGenHillclimber:
                 print("max oracle calls hit, exit")
                 break 
             self._report_best(sorted_tts, tb_logger, round)
+
+            # early stopping
+            if len(self.parts.scorer) > 100:
+                self.parts.scorer.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.parts.scorer.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= 5:
+                        self.parts.scorer.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
+
         return sorted_tts
 
     def train_one_round(self, tuple_trees_to_train_on: typing.List[tuple], tb_logger: SummaryWriter):
