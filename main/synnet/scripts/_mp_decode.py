@@ -217,14 +217,15 @@ def synthetic_tree_decoder(z_target,
 
     return tree, act
 
-path_to_reaction_file = '/home/whgao/synth_net/data/reactions_' + rxn_template + '.json.gz'
-path_to_building_blocks = '/home/whgao/synth_net/data/enamine_us_matched.csv.gz'
 
-param_path = '/home/whgao/synth_net/synth_net/params/' + param_dir + '/'
-path_to_act = param_path + 'act.ckpt'
-path_to_rt1 = param_path + 'rt1.ckpt'
-path_to_rxn = param_path + 'rxn.ckpt'
-path_to_rt2 = param_path + 'rt2.ckpt'
+path_to_reaction_file = os.path.join(path_main, f"data/reactions_{rxn_template}.json.gz")
+path_to_building_blocks = os.path.join(path_main, "data/enamine_us_matched.csv.gz")
+
+param_path = os.path.join(path_main, f"syn_net/params/{param_dir}/")
+path_to_act = os.path.join(param_path, 'act.ckpt')
+path_to_rt1 = os.path.join(param_path, 'rt1.ckpt')
+path_to_rxn = os.path.join(param_path, 'rxn.ckpt')
+path_to_rt2 = os.path.join(param_path, 'rt2.ckpt')
 
 building_blocks = pd.read_csv(path_to_building_blocks, compression='gzip')['SMILES'].tolist()
 bb_dict = {building_blocks[i]: i for i in range(len(building_blocks))}
