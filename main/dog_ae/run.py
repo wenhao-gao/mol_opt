@@ -61,7 +61,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 
-from main.optimizer import BaseOptimizer
+from main.optimizer import BaseOptimizer, Objdict
 
 TB_LOGS_FILE = 'tb_logs'
 HC_RESULTS_FOLDER = 'hc_results'
@@ -101,6 +101,7 @@ class DoG_AE_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+        config = Objdict(config)
 
         weight_path = os.path.join(path_here, 'scripts/dogae/train/chkpts/dogae_weights.pth.pick')
         params = Params(weight_path)
