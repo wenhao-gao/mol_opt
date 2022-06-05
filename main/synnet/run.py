@@ -159,7 +159,12 @@ class SynNet_Optimizer(BaseOptimizer):
         num_mut_per_ele_ = config.num_mut_per_ele
         mut_probability_ = config.mut_probability
 
+        n = 0
+        patience = 0
+
         while True:
+
+            n += 1
 
             if len(self.oracle) > 100:
                 self.sort_buffer()
