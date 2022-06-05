@@ -15,6 +15,9 @@ from sklearn.neighbors import BallTree
 
 from tdc.chem_utils import MolConvert
 from main.synnet.syn_net.models.mlp import MLP
+import os
+path_here = os.path.dirname(os.path.realpath(__file__))
+path_main = '/'.join(path_here.split('/')[:-1])
 
 nbits = 4096
 out_dim = 256
@@ -89,7 +92,7 @@ def mol_fp(smi, _radius=2, _nBits=4096):
 def cosine_distance(v1, v2, eps=1e-15):
     return 1 - np.dot(v1, v2) / (np.linalg.norm(v1, ord=2) * np.linalg.norm(v2, ord=2) + eps)
 
-bb_emb = np.load('/home/whgao/synth_net/data/enamine_us_emb_fp_256.npy')
+bb_emb = np.load(os.path.join(path_main, 'data/enamine_us_emb_fp_256.npy'))
 kdtree = BallTree(bb_emb, metric=cosine_distance)
 def nn_search(_e, _tree=kdtree, _k=1):
     dist, ind = _tree.query(_e, k=_k)
