@@ -221,7 +221,7 @@ python run.py MODEL_NAME --wandb online
 ## specify multiple random seeds 
 python run.py MODEL_NAME --seed 0 1 2 
 ## run 5 runs with different random seeds on multuple oracles with wandb logging offline
-python run.py MODEL_NAME --task production --n_runs 5 --oracles qed jnk3 drd2 
+python run.py MODEL_NAME --task production --n_runs 5 --oracles qed 
 ## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
 python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
 ```
