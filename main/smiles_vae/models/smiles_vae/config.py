@@ -7,6 +7,8 @@ def get_parser(parser=None):
 
     # Model
     model_arg = parser.add_argument_group('Model')
+
+    ##### Encoder GRU
     model_arg.add_argument('--q_cell',
                            type=str, default='gru', choices=['gru'],
                            help='Encoder rnn cell type')
@@ -22,6 +24,8 @@ def get_parser(parser=None):
     model_arg.add_argument('--q_dropout',
                            type=float, default=0.5,
                            help='Encoder layers dropout')
+
+    ##### Decoder GRU
     model_arg.add_argument('--d_cell',
                            type=str, default='gru', choices=['gru'],
                            help='Decoder rnn cell type')
