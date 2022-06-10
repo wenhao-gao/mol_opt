@@ -1,4 +1,7 @@
-# mol_opt
+# mol_opt: A Benchmark for Practical Molecular Optimization
+
+This repository created an open-source benchmark for Practical Molecular Optimization, (PMO), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). 
+
 
 ## install 
 
@@ -22,49 +25,39 @@ wandb login  ### user need to register wandb
 conda activate molopt 
 ```
 
-## step by step  
-
-- runable 
-- make compatible (run.py with TDC type oracle)
-- hyper-param tuning (on ranolazine_mpo and zaleplon_mpo, with 3 runs per h-param set and 30 loops)
-- test run (5 independent runs for each oracle, 10k oracle calls for exploration and 1k for exploitation)
-- code oragnization and cleaning
 
 
 ## Models
 
 |                    | `runable` | `compatible` | `hparam` | `test` | `clean` |
 |--------------------|-----------|--------------|----------|--------|---------|
-| **Screening**      | ✅        | ✅           | -        |        |         |
-| **Mol PAL**        | ✅        | ✅           | -        |        |         |
-| **Graph Ga**       | ✅        | ✅           | ✅       |        |         |
-| **SMILES GA**      | ✅        | ✅           | ✅       |        |         |
-| **SELFIES GA**     | ✅        | ✅           |          |        |         |
-| **SELFIES GA +D**  | ✅        | ✅           |          |        |         |
+| **screening**      | ✅        | ✅           | -        |        |         |
+| **molpal**         | ✅        | ✅           | -        |        |         |
+| **graph\_ga**       | ✅        | ✅           | ✅       |        |         |
+| **smiles\_ga**      | ✅        | ✅           | ✅       |        |         |
+| **stoned**     | ✅        | ✅           |          |        |         |
+| **selfies\_ga**  | ✅        | ✅           |          |        |         |
 | **Graph MCTS**     | ✅        | ✅           | ✅       |        |         |
-| **SMILES HC**      | ✅        | ✅           |          |        |         |
-| **SELFIES HC**     |           |              |          |        |         |
+| **smiles\_lstm\_hc**      | ✅        | ✅           |          |        |         |
+| **selfies\_lstm\_hc**     |           |              |          |        |         |
 | **SMILES VAE BO**  | ✅        |              |          |        |         |
 | **SELFIES VAE BO** |           |              |          |        |         |
-| **JTVAE BO**       | ✅        |              |          |        |         |
-| **BOSS (SMILES)**  | ✅        |              |          |        |         |
-| **BOSS (SELFIES)** |           |              |          |        |         |
-| **Graph-GA+GP-BO** | ✅        |              |          |        |         |
-| **ORGAN**          |           |              |          |        |         |
-| **MolGAN**         | ✅        |              |          |        |         |
-| **ChemBO**         | ✅        |              |          |        |         |
-| **REINVENT**       | ✅        |              |          |        |         |
-| **RationaleRL**    | ✅        |              |          |        |         |
-| **MolDQN**         | ✅        |  ✅          |          |        |         |
-| **MIMOSA**         | ✅        | ✅           |          |        |         |
-| **MARS**           | ✅        | ✅           |          |        |         |
-| **DoG-Gen**        | doing     |              |          |        |         |
-| **DoG-AE BO**      | doing     |              |          |        |         |
-| **SynNet**         | ✅        |              |          |        |         |
-| **Pasithea**       | ✅        |              |          |        |         |
-| **DST**            | ✅        | ✅           |          |        |         |
-| **GFlowNet**       | ✅        |  ✅          |          |        |         |
-| **GFlowNet (AL)**  |           |              |          |        |         ||
+| **jt\_vae**        | ✅        |              |          |        |         |
+| **gpbo**           | ✅        |              |          |        |         |
+| **reinvent**       | ✅        |              |          |        |         |
+| **reinvent\_selfies** | ✅        |              |          |        |         |
+| **moldqn**         | ✅        |  ✅          |          |        |         |
+| **mimosa**         | ✅        | ✅           |          |        |         |
+| **mars**           | ✅        | ✅           |          |        |         |
+| **dog\_gen**       | doing     |              |          |        |         |
+| **dog\_ae**        | doing     |              |          |        |         |
+| **synnet**         | ✅        |              |          |        |         |
+| **pasithea**       | ✅        |              |          |        |         |
+| **dst**            | ✅        | ✅           |          |        |         |
+| **gflownet**       | ✅        |  ✅          |          |        |         |
+| **gflownet\_al**   |           |              |          |        |         ||
+
+
 
 # Contribution Guide
 
@@ -84,7 +77,7 @@ mkdir main/MODEL_NAME
 One should run the `main/MODEL_NAME/run.py` to optimize a property by:
 
 ```bash
-python main/MODEL_NAME/run.py 
+python run.py MODEL_NAME 
 ```
 
 Within this `run.py` file, the core code for optimization should be implemented in an optimizer class. One should inherit from BaseOptimizer defined in `main/optimizer.py`, in which defined all necessary infrastructures for a molecular optimization run:
