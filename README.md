@@ -3,23 +3,25 @@
 This repository created an open-source benchmark for Practical Molecular Optimization, (PMO), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). 
 
 
+
 ## install 
 
 ```bash
 conda create -n molopt python=3.7
 conda activate molopt 
-conda install -c rdkit rdkit 
 pip install torch 
 pip install guacamol 
 pip install PyTDC 
 pip install networkx 
 pip install joblib 
-pip install nltk 
 conda install -c rdkit rdkit 
 pip install wandb   
 wandb login  ### user need to register wandb
 ```
 
+<!-- pip install nltk: only for smiles_ga  -->
+
+## activate conda environment 
 
 ```bash
 conda activate molopt 
@@ -27,138 +29,57 @@ conda activate molopt
 
 
 
-## Models
+## 25 Models
 
 |                    | `runable` | `compatible` | `hparam` | `test` | `clean` |
 |--------------------|-----------|--------------|----------|--------|---------|
 | **screening**      | ✅        | ✅           | -        |        |         |
 | **molpal**         | ✅        | ✅           | -        |        |         |
-| **graph\_ga**       | ✅        | ✅           | ✅       |        |         |
-| **smiles\_ga**      | ✅        | ✅           | ✅       |        |         |
-| **stoned**     | ✅        | ✅           |          |        |         |
-| **selfies\_ga**  | ✅        | ✅           |          |        |         |
-| **Graph MCTS**     | ✅        | ✅           | ✅       |        |         |
-| **smiles\_lstm\_hc**      | ✅        | ✅           |          |        |         |
-| **selfies\_lstm\_hc**     |           |              |          |        |         |
-| **SMILES VAE BO**  | ✅        |              |          |        |         |
-| **SELFIES VAE BO** |           |              |          |        |         |
-| **jt\_vae**        | ✅        |              |          |        |         |
-| **gpbo**           | ✅        |              |          |        |         |
-| **reinvent**       | ✅        |              |          |        |         |
-| **reinvent\_selfies** | ✅        |              |          |        |         |
-| **moldqn**         | ✅        |  ✅          |          |        |         |
+| **graph\_ga**      | ✅        | ✅           | ✅       |        |         |
+| **smiles\_ga**     | ✅        | ✅           | ✅       |        |         |
+| **stoned**         | ✅        | ✅           |          |        |         |
+| **selfies\_ga**    | ✅        | ✅           |          |        |         |
+| **graph\_mcts**    | ✅        | ✅           | ✅       |        |         |
+| **smiles\_lstm\_hc**   | ✅    | ✅           |          |        |         |
+| **selfies\_lstm\_hc**  | ✅    | ✅           |          |        |         |
+| **smiles\_vae**    | ✅        | ✅           |          |        |         |
+| **selfies\_vae**   | ✅        | ✅           |          |        |         |
+| **jt\_vae**        | ✅        | ✅           |          |        |         |
+| **gpbo**           | ✅        | ✅           |          |        |         |
+| **reinvent**       | ✅        | ✅           |          |        |         |
+| **reinvent\_selfies** | ✅     | ✅           |          |        |         |
+| **moldqn**         | ✅        | ✅           |          |        |         |
 | **mimosa**         | ✅        | ✅           |          |        |         |
 | **mars**           | ✅        | ✅           |          |        |         |
-| **dog\_gen**       | doing     |              |          |        |         |
-| **dog\_ae**        | doing     |              |          |        |         |
-| **synnet**         | ✅        |              |          |        |         |
-| **pasithea**       | ✅        |              |          |        |         |
+| **dog\_gen**       | ✅        | ✅           |          |        |         |
+| **dog\_ae**        | ✅        | ✅           |          |        |         |
+| **synnet**         | ✅        | ✅           |          |        |         |
+| **pasithea**       | ✅        | ✅           |          |        |         |
 | **dst**            | ✅        | ✅           |          |        |         |
-| **gflownet**       | ✅        |  ✅          |          |        |         |
-| **gflownet\_al**   |           |              |          |        |         ||
+| **gflownet**       | ✅        | ✅           |          |        |         |
+| **gflownet\_al**   | ✅        | ✅           |          |        |         ||
 
 
+## Run with one-line bash command line
 
-# Contribution Guide
-
-Thanks for your interest in our benchmark! This guide was made to help you develop your model that fits our benchmark quickly. If you have a other suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue.
-Don't forget to give the project a star! Thanks again!
-
-## 1) Create a directory for new method main/MODEL_NAME 
-
-All codes for a model should be in the `main/MODEL_NAME` directory, including pretrained model. A `README.md` is prefered to describe the method.
+There are three types of runs defined in our code base: 
+* `simple`: A single run for testing purposes for each oracle, is the defualt.
+* `production`: Multiple independent runs with various random seeds for each oracle.
+* `tune`: A hyper-parameter tuning over the search space defined in `main/MODEL_NAME/hparam_tune.yaml` for each oracle.
 
 ```bash
-mkdir main/MODEL_NAME
+## run a single test run on qed with wandb logging online
+python run.py MODEL_NAME --wandb online
+## specify multiple random seeds 
+python run.py MODEL_NAME --seed 0 1 2 
+## run 5 runs with different random seeds on multuple oracles with wandb logging offline
+python run.py MODEL_NAME --task production --n_runs 5 --oracles qed 
+## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
+python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
 ```
 
-## 2) Make an Optimizer class for your method
 
-One should run the `main/MODEL_NAME/run.py` to optimize a property by:
-
-```bash
-python run.py MODEL_NAME 
-```
-
-Within this `run.py` file, the core code for optimization should be implemented in an optimizer class. One should inherit from BaseOptimizer defined in `main/optimizer.py`, in which defined all necessary infrastructures for a molecular optimization run:
-
-```python
-from xxx import xxx 
-
-class MODEL_NAME_Optimizer(BaseOptimizer):
-
-    def __init__(self, args=None):
-        super().__init__(args)
-        ## Your model name, used for logging your results
-        self.model_name = "model_name" 
-
-    def _optimize(self, oracle, config): 
-        """
-        The code for a function to optimize a oracle function with hyper-parameters defined in config
-        """
-        
-        ## This line is necessary
-        self.oracle.assign_evaluator(oracle)
-
-        ############# Your code to optimize an oracle function #############
-        ############################## START ###############################
-
-        ## Initialization
-        population_size = config["population_size"]
-        ...
-
-        ## A typical iterative optimization loop
-        for it in range(iterations):
-
-        	## Search for next batch to evaluate
-            population = model(old_population)
-            ...
-
-	        ## Score the smiles strings with self.oracle, with either a list of SMILES or a SMILES as input
-            ## Doing so automatically:
-            ##     1) scores the new input molecules and retrieves values for old ones
-            ##     2) saves results to self.mol_buffer for logging and analyzing
-            ##     3) logs the results to wandb with a predefined frequency
-            ##     4) determins if we reached a predefined maximum number of oracle calls
-    	    population_scores = self.oracle(population) 
-
-            ## If we reached a predefined maximum number of oracle calls, break
-            ## This line could be used in 
-            if self.finish:
-                break
-
-            ## or one could also use self.oracle.finish to check within a user-defined function with self.oracle
-            if self.oracle.finish:
-                break
-
-            ## Once you decide to early-stop, you could use self.log_intermediate(finish=True) to fake a converged 
-            ## line to maximum number of oracle calls for comparison purposes
-            if converge: 
-                self.log_intermediate(finish=True)
-                break
-
-        ############################### END ################################
-
-```
-
-## 3) Copy a main function
-
-After implementing your optimizer class, you could add the class to the `run.py` file. Note the arguments in argparse are for task-level control, i.e., what type of runs, how many independent runs, optimize which oracle functions, etc. Hyper-parameters for molecular optimization algorithms should be defined in `main/MODEL_NAME/hparams_default.yaml` and their search space for tuning should be defined in `main/MODEL_NAME/hparams_tune.yaml`. We will explain them in the next section.
-
-```python
-from main.graph_ga.run import GB_GA_Optimizer
-from main.MODEL_NAME.run import MODEL_NAME_Optimizer
-
-...
-
-    if args.method == 'graph_ga':
-        Optimizer = GB_GA_Optimizer
-    elif args.method == MODEL_NAME:
-        Optimizer = MODEL_NAME_Optimizer
-
-```
-
-## 4) Hyperparameters
+## Hyperparameters
 
 We separate hyperparameters for task-level control, defined from `argparse`, and algorithm-level control, defined from `hparam_default.yaml`. There is no clear boundary for them, but we reccomend one keep all hyperparameters in the `self._optimize` function as task-level. 
 
@@ -201,33 +122,17 @@ parameters:
 
 We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](https://docs.wandb.ai) for a convenient visualization. The taml file should follow the format as above. Further detail is in this [instruction](https://docs.wandb.ai/guides/sweeps/configuration).
 
-## 5) Running
-
-There are three types of runs defined in our code base: 
-* `simple`: A single run for testing purposes for each oracle, is the defualt.
-* `production`: Multiple independent runs with various random seeds for each oracle.
-* `tune`: A hyper-parameter tuning over the search space defined in `main/MODEL_NAME/hparam_tune.yaml` for each oracle.
-
-```bash
-## run a single test run on qed with wandb logging online
-python run.py MODEL_NAME --wandb online
-## specify multiple random seeds 
-python run.py MODEL_NAME --seed 0 1 2 
-## run 5 runs with different random seeds on multuple oracles with wandb logging offline
-python run.py MODEL_NAME --task production --n_runs 5 --oracles qed 
-## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
-python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
-```
-
-One can use argparse help to check the detail description of the arguments.
 
 
-## 6) Logging metrics to wandb server
+## How to Contribute to our benchmark
 
-The default mode for wandb logging is `offline` for the speed and memory reasons. After finishing a run, one could syncronyze teh results to the server by running:
+Our repository is an open-source initiative. To get involved, check our [Contribution Guidelines](CONTRIBUTE.md)!
 
-```bash
-wandb sync PATH_TO/wandb/offline-run-20220406_182133-xxxxxxxx
-```
 
-To watch the results in time, one could turn the mode to `online` by flag `wandb`. To stop wandb logging, one could turn the mode to `disabled` by flag `wandb`.
+
+
+
+
+
+
+
