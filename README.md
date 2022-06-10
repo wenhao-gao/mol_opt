@@ -86,7 +86,7 @@ python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled 
 
 ## Hyperparameters
 
-We separate hyperparameters for task-level control, defined from `argparse`, and algorithm-level control, defined from `hparam_default.yaml`. There is no clear boundary for them, but we reccomend one keep all hyperparameters in the `self._optimize` function as task-level. 
+We separate hyperparameters for task-level control, defined from `argparse`, and algorithm-level control, defined from `hparam_default.yaml`. There is no clear boundary for them, but we recommend one keep all hyperparameters in the `self._optimize` function as task-level. 
 
 * **running hyperparameter**: parser argument. 
 * **default model hyperparameter**: `hparam_default.yaml`
@@ -125,7 +125,7 @@ parameters:
     value: 1000
 ```
 
-We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](https://docs.wandb.ai) for a convenient visualization. The taml file should follow the format as above. Further detail is in this [instruction](https://docs.wandb.ai/guides/sweeps/configuration).
+We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](https://docs.wandb.ai) for a convenient visualization. The yaml file should follow the format as above. Further detail is in this [instruction](https://docs.wandb.ai/guides/sweeps/configuration).
 
 
 
