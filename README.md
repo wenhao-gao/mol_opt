@@ -1,6 +1,6 @@
 # mol_opt: A Benchmark for Practical Molecular Optimization
 
-This repository created an open-source benchmark for Practical Molecular Optimization, (PMO), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). 
+This repository hosts an open-source benchmark for Practical Molecular Optimization (**PMO**), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). 
 
 
 
@@ -26,7 +26,7 @@ We recommend to use PyTorch 1.10.2 and PyTDC 0.3.6.
 
 
 
-## activate conda environment 
+## activate conda 
 
 ```bash
 conda activate molopt 
@@ -36,36 +36,39 @@ conda activate molopt
 
 ## 25 Models
 
-|                    | `runable` | `compatible` | `additional package` | `test` | `clean` |
-|--------------------|-----------|--------------|----------|--------|---------|
-| **screening**      | ✅        | ✅           | -        |        |         |
-| **molpal**         | ✅        | ✅           | ray      |        |         |
-| **graph\_ga**      | ✅        | ✅           | joblib   |        |         |
-| **smiles\_ga**     | ✅        | ✅           | joblib, nltk   |        |         |
-| **stoned**         | ✅        | ✅           | -         |        |         |
-| **selfies\_ga**    | ✅        | ✅           | selfies   |        |         |
-| **graph\_mcts**    | ✅        | ✅           | -       |        |         |
-| **smiles\_lstm\_hc**   | ✅    | ✅           | guacamol         |        |         |
-| **selfies\_lstm\_hc**  | ✅    | ✅           | guacamol, selfies         |        |         |
-| **smiles\_vae**    | ✅        | ✅           | botorch         |        |         |
-| **selfies\_vae**   | ✅        | ✅           | botorch, selfies         |        |         |
-| **jt\_vae**        | ✅        | ✅           | botorch          |        |         |
-| **gpbo**           | ✅        | ✅           | botorch, networkx         |        |         |
-| **reinvent**       | ✅        | ✅           | -         |        |         |
-| **reinvent\_selfies** | ✅     | ✅           | selfies         |        |         |
-| **moldqn**         | ✅        | ✅           | networks, requests    |        |         |
-| **mimosa**         | ✅        | ✅           | -         |        |         |
-| **mars**           | ✅        | ✅           | chemprop, networkx, dgl         |        |         |
-| **dog\_gen**       | ✅        | ✅           | **super complex**         |        |         |
-| **dog\_ae**        | ✅        | ✅           | **super complex**         |        |         |
-| **synnet**         | ✅        | ✅           | dgl, pytorch_lightning, networkx, matplotlib        |        |         |
-| **pasithea**       | ✅        | ✅           | selfies, matplotlib         |        |         |
-| **dst**            | ✅        | ✅           | -         |        |         |
-| **gflownet**       | ✅        | ✅           | torch_geometric, torch_sparse, pdb         |        |         |
-| **gflownet\_al**   | ✅        | ✅           | torch_geometric, torch_sparse, pdb         |        |         ||
+`time` is the average rough clock time for a single run in our benchmark and do not involve the time for pretraining and data preprocess. 
+We have processed the data, pretrained the model. Both are available in the repository. 
+
+|                    | `runable` | `additional package` | `time` | `clean` |
+|--------------------|-----------|----------|--------|---------|
+| **screening**      | ✅        | -        |  2 min     |         |
+| **molpal**         | ✅        | ray      |     ?   |         |
+| **graph\_ga**      | ✅        | joblib   |  3 min      |         |
+| **smiles\_ga**     | ✅        | joblib, nltk   |   2 min     |         |
+| **stoned**         | ✅        | -         |   3 min     |         |
+| **selfies\_ga**    | ✅        | selfies   |  20 min      |         |
+| **graph\_mcts**    | ✅        | -       |   2 min     |         |
+| **smiles\_lstm\_hc**   | ✅    | guacamol         |    4 min    |         |
+| **selfies\_lstm\_hc**  | ✅    | guacamol, selfies         |    4 min    |         |
+| **smiles\_vae**    | ✅        | botorch         |   20 min    |         |
+| **selfies\_vae**   | ✅        | botorch, selfies         |    20 min    |         |
+| **jt\_vae**        | ✅        | botorch          |    20 min    |         |
+| **gpbo**           | ✅        | botorch, networkx         |    15 min    |         |
+| **reinvent**       | ✅        | -         |    2 min    |         |
+| **reinvent\_selfies** | ✅     | selfies         |    3 min    |         |
+| **moldqn**         | ✅        | networks, requests    |    60 min    |         |
+| **mimosa**         | ✅        | -         |    10 min    |         |
+| **mars**           | ✅        | chemprop, networkx, dgl         |    20 min    |         |
+| **dog\_gen**       | ✅        | extra conda        |    120 min    |         |
+| **dog\_ae**        | ✅        | extra conda        |        |         |
+| **synnet**         | ✅        | dgl, pytorch_lightning, networkx, matplotlib        |        |         |
+| **pasithea**       | ✅        | selfies, matplotlib         |    50 min    |         |
+| **dst**            | ✅        | -         |    120 min     |         |
+| **gflownet**       | ✅        | torch_geometric, torch_sparse, torch_cluster, pdb        |    30 min    |         |
+| **gflownet\_al**   | ✅        | torch_geometric, torch_sparse, torch_cluster,pdb         |    30 min    |         ||
 
 
-## Run with one-line bash command line
+## Run with one-line code
 
 There are three types of runs defined in our code base: 
 * `simple`: A single run for testing purposes for each oracle, is the defualt.
@@ -77,11 +80,13 @@ There are three types of runs defined in our code base:
 python run.py MODEL_NAME --wandb online
 ## specify multiple random seeds 
 python run.py MODEL_NAME --seed 0 1 2 
-## run 5 runs with different random seeds on multuple oracles with wandb logging offline
+## run 5 runs with different random seeds with specific oracle with wandb logging offline
 python run.py MODEL_NAME --task production --n_runs 5 --oracles qed 
 ## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
 python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
 ```
+
+`MODEL_NAME` are listed in the table above. 
 
 
 ## Hyperparameters
@@ -129,7 +134,7 @@ We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](http
 
 
 
-## How to Contribute to our benchmark
+## Contribute
 
 Our repository is an open-source initiative. To get involved, check our [Contribution Guidelines](CONTRIBUTE.md)!
 
