@@ -10,16 +10,21 @@ This repository created an open-source benchmark for Practical Molecular Optimiz
 conda create -n molopt python=3.7
 conda activate molopt 
 pip install torch 
-pip install guacamol 
 pip install PyTDC 
-pip install networkx 
-pip install joblib 
+pip install PyYAML
 conda install -c rdkit rdkit 
 pip install wandb   
 wandb login  ### user need to register wandb
 ```
 
+We recommend to use PyTorch 1.10.2 and PyTDC 0.3.6. 
+
 <!-- pip install nltk: only for smiles_ga  -->
+<!-- pip install guacamol  -->
+<!-- pip install networkx  -->
+<!-- pip install joblib  -->
+
+
 
 ## activate conda environment 
 
@@ -31,33 +36,33 @@ conda activate molopt
 
 ## 25 Models
 
-|                    | `runable` | `compatible` | `hparam` | `test` | `clean` |
+|                    | `runable` | `compatible` | `additional package` | `test` | `clean` |
 |--------------------|-----------|--------------|----------|--------|---------|
 | **screening**      | ✅        | ✅           | -        |        |         |
-| **molpal**         | ✅        | ✅           | -        |        |         |
-| **graph\_ga**      | ✅        | ✅           | ✅       |        |         |
-| **smiles\_ga**     | ✅        | ✅           | ✅       |        |         |
-| **stoned**         | ✅        | ✅           |          |        |         |
-| **selfies\_ga**    | ✅        | ✅           |          |        |         |
-| **graph\_mcts**    | ✅        | ✅           | ✅       |        |         |
-| **smiles\_lstm\_hc**   | ✅    | ✅           |          |        |         |
-| **selfies\_lstm\_hc**  | ✅    | ✅           |          |        |         |
-| **smiles\_vae**    | ✅        | ✅           |          |        |         |
-| **selfies\_vae**   | ✅        | ✅           |          |        |         |
-| **jt\_vae**        | ✅        | ✅           |          |        |         |
-| **gpbo**           | ✅        | ✅           |          |        |         |
-| **reinvent**       | ✅        | ✅           |          |        |         |
-| **reinvent\_selfies** | ✅     | ✅           |          |        |         |
-| **moldqn**         | ✅        | ✅           |          |        |         |
-| **mimosa**         | ✅        | ✅           |          |        |         |
-| **mars**           | ✅        | ✅           |          |        |         |
-| **dog\_gen**       | ✅        | ✅           |          |        |         |
-| **dog\_ae**        | ✅        | ✅           |          |        |         |
-| **synnet**         | ✅        | ✅           |          |        |         |
-| **pasithea**       | ✅        | ✅           |          |        |         |
-| **dst**            | ✅        | ✅           |          |        |         |
-| **gflownet**       | ✅        | ✅           |          |        |         |
-| **gflownet\_al**   | ✅        | ✅           |          |        |         ||
+| **molpal**         | ✅        | ✅           | ray      |        |         |
+| **graph\_ga**      | ✅        | ✅           | joblib   |        |         |
+| **smiles\_ga**     | ✅        | ✅           | joblib, nltk   |        |         |
+| **stoned**         | ✅        | ✅           | -         |        |         |
+| **selfies\_ga**    | ✅        | ✅           | selfies   |        |         |
+| **graph\_mcts**    | ✅        | ✅           | -       |        |         |
+| **smiles\_lstm\_hc**   | ✅    | ✅           | guacamol         |        |         |
+| **selfies\_lstm\_hc**  | ✅    | ✅           | guacamol, selfies         |        |         |
+| **smiles\_vae**    | ✅        | ✅           | botorch         |        |         |
+| **selfies\_vae**   | ✅        | ✅           | botorch, selfies         |        |         |
+| **jt\_vae**        | ✅        | ✅           | botorch          |        |         |
+| **gpbo**           | ✅        | ✅           | botorch, networkx         |        |         |
+| **reinvent**       | ✅        | ✅           | -         |        |         |
+| **reinvent\_selfies** | ✅     | ✅           | selfies         |        |         |
+| **moldqn**         | ✅        | ✅           | networks, requests    |        |         |
+| **mimosa**         | ✅        | ✅           | -         |        |         |
+| **mars**           | ✅        | ✅           | chemprop, networkx, dgl         |        |         |
+| **dog\_gen**       | ✅        | ✅           | **super complex**         |        |         |
+| **dog\_ae**        | ✅        | ✅           | **super complex**         |        |         |
+| **synnet**         | ✅        | ✅           | dgl, pytorch_lightning, networkx, matplotlib        |        |         |
+| **pasithea**       | ✅        | ✅           | selfies, matplotlib         |        |         |
+| **dst**            | ✅        | ✅           | -         |        |         |
+| **gflownet**       | ✅        | ✅           | torch_geometric, torch_sparse, pdb         |        |         |
+| **gflownet\_al**   | ✅        | ✅           | torch_geometric, torch_sparse, pdb         |        |         ||
 
 
 ## Run with one-line bash command line
