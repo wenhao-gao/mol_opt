@@ -66,7 +66,7 @@ Based the ML methodologies, all the methods are categorized into:
 * gradient (gradient ascent)
     * **dst** is based molecular graph. 
     * **pasithea** is based on SELFIES. 
-* MCMC (Markov Chain Monte Carlo)
+* SBM (score-based modeling)
     * **gflownet**  
     * **gflownet\_al** 
     * **mars** 
@@ -77,7 +77,7 @@ We have processed the data, pretrained the model. Both are available in the repo
 |                    | `assembly` | `additional package` | `time` | `requires_gpu` |
 |--------------------|-----------|----------|--------|---------|
 | **screening**      | -        | -        |  2 min     |    no     |
-| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**         | -        | ray      |     ?   |    no     |
+| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**         | -        | ray      |     1 hour   |    no     |
 | **[graph\_ga](https://pubs.rsc.org/en/content/articlelanding/2019/sc/c8sc05372c)**      | fragment        | joblib   |  3 min      |   no    |
 | **[smiles\_ga](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**     | SMILES        | joblib, nltk   |   2 min     |    no     |
 | **[stoned](https://chemrxiv.org/engage/chemrxiv/article-details/60c753f00f50db6830397c37)**         | SELFIES        | -         |   3 min     |    no    |
@@ -96,7 +96,7 @@ We have processed the data, pretrained the model. Both are available in the repo
 | **[mars](https://openreview.net/pdf?id=kHSu4ebxFXY)**           | fragment        | chemprop, networkx, dgl         |    20 min    |    yes     |
 | **[dog\_gen](https://proceedings.neurips.cc/paper/2020/file/4cc05b35c2f937c5bd9e7d41d3686fff-Paper.pdf)**       | synthesis        | extra conda        |    120 min    |     yes    |
 | **[dog\_ae](https://proceedings.neurips.cc/paper/2020/file/4cc05b35c2f937c5bd9e7d41d3686fff-Paper.pdf)**        | synthesis        | extra conda        |    50 min    |    yes     |
-| **[synnet](https://openreview.net/forum?id=FRxhHdnxt1)**         | synthesis        | dgl, pytorch_lightning, networkx, matplotlib        |   >10 hours?     |    yes     |
+| **[synnet](https://openreview.net/forum?id=FRxhHdnxt1)**         | synthesis        | dgl, pytorch_lightning, networkx, matplotlib        |   2-5 hours     |    yes     |
 | **[pasithea](https://arxiv.org/pdf/2012.09712.pdf)**       | SELFIES        | selfies, matplotlib         |    50 min    |    yes     |
 | **[dst](https://openreview.net/pdf?id=w_drCosT76)**            | fragment        | -         |    120 min     |    no     |
 | **[gflownet](https://arxiv.org/abs/2106.04399)**       | fragment        | torch_{geometric,sparse,cluster}, pdb        |    30 min    |     yes    |
@@ -171,13 +171,7 @@ We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](http
 
 ## Contribute
 
-Our repository is an open-source initiative. To get involved, check our [Contribution Guidelines](CONTRIBUTE.md)!
-
-
-
-
-
-
+Our repository is an open-source initiative. To update a better set of parameters or incldue your model in out benchmark, check our [Contribution Guidelines](CONTRIBUTE.md)!
 
 
 
