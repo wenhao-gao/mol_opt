@@ -4,6 +4,6 @@ radius: 2
 nbits: 4096
 num_population: 128
 num_offspring: 512
-ncpu: 64
+ncpu: 32
 mut_probability: 0.5
 num_mut_per_ele: 24

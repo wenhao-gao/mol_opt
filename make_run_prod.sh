@@ -34,6 +34,6 @@ done" > production_$method.slurm
 #     then
 #         CUDA_VISIBLE_DEVICES=3 nohup bash production_${method}.sh &> ${method}_prod.out &
 #     else
-#         CUDA_VISIBLE_DEVICES= nohup bash production_${method}.sh &> ${method}_prod.out &
+#         CUDA_VISIBLE_DEVICES= nohup bash production_synnet1.sh &> synnet_prod1.out &
 #     fi
 done
