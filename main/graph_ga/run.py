@@ -78,6 +78,12 @@ class GB_GA_Optimizer(BaseOptimizer):
 
         while True:
 
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                old_score = np.mean([item[1][0] for item in list(self.mol_buffer.items())[:100]])
+            else:
+                old_score = 0
+
             # new_population
             mating_pool = make_mating_pool(population_mol, population_scores, config["population_size"])
             offspring_mol = pool(delayed(reproduce)(mating_pool, config["mutation_rate"]) for _ in range(config["offspring_size"]))
@@ -94,14 +100,30 @@ class GB_GA_Optimizer(BaseOptimizer):
             population_mol = [t[1] for t in population_tuples]
             population_scores = [t[0] for t in population_tuples]
 
-            # early stopping
-            if population_scores == old_scores:
-                patience += 1
-                if patience >= self.args.patience:
-                    self.log_intermediate(finish=True)
-                    break
-            else:
-                patience = 0
+            # # early stopping
+            # if population_scores == old_scores:
+            #     patience += 1
+            #     if patience >= self.args.patience:
+            #         self.log_intermediate(finish=True)
+            #         break
+            # else:
+            #     patience = 0
+
+            ### early stopping
+            if len(self.oracle) > 100:
+                self.sort_buffer()
+                new_score = np.mean([item[1][0] for item in list(self.mol_buffer.items())[:100]])
+                # import ipdb; ipdb.set_trace()
+                if (new_score - old_score) < 1e-3:
+                    patience += 1
+                    if patience >= self.args.patience:
+                        self.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
+
+                old_score = new_score
                 
             if self.finish:
                 break

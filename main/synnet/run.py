@@ -168,9 +168,9 @@ class SynNet_Optimizer(BaseOptimizer):
 
             if len(self.oracle) > 100:
                 self.sort_buffer()
-                old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                old_score = np.mean([item[1][0] for item in list(self.mol_buffer.items())[:100]])
             else:
-                old_scores = 0
+                old_score = 0
 
             t = time.time()
 
@@ -220,11 +220,10 @@ class SynNet_Optimizer(BaseOptimizer):
             if len(recent_scores) > 10:
                 del recent_scores[0]
 
-            ### early stopping
-            if len(self.oracle) > 2000:
+            if len(self.oracle) > 100:
                 self.sort_buffer()
-                new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
-                if new_scores == old_scores:
+                new_score = np.mean([item[1][0] for item in list(self.mol_buffer.items())[:100]])
+                if (new_score - old_score) < 1e-3:
                     patience += 1
                     if patience >= self.args.patience:
                         self.log_intermediate(finish=True)
@@ -233,4 +232,4 @@ class SynNet_Optimizer(BaseOptimizer):
                 else:
                     patience = 0
 
-                old_scores = new_scores
+                old_score = new_score

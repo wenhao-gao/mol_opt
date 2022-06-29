@@ -1,9 +1,9 @@
 #!/bin/bash
 
-methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
-         'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo' 'jt_vae' 'moldqn' \
-         'smiles_vae' 'selfies_vae' 'chembo' 'mars' 'reinvent' 'reinvent_selfies')
-# methods=('gpbo' 'smiles_ga' 'selfies_ga' 'smiles_lstm_hc' 'selfies_lstm_hc' 'mars' 'reinvent' 'reinvent_selfies' 'smiles_vae' 'selfies_vae')
+# methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
+#          'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo' 'jt_vae' 'moldqn' \
+#          'smiles_vae' 'selfies_vae' 'chembo' 'mars' 'reinvent' 'reinvent_selfies')
+methods=('synnet')
 
 for method in "${methods[@]}"
 do
@@ -18,7 +18,7 @@ oracle_array=('jnk3' 'gsk3b' 'celecoxib_rediscovery' \\
 
 for oralce in "\${oracle_array[@]}"
 do
-python -u run.py ${method} --task production --n_runs 5 --n_jobs 8 --wandb offline --max_oracle_calls 10000 --oracles \${oralce}
+python -u run.py ${method} --seed 1 --n_jobs 16 --wandb offline --max_oracle_calls 10000 --oracles \${oralce}
 done" > production_$method.sh
 
 #     if [[ ${method} = 'molpal' ]]
@@ -34,6 +34,6 @@ done" > production_$method.sh
 #     then
 #         CUDA_VISIBLE_DEVICES=3 nohup bash production_${method}.sh &> ${method}_prod.out &
 #     else
-#         CUDA_VISIBLE_DEVICES= nohup bash production_${method}.sh &> ${method}_prod.out &
+#         CUDA_VISIBLE_DEVICES= nohup bash production_synnet1.sh &> synnet_prod1.out &
 #     fi
 done

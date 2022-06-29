@@ -52,6 +52,7 @@ class Oracle:
     def __init__(self, args=None, mol_buffer={}):
         self.name = None
         self.evaluator = None
+        self.task_label = None
         if args is None:
             self.max_oracle_calls = 10000
             self.freq_log = 100
@@ -73,6 +74,17 @@ class Oracle:
 
     def sort_buffer(self):
         self.mol_buffer = dict(sorted(self.mol_buffer.items(), key=lambda kv: kv[1][0], reverse=True))
+
+    def save_result(self, suffix=None):
+        
+        if suffix is None:
+            output_file_path = os.path.join(self.args.output_dir, 'results.yaml')
+        else:
+            output_file_path = os.path.join(self.args.output_dir, 'results_' + suffix + '.yaml')
+
+        self.sort_buffer()
+        with open(output_file_path, 'w') as f:
+            yaml.dump(self.mol_buffer, f, sort_keys=False)
 
     def log_intermediate(self, mols=None, scores=None, finish=False):
 
@@ -172,12 +184,14 @@ class Oracle:
                     self.sort_buffer()
                     self.log_intermediate()
                     self.last_log = len(self.mol_buffer)
+                    self.save_result(self.task_label)
         else:  ### a string of SMILES 
             score_list = self.score_smi(smiles_lst)
             if len(self.mol_buffer) % self.freq_log == 0 and len(self.mol_buffer) > self.last_log:
                 self.sort_buffer()
                 self.log_intermediate()
                 self.last_log = len(self.mol_buffer)
+                self.save_result(self.task_label)
         return score_list
 
     @property
@@ -334,6 +348,7 @@ class BaseOptimizer:
         torch.manual_seed(seed)
         random.seed(seed)
         self.seed = seed 
+        self.oracle.task_label = self.model_name + "_" + oracle.name + "_" + str(seed)
         self._optimize(oracle, config)
         if self.args.log_results:
             self.log_result()
