@@ -41,7 +41,7 @@ from syn_dags.script_utils import doggen_utils
 from syn_dags.script_utils import opt_utils
 from syn_dags.utils import settings
 
-from main.optimizer import BaseOptimizer
+from main.optimizer import BaseOptimizer, Objdict
 
 TB_LOGS_FILE = 'tb_logs'
 HC_RESULTS_FOLDER = 'hc_results'
@@ -79,7 +79,7 @@ class DoG_Gen_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
-
+        config = Objdict(config)
         rng = np.random.RandomState(5156)
 
         weight_path = os.path.join(path_here, 'scripts/dog_gen/chkpts/doggen_weights.pth.pick')

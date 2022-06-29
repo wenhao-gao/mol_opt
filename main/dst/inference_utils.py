@@ -249,9 +249,15 @@ def inference_molecule_set(input_smiles_lst, gnn, result_file, generations, popu
 def optimize_dst(feature):
 	smiles, gnn, topk, epsilon = feature
 	if substr_num(smiles) < 3:
-		smiles_set = optimize_single_molecule_one_iterate(smiles, gnn, )  ### optimize_single_molecule_one_iterate_v2
+		try:
+			smiles_set = optimize_single_molecule_one_iterate(smiles, gnn, )  ### optimize_single_molecule_one_iterate_v2
+		except:
+			return set()
 	else:
-		smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon, )
+		try:
+			smiles_set = optimize_single_molecule_one_iterate_v3(smiles, gnn, topk = topk, epsilon = epsilon, )
+		except:
+			return set()
 	return smiles_set 
 
 

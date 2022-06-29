@@ -61,7 +61,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.acquisition import UpperConfidenceBound
 from botorch.optim import optimize_acqf
 
-from main.optimizer import BaseOptimizer
+from main.optimizer import BaseOptimizer, Objdict
 
 TB_LOGS_FILE = 'tb_logs'
 HC_RESULTS_FOLDER = 'hc_results'
@@ -101,6 +101,7 @@ class DoG_AE_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
 
         self.oracle.assign_evaluator(oracle)
+        config = Objdict(config)
 
         weight_path = os.path.join(path_here, 'scripts/dogae/train/chkpts/dogae_weights.pth.pick')
         params = Params(weight_path)
@@ -147,33 +148,37 @@ class DoG_AE_Optimizer(BaseOptimizer):
             else:
                 old_scores = 0
 
-            # 1. Fit a Gaussian Process model to data
-            gp = SingleTaskGP(train_X, train_Y)
-            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-            fit_gpytorch_model(mll)
+            try:
 
-            # 2. Construct an acquisition function
-            UCB = UpperConfidenceBound(gp, beta=0.1) 
+                # 1. Fit a Gaussian Process model to data
+                gp = SingleTaskGP(train_X, train_Y)
+                mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+                fit_gpytorch_model(mll)
 
-            # 3. Optimize the acquisition function 
-            for _ in range(config['bo_batch']):
-                bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
-                z, _ = optimize_acqf(UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,)
+                # 2. Construct an acquisition function
+                UCB = UpperConfidenceBound(gp, beta=0.1) 
 
-                new_out, _ = model.decode_from_z_no_grad(z, sample_x=False) 
-                ### new_out is list of syn_dags.data.synthesis_trees.SynthesisTree 
-                new_smiles = new_out[0].root_smi
-                print(new_smiles)
+                # 3. Optimize the acquisition function 
+                for _ in range(config['bo_batch']):
+                    bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
+                    z, _ = optimize_acqf(UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,)
+
+                    new_out, _ = model.decode_from_z_no_grad(z, sample_x=False) 
+                    ### new_out is list of syn_dags.data.synthesis_trees.SynthesisTree 
+                    new_smiles = new_out[0].root_smi
+                    print(new_smiles)
 
 
-                new_score = self.oracle(new_smiles)           
-                new_score = torch.FloatTensor([new_score]).view(-1,1)
+                    new_score = self.oracle(new_smiles)           
+                    new_score = torch.FloatTensor([new_score]).view(-1,1)
 
-                train_X = torch.cat([train_X, z], dim = 0)
-                train_Y = torch.cat([train_Y, new_score], dim = 0)
-                if train_X.shape[0] > config['train_num']:
-                    train_X = train_X[-config['train_num']:]
-                    train_Y = train_Y[-config['train_num']:]
+                    train_X = torch.cat([train_X, z], dim = 0)
+                    train_Y = torch.cat([train_Y, new_score], dim = 0)
+                    if train_X.shape[0] > config['train_num']:
+                        train_X = train_X[-config['train_num']:]
+                        train_Y = train_Y[-config['train_num']:]
+            except:
+                break 
 
             # early stopping
             if len(self.oracle) > 100:

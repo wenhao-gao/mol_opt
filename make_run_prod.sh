@@ -3,7 +3,7 @@
 # methods=('screening' 'molpal' 'graph_ga' 'smiles_ga' 'selfies_ga' \
 #          'graph_mcts' 'smiles_lstm_hc' 'selfies_lstm_hc' 'gpbo' 'jt_vae' 'moldqn' \
 #          'smiles_vae' 'selfies_vae' 'chembo' 'mars' 'reinvent' 'reinvent_selfies')
-methods=('synnet')
+methods=('dog_ae' 'dog_gen')
 
 for method in "${methods[@]}"
 do
@@ -18,8 +18,8 @@ oracle_array=('jnk3' 'gsk3b' 'celecoxib_rediscovery' \\
 
 for oralce in "\${oracle_array[@]}"
 do
-python -u run.py ${method} --seed 1 --n_jobs 16 --wandb offline --max_oracle_calls 10000 --oracles \${oralce}
-done" > production_$method.sh
+python -u run.py ${method} --task production --n_runs 1 --n_jobs 8 --wandb offline --max_oracle_calls 10000 --oracles \${oralce}
+done" > production_$method.slurm
 
 #     if [[ ${method} = 'molpal' ]]
 #     then

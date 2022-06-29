@@ -84,17 +84,25 @@ class DogGenHillclimber:
         self._report_best(sorted_tts, tb_logger, 0)
 
         round = 0
+        patience = 0
         
         while True:
             round += 1
             print(f"# Starting round {round}")
+
+            if len(self.parts.scorer) > 100:
+                self.parts.scorer.sort_buffer()
+                old_scores = [item[1][0] for item in list(self.parts.scorer.mol_buffer.items())[:100]]
+            else:
+                old_scores = 0
+
             print('## Setting up new batch for training...')
             new_batch_for_fine_tuning = [e.tuple_tree for e in sorted_tts[:self.hparams.n_samples_to_keep_per_round]]
 
-            print('## Starting dog_gen on new batch...')
+            # print('## Starting dog_gen on new batch...')
             self.train_one_round(new_batch_for_fine_tuning, tb_logger)
 
-            print('## Sampling...')
+            # print('## Sampling...')
             sampled_dirty_tts = self.sample_from_model()
             sampled_clean_tts = self.filter_out_uninteresting_trees_and_clean(sampled_dirty_tts, sorted_tts)
             sorted_tts: typing.List[ScoredTupleTree] = self.score_new_trees_and_sort(sampled_clean_tts, sorted_tts)
@@ -102,6 +110,20 @@ class DogGenHillclimber:
                 print("max oracle calls hit, exit")
                 break 
             self._report_best(sorted_tts, tb_logger, round)
+
+            # early stopping
+            if len(self.parts.scorer) > 100:
+                self.parts.scorer.sort_buffer()
+                new_scores = [item[1][0] for item in list(self.parts.scorer.mol_buffer.items())[:100]]
+                if new_scores == old_scores:
+                    patience += 1
+                    if patience >= 5:
+                        self.parts.scorer.log_intermediate(finish=True)
+                        print('convergence criteria met, abort ...... ')
+                        break
+                else:
+                    patience = 0
+
         return sorted_tts
 
     def train_one_round(self, tuple_trees_to_train_on: typing.List[tuple], tb_logger: SummaryWriter):
@@ -109,9 +131,9 @@ class DogGenHillclimber:
         train_dataloader = self.parts.dataloader_factory(tuple_trees=tuple_trees_to_train_on,
                                                          batch_size=self.hparams.batch_size)
         for epoch in range(self.hparams.n_epochs_for_finetuning):
-            print(f"### Training epoch {epoch}")
+            # print(f"### Training epoch {epoch}")
             loss = 0.
-            for data in tqdm(train_dataloader, desc="training"):
+            for data in train_dataloader:
                 self.optimizer.zero_grad()
                 batch = self.parts.prepare_batch(data, self.parts.device)
                 loss = self.parts.loss_fn(self.parts.model, *batch)
@@ -121,7 +143,7 @@ class DogGenHillclimber:
                     nn.utils.clip_grad_norm_(self.parts.model.parameters(), 1.0)
                 self.optimizer.step()
                 self._num_total_train_steps_for_hc += 1
-            print(f"loss, last batch: {loss.item()}")
+            # print(f"loss, last batch: {loss.item()}")
 
     @staticmethod
     def _report_best(sorted_list: typing.List[ScoredTupleTree], tb_logger: SummaryWriter, step_num):

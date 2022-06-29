@@ -66,12 +66,15 @@ Pretrained DoG-Gen model is saved in `mol_opt/main/dog_gen/scripts/dog_gen/chkpt
 
 Open a new shell, and run the following code and leave it open: 
 ```bash
-conda activate activate mtransformer_py3.6_pt0.4
+conda activate mtransformer_py3.6_pt0.4
 cd MolecularTransformer 
-CUDA_VISIBLE_DEVICES="0,1" python server.py --config available_models/mtransformer_example_server.conf.json
+CUDA_VISIBLE_DEVICES="0,1" python server.py --port 5001 --config available_models/mtransformer_example_server.conf.json
 ```
 
 ### 2. main `DoG_Gen` program
+
+Make sure the port number in `main/dog_ae/synthesis-dags-config.ini` is the same as `5001` in Molecular Transformer above. 
+
 
 Open a new shell, run the following codes and wait the results
 

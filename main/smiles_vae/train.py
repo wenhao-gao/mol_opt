@@ -11,6 +11,9 @@ import sys
 sys.path.append('.')
 
 
+######### hyperparameter  ############
+###### see "models/smiles_vae/config.py" for the hyperparameter of vae model 
+######### hyperparameter  ############
 from utils.script_utils import add_train_args, set_seed
 from models.models_storage import ModelsStorage
 from tdc.generation import MolGen
@@ -83,4 +86,10 @@ if __name__ == '__main__':
     model = sys.argv[1]
     # model = 'smiles_vae' ## smiles_vae
     main(model, config)
+
+
+######### hyperparameter  ############
+###### see "models/smiles_vae/config.py" for the hyperparameter of vae model 
+######### hyperparameter  ############
+
 

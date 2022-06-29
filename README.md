@@ -1,173 +1,132 @@
-# mol_opt
+# mol_opt: A Benchmark for Practical Molecular Optimization
+
+This repository hosts an open-source benchmark for Practical Molecular Optimization (**PMO**), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). The preprint version of the paper is available at https://arxiv.org/pdf/2206.12411.pdf
+
+
 
 ## install 
 
 ```bash
 conda create -n molopt python=3.7
 conda activate molopt 
-conda install -c rdkit rdkit 
 pip install torch 
-pip install guacamol 
 pip install PyTDC 
-pip install networkx 
-pip install joblib 
-pip install nltk 
+pip install PyYAML
 conda install -c rdkit rdkit 
 pip install wandb   
 wandb login  ### user need to register wandb
 ```
 
+We recommend to use PyTorch 1.10.2 and PyTDC 0.3.6. 
+
+<!-- pip install nltk: only for smiles_ga  -->
+<!-- pip install guacamol  -->
+<!-- pip install networkx  -->
+<!-- pip install joblib  -->
+
+
+
+## activate conda 
 
 ```bash
 conda activate molopt 
 ```
 
-## step by step  
-
-- runable 
-- make compatible (run.py with TDC type oracle)
-- hyper-param tuning (on ranolazine_mpo and zaleplon_mpo, with 3 runs per h-param set and 30 loops)
-- test run (5 independent runs for each oracle, 10k oracle calls for exploration and 1k for exploitation)
-- code oragnization and cleaning
 
 
-## Models
+## 25 Methods
 
-|                    | `runable` | `compatible` | `hparam` | `test` | `clean` |
-|--------------------|-----------|--------------|----------|--------|---------|
-| **Screening**      | ✅        | ✅           | -        |        |         |
-| **Mol PAL**        | ✅        | ✅           | -        |        |         |
-| **Graph Ga**       | ✅        | ✅           | ✅       |        |         |
-| **SMILES GA**      | ✅        | ✅           | ✅       |        |         |
-| **SELFIES GA**     | ✅        | ✅           |          |        |         |
-| **SELFIES GA +D**  | ✅        | ✅           |          |        |         |
-| **Graph MCTS**     | ✅        | ✅           | ✅       |        |         |
-| **SMILES HC**      | ✅        | ✅           |          |        |         |
-| **SELFIES HC**     |           |              |          |        |         |
-| **SMILES VAE BO**  | ✅        |              |          |        |         |
-| **SELFIES VAE BO** |           |              |          |        |         |
-| **JTVAE BO**       | ✅        |              |          |        |         |
-| **BOSS (SMILES)**  | ✅        |              |          |        |         |
-| **BOSS (SELFIES)** |           |              |          |        |         |
-| **Graph-GA+GP-BO** | ✅        |              |          |        |         |
-| **ORGAN**          |           |              |          |        |         |
-| **MolGAN**         | ✅        |              |          |        |         |
-| **ChemBO**         | ✅        |              |          |        |         |
-| **REINVENT**       | ✅        |              |          |        |         |
-| **RationaleRL**    | ✅        |              |          |        |         |
-| **MolDQN**         | ✅        |  ✅          |          |        |         |
-| **MIMOSA**         | ✅        | ✅           |          |        |         |
-| **MARS**           | ✅        | ✅           |          |        |         |
-| **DoG-Gen**        | doing     |              |          |        |         |
-| **DoG-AE BO**      | doing     |              |          |        |         |
-| **SynNet**         | ✅        |              |          |        |         |
-| **Pasithea**       | ✅        |              |          |        |         |
-| **DST**            | ✅        | ✅           |          |        |         |
-| **GFlowNet**       | ✅        |  ✅          |          |        |         |
-| **GFlowNet (AL)**  |           |              |          |        |         ||
 
-# Contribution Guide
+Based the ML methodologies, all the methods are categorized into: 
+* virtual screening
+    * **screening** randomly search ZINC database. 
+    * **molpal** uses molecular property predictor to prioritize the high-scored molecules. 
+* GA (genetic algorithm)
+    * **graph\_ga** based on molecular graph.
+    * **smiles\_ga** based on SMILES 
+    * **selfies\_ga** based on SELFIES
+    * **stoned** based on SELFIES
+    * **synnet** based on synthesis
+* VAE (variational auto-encoder)
+    * **smiles\_vae** based on SMILES
+    * **selfies\_vae** based on SELFIES
+    * **jt\_vae** based on junction tree (fragment as building block)
+    * **dog\_ae** based on synthesis 
+* BO (Bayesian optimization)
+    * **gpbo** 
+* RL (reinforcement learning)
+    * **reinvent** 
+    * **reinvent\_selfies** 
+    * **moldqn** 
+* HC (hill climbing)
+    * **smiles\_lstm\_hc** is SMILES-level HC. 
+    * **selfies\_lstm\_hc** is SELFIES-level HC
+    * **mimosa** is graph-level HC
+    * **dog\_gen** is synthesis based HC 
+* gradient (gradient ascent)
+    * **dst** is based molecular graph. 
+    * **pasithea** is based on SELFIES. 
+* MCMC (Markov Chain Monte Carlo)
+    * **gflownet**  
+    * **gflownet\_al** 
+    * **mars** 
 
-Thanks for your interest in our benchmark! This guide was made to help you develop your model that fits our benchmark quickly. If you have a other suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue.
-Don't forget to give the project a star! Thanks again!
+`time` is the average rough clock time for a single run in our benchmark and do not involve the time for pretraining and data preprocess. 
+We have processed the data, pretrained the model. Both are available in the repository. 
 
-## 1) Create a directory for new method main/MODEL_NAME 
+|                    | `assembly` | `additional package` | `time` | `requires_gpu` |
+|--------------------|-----------|----------|--------|---------|
+| **screening**      | -        | -        |  2 min     |    no     |
+| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**         | -        | ray      |     ?   |    no     |
+| **[graph\_ga](https://pubs.rsc.org/en/content/articlelanding/2019/sc/c8sc05372c)**      | fragment        | joblib   |  3 min      |   no    |
+| **[smiles\_ga](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**     | SMILES        | joblib, nltk   |   2 min     |    no     |
+| **[stoned](https://chemrxiv.org/engage/chemrxiv/article-details/60c753f00f50db6830397c37)**         | SELFIES        | -         |   3 min     |    no    |
+| **[selfies\_ga](https://openreview.net/forum?id=H1lmyRNFvr)**    | SELFIES        | selfies   |  20 min      |    no     |
+| **[graph\_mcts](https://pubs.rsc.org/en/content/articlelanding/2019/sc/c8sc05372c)**    | atom        | -       |   2 min     |    no     |
+| **[smiles\_lstm\_hc](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**   | SMILES    | guacamol         |    4 min    |    no     |
+| **[selfies\_lstm\_hc](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**  | SELFIES    | guacamol, selfies         |    4 min    |    yes    |
+| **[smiles\_vae](https://arxiv.org/pdf/1610.02415.pdf)**    | SMILES        | botorch         |   20 min    |    yes     |
+| **[selfies\_vae](https://arxiv.org/pdf/1610.02415.pdf)**   | SELFIES        | botorch, selfies         |    20 min    |    yes     |
+| **[jt\_vae](https://arxiv.org/pdf/1802.04364.pdf)**        | fragment        | botorch          |    20 min    |    yes     |
+| **[gpbo](https://openreview.net/forum?id=gS3XMun4cl_)**           | fragment        | botorch, networkx         |    15 min    |    no     |
+| **[reinvent](https://arxiv.org/abs/1704.07555)**       | SMILES        | -         |    2 min    |    yes    |
+| **[reinvent\_selfies](https://arxiv.org/abs/1704.07555)** | SELFIES     | selfies         |    3 min    |    yes     |
+| **[moldqn](https://www.nature.com/articles/s41598-019-47148-x?ref=https://githubhelp.com)**         | atom        | networks, requests    |    60 min    |     yes    |
+| **[mimosa](https://arxiv.org/abs/2010.02318)**         | fragment        | -         |    10 min    |     yes    |
+| **[mars](https://openreview.net/pdf?id=kHSu4ebxFXY)**           | fragment        | chemprop, networkx, dgl         |    20 min    |    yes     |
+| **[dog\_gen](https://proceedings.neurips.cc/paper/2020/file/4cc05b35c2f937c5bd9e7d41d3686fff-Paper.pdf)**       | synthesis        | extra conda        |    120 min    |     yes    |
+| **[dog\_ae](https://proceedings.neurips.cc/paper/2020/file/4cc05b35c2f937c5bd9e7d41d3686fff-Paper.pdf)**        | synthesis        | extra conda        |    50 min    |    yes     |
+| **[synnet](https://openreview.net/forum?id=FRxhHdnxt1)**         | synthesis        | dgl, pytorch_lightning, networkx, matplotlib        |   >10 hours?     |    yes     |
+| **[pasithea](https://arxiv.org/pdf/2012.09712.pdf)**       | SELFIES        | selfies, matplotlib         |    50 min    |    yes     |
+| **[dst](https://openreview.net/pdf?id=w_drCosT76)**            | fragment        | -         |    120 min     |    no     |
+| **[gflownet](https://arxiv.org/abs/2106.04399)**       | fragment        | torch_{geometric,sparse,cluster}, pdb        |    30 min    |     yes    |
+| **[gflownet\_al](https://arxiv.org/abs/2106.04399)**   | fragment        | torch_{geometric,sparse,cluster}, pdb         |    30 min    |    yes     ||
 
-All codes for a model should be in the `main/MODEL_NAME` directory, including pretrained model. A `README.md` is prefered to describe the method.
+
+## Run with one-line code
+
+There are three types of runs defined in our code base: 
+* `simple`: A single run for testing purposes for each oracle, is the defualt.
+* `production`: Multiple independent runs with various random seeds for each oracle.
+* `tune`: A hyper-parameter tuning over the search space defined in `main/MODEL_NAME/hparam_tune.yaml` for each oracle.
 
 ```bash
-mkdir main/MODEL_NAME
+## run a single test run on qed with wandb logging online
+python run.py MODEL_NAME --wandb online
+## specify multiple random seeds 
+python run.py MODEL_NAME --seed 0 1 2 
+## run 5 runs with different random seeds with specific oracle with wandb logging offline
+python run.py MODEL_NAME --task production --n_runs 5 --oracles qed 
+## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
+python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
 ```
 
-## 2) Make an Optimizer class for your method
+`MODEL_NAME` are listed in the table above. 
 
-One should run the `main/MODEL_NAME/run.py` to optimize a property by:
 
-```bash
-python main/MODEL_NAME/run.py 
-```
+## Hyperparameters
 
-Within this `run.py` file, the core code for optimization should be implemented in an optimizer class. One should inherit from BaseOptimizer defined in `main/optimizer.py`, in which defined all necessary infrastructures for a molecular optimization run:
-
-```python
-from xxx import xxx 
-
-class MODEL_NAME_Optimizer(BaseOptimizer):
-
-    def __init__(self, args=None):
-        super().__init__(args)
-        ## Your model name, used for logging your results
-        self.model_name = "model_name" 
-
-    def _optimize(self, oracle, config): 
-        """
-        The code for a function to optimize a oracle function with hyper-parameters defined in config
-        """
-        
-        ## This line is necessary
-        self.oracle.assign_evaluator(oracle)
-
-        ############# Your code to optimize an oracle function #############
-        ############################## START ###############################
-
-        ## Initialization
-        population_size = config["population_size"]
-        ...
-
-        ## A typical iterative optimization loop
-        for it in range(iterations):
-
-        	## Search for next batch to evaluate
-            population = model(old_population)
-            ...
-
-	        ## Score the smiles strings with self.oracle, with either a list of SMILES or a SMILES as input
-            ## Doing so automatically:
-            ##     1) scores the new input molecules and retrieves values for old ones
-            ##     2) saves results to self.mol_buffer for logging and analyzing
-            ##     3) logs the results to wandb with a predefined frequency
-            ##     4) determins if we reached a predefined maximum number of oracle calls
-    	    population_scores = self.oracle(population) 
-
-            ## If we reached a predefined maximum number of oracle calls, break
-            ## This line could be used in 
-            if self.finish:
-                break
-
-            ## or one could also use self.oracle.finish to check within a user-defined function with self.oracle
-            if self.oracle.finish:
-                break
-
-            ## Once you decide to early-stop, you could use self.log_intermediate(finish=True) to fake a converged 
-            ## line to maximum number of oracle calls for comparison purposes
-            if converge: 
-                self.log_intermediate(finish=True)
-                break
-
-        ############################### END ################################
-
-```
-
-## 3) Copy a main function
-
-After implementing your optimizer class, you could add the class to the `run.py` file. Note the arguments in argparse are for task-level control, i.e., what type of runs, how many independent runs, optimize which oracle functions, etc. Hyper-parameters for molecular optimization algorithms should be defined in `main/MODEL_NAME/hparams_default.yaml` and their search space for tuning should be defined in `main/MODEL_NAME/hparams_tune.yaml`. We will explain them in the next section.
-
-```python
-from main.graph_ga.run import GB_GA_Optimizer
-from main.MODEL_NAME.run import MODEL_NAME_Optimizer
-
-...
-
-    if args.method == 'graph_ga':
-        Optimizer = GB_GA_Optimizer
-    elif args.method == MODEL_NAME:
-        Optimizer = MODEL_NAME_Optimizer
-
-```
-
-## 4) Hyperparameters
-
-We separate hyperparameters for task-level control, defined from `argparse`, and algorithm-level control, defined from `hparam_default.yaml`. There is no clear boundary for them, but we reccomend one keep all hyperparameters in the `self._optimize` function as task-level. 
+We separate hyperparameters for task-level control, defined from `argparse`, and algorithm-level control, defined from `hparam_default.yaml`. There is no clear boundary for them, but we recommend one keep all hyperparameters in the `self._optimize` function as task-level. 
 
 * **running hyperparameter**: parser argument. 
 * **default model hyperparameter**: `hparam_default.yaml`
@@ -206,35 +165,19 @@ parameters:
     value: 1000
 ```
 
-We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](https://docs.wandb.ai) for a convenient visualization. The taml file should follow the format as above. Further detail is in this [instruction](https://docs.wandb.ai/guides/sweeps/configuration).
-
-## 5) Running
-
-There are three types of runs defined in our code base: 
-* `simple`: A single run for testing purposes for each oracle, is the defualt.
-* `production`: Multiple independent runs with various random seeds for each oracle.
-* `tune`: A hyper-parameter tuning over the search space defined in `main/MODEL_NAME/hparam_tune.yaml` for each oracle.
-
-```bash
-## run a single test run on qed with wandb logging online
-python run.py MODEL_NAME --wandb online
-## specify multiple random seeds 
-python run.py MODEL_NAME --seed 0 1 2 
-## run 5 runs with different random seeds on multuple oracles with wandb logging offline
-python run.py MODEL_NAME --task production --n_runs 5 --oracles qed jnk3 drd2 
-## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
-python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
-```
-
-One can use argparse help to check the detail description of the arguments.
+We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](https://docs.wandb.ai) for a convenient visualization. The yaml file should follow the format as above. Further detail is in this [instruction](https://docs.wandb.ai/guides/sweeps/configuration).
 
 
-## 6) Logging metrics to wandb server
 
-The default mode for wandb logging is `offline` for the speed and memory reasons. After finishing a run, one could syncronyze teh results to the server by running:
+## Contribute
 
-```bash
-wandb sync PATH_TO/wandb/offline-run-20220406_182133-xxxxxxxx
-```
+Our repository is an open-source initiative. To get involved, check our [Contribution Guidelines](CONTRIBUTE.md)!
 
-To watch the results in time, one could turn the mode to `online` by flag `wandb`. To stop wandb logging, one could turn the mode to `disabled` by flag `wandb`.
+
+
+
+
+
+
+
+
