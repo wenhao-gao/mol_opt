@@ -57,6 +57,8 @@ def main():
         from main.selfies_ga.run import SELFIES_GA_Optimizer as Optimizer
     elif args.method == "synnet":
         from main.synnet.run import SynNet_Optimizer as Optimizer
+    elif args.method == 'hebo':
+        from main.hebo.run import HEBO_Optimizer as Optimizer 
     elif args.method == 'graph_mcts':
         from main.graph_mcts.run import Graph_MCTS_Optimizer as Optimizer
     elif args.method == "smiles_lstm_hc":
