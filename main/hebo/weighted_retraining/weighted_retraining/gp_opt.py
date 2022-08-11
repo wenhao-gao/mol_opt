@@ -259,6 +259,7 @@ def robust_multi_restart_optimizer(
 def gp_opt(gp_file, data_file, save_file, n_out, logfile,
            gp_err_file=None, data_err_file=None,
            n_starts=20, early_stopping=True):
+    early_stopping = True 
     """ Do optimization via GPFlow"""
     # check if using error-aware acquisition
     if gp_err_file is not None and data_err_file is not None:
@@ -412,7 +413,7 @@ if __name__ == "__main__":
         n_out=args.n_out,
         logfile=args.logfile,
         n_starts=args.n_starts,
-        early_stopping=args.early_stopping,
+        early_stopping=True,
         gp_err_file=args.gp_err_file,
         data_err_file=args.data_err_file,
     )

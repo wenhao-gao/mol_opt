@@ -107,7 +107,7 @@ class WeightedMolTreeFolder(MolTreeFolder):
         """ Set various properties from the dataset """
 
         # Extract smiles from the data
-        self.smiles = [t.smiles for t in self.data][:50]
+        self.smiles = [t.smiles for t in self.data][:70]
         self.canonic_smiles = list(map(standardize_smiles, self.smiles))
 
         # Set the data length

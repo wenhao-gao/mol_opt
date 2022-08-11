@@ -133,7 +133,7 @@ def _batch_decode_z_and_props(
     if pbar is not None:
         pbar.set_description(old_desc)
 
-    return z_decode, z_prop
+    return z_decode, z_prop ### list, list 
 
 
 def _choose_best_rand_points(n_rand_points: int, n_best_points: int, dataset: WeightedMolTreeFolder):
@@ -188,7 +188,7 @@ def _encode_mol_trees(model, mol_trees):
 def retrain_model(model, datamodule, save_dir, version_str, num_epochs, gpu, store_best=False,
                   best_ckpt_path: Optional[str] = None):
     # pl._logger.setLevel(logging.CRITICAL)
-    print('========= inner retrain ========')
+    print('========= begin retrain vae ========')
     train_pbar = SubmissivePlProgressbar(process_position=1)
 
     # Create custom saver and logger
@@ -229,7 +229,7 @@ def retrain_model(model, datamodule, save_dir, version_str, num_epochs, gpu, sto
     #     print('best_ckpt_path', best_ckpt_path)
     #     os.makedirs(os.path.dirname(best_ckpt_path), exist_ok=True)
     #     shutil.copyfile(checkpointer.best_model_path, best_ckpt_path)
-    # print('========= inner retrain ========')
+    print('========= end retrain vae ========')
 
 
 
@@ -389,6 +389,95 @@ def get_path(lso_strategy: str, weight_type, k, r,
     result_path = os.path.join(result_path, f'seed{seed}')
     return result_path
 
+from botorch.models import SingleTaskGP
+from botorch.fit import fit_gpytorch_model
+from gpytorch.mlls import ExactMarginalLogLikelihood
+from botorch.acquisition import UpperConfidenceBound
+from botorch.optim import optimize_acqf
+
+def vae_bo(oracle, model, datamodule, num_queries_to_do, gpu = True, bo_batch=10, train_num = 200):
+    dset = datamodule.train_dataset ### need oracle 
+
+    chosen_indices = _choose_best_rand_points(n_rand_points=n_rand_points, n_best_points=n_best_points, dataset=dset)
+    mol_trees = [dset.data[i] for i in chosen_indices]
+    targets = dset.data_properties[chosen_indices]
+    chosen_smiles = [dset.canonic_smiles[i] for i in chosen_indices]
+
+    print('# Next, encode these mol trees')
+    if gpu:
+        model = model.cuda()
+    latent_points = _encode_mol_trees(model, mol_trees)
+    model = model.cpu()  # Make sure to free up GPU memory
+    torch.cuda.empty_cache()  # Free the memory up for tensorflow
+
+
+    train_X = torch.cat(train_X, dim=0)
+    train_X = train_X.detach()
+    train_Y = torch.FloatTensor(y).view(-1,1)
+    patience = 0
+        
+    while True:
+
+        if len(oracle) > 100:
+            self.sort_buffer()
+            old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+        else:
+            old_scores = 0
+
+        # 1. Fit a Gaussian Process model to data
+        gp = SingleTaskGP(train_X, train_Y)
+        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        fit_gpytorch_model(mll)
+
+        # 2. Construct an acquisition function
+        UCB = UpperConfidenceBound(gp, beta=0.1) 
+
+        # 3. Optimize the acquisition function 
+        for _ in range(bo_batch):
+            bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
+            z, _ = optimize_acqf(
+                UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+            )
+
+            new_smiles = vae_model.decoder_z(z)
+            mol = smiles_to_rdkit_mol(new_smiles)
+        
+            if mol is None:
+                new_score = 0
+            else:
+                new_score = self.oracle(new_smiles)
+
+            if new_score == 0:
+                new_smiles = choice(smiles_lst)
+                new_score = self.oracle(new_smiles)             
+
+            new_score = torch.FloatTensor([new_score]).view(-1,1)
+
+            train_X = torch.cat([train_X, z], dim = 0)
+            train_Y = torch.cat([train_Y, new_score], dim = 0)
+            if train_X.shape[0] > train_num:
+                train_X = train_X[-train_num:]
+                train_Y = train_Y[-train_num:]
+
+        # early stopping
+        if len(self.oracle) > 100:
+            self.sort_buffer()
+            new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+            if new_scores == old_scores:
+                patience += 1
+                if patience >= self.args.patience * 100:
+                    self.log_intermediate(finish=True)
+                    print('convergence criteria met, abort ...... ')
+                    break
+            else:
+                patience = 0
+            
+        if self.finish:
+            print('max oracle hit, abort ...... ')
+            break 
+
+
+
 
 
 def latent_optimization(
@@ -473,7 +562,7 @@ def latent_optimization(
     _save_gp_data(latent_points, targets, chosen_smiles, gp_data_file, flip_sign=False)
 
     ##################################################
-    print('# Run iterative GP fitting/optimization')
+    print('# Run iterative GP fitting/optimization, num_queries_to_do', num_queries_to_do) ## 23
     ##################################################
     curr_gp_file = None
     curr_gp_err_file = None
@@ -487,7 +576,7 @@ def latent_optimization(
         if latent_points.shape[0] == n_inducing_points:
             gp_initial_train = True
 
-        print('# Part 1: fit GP')
+        print('# Part 1: fit GP') ### GP_TRAIN_FILE 
         # ===============================
         new_gp_file = os.path.join(gp_run_folder, f"gp_train_res{gp_iter:04d}.npz")
         new_gp_err_file = os.path.join(gp_run_folder, f"gp_err_train_res0000.npz")  # no incremental fit of error-GP
@@ -612,7 +701,7 @@ def latent_optimization(
                     _run_command(gp_err_train_command, f"GP err train {gp_iter}")
                     curr_gp_err_file = new_gp_err_file
 
-        print('# Part 2: optimize GP acquisition func to query point')
+        print('# Part 2: optimize GP acquisition func to query point') ### GP_OPT_FILE 
         # ===============================
 
         max_retry = 3
@@ -656,7 +745,7 @@ def latent_optimization(
                     invalid_score=invalid_score,
                     pbar=pbar,
                 )
-                good = True
+                good = True ### break while-loop
             except AssertionError:
                 iter_seed = int(np.random.randint(10000))
                 n_retry += 1
@@ -670,6 +759,7 @@ def latent_optimization(
 
             # Update best point in progress bar
             if postfix is not None:
+                assert len(prop_opt) > 0
                 postfix["best"] = max(postfix["best"], float(max(prop_opt)))
                 pbar.set_postfix(postfix)
 
@@ -853,16 +943,21 @@ def main_aux(args, result_dir: str):
         print(f"Retrain from {result_dir} | Best: {max(results['opt_point_properties'])}")
     start_time = time.time()
 
+    num_retrain = max(num_retrain, 5)
+    print(">>>>> num_retrain", num_retrain)
 
     # Main loop
     with tqdm(
             total=args.query_budget, dynamic_ncols=True, smoothing=0.0, file=sys.stdout
-    ) as pbar:
+    ) as pbar: ### query_budget=23 
         if args.oracle.finish:
             print('---- oracle used up ------')
             return 
-        print('--- main loop ---')
+        print('--- main loop ---, num_retrain is ', num_retrain, 'start_num_retrain', start_num_retrain)
         for ret_idx in range(start_num_retrain, start_num_retrain + num_retrain):
+            if args.oracle.finish:
+                print('---- oracle used up ------')
+                return
 
             if vae.predict_target and vae.metric_loss is not None:
                 vae.training_m = datamodule.training_m
@@ -874,27 +969,27 @@ def main_aux(args, result_dir: str):
             pbar.set_postfix(postfix)
             pbar.set_description("retraining")
             print(result_dir)
-            print('######### Decide whether to retrain #########')
+            # print('######### Decide whether to retrain #########')
             samples_so_far = args.retraining_frequency * ret_idx
 
-            print('########## Optionally do retraining #########')
+            # print('########## Optionally do retraining #########')
+            ########### VAE ##########
             num_epochs = args.n_retrain_epochs
             if ret_idx == 0 and args.n_init_retrain_epochs is not None:
                 num_epochs = args.n_init_retrain_epochs
             if num_epochs > 0:
                 retrain_dir = os.path.join(result_dir, "retraining")
                 version = f"retrain_{samples_so_far}"
-                print('######### retrain begin #########')
                 retrain_model(
                     model=vae, datamodule=datamodule, save_dir=retrain_dir,
                     version_str=version, num_epochs=num_epochs, gpu=args.gpu, store_best=args.train_only,
                     best_ckpt_path=args.save_model_path
                 )
-                print('######### retrain doing #########')
                 vae.eval()
                 # if args.train_only:
                 #     return
             del num_epochs
+            ########### VAE ##########
 
             model = vae
 
@@ -909,6 +1004,7 @@ def main_aux(args, result_dir: str):
                         args.samples_per_model, desc="sampling", leave=False
                 ) as sample_pbar:
                     #### main 
+                    print('#### latent_sampling ####')
                     sample_x, sample_y = latent_sampling(
                         args, model, datamodule, args.samples_per_model,
                         pbar=sample_pbar
@@ -923,55 +1019,192 @@ def main_aux(args, result_dir: str):
                 results["sample_properties"].append(sample_y)
                 results["sample_versions"].append(ret_idx)
 
-            print('########## Do querying! #########')
-            pbar.set_description("querying")
-            num_queries_to_do = min(
-                args.retraining_frequency, args.query_budget - samples_so_far
-            )
-            if args.lso_strategy == "opt":
-                gp_dir = os.path.join(result_dir, "gp", f"iter{samples_so_far}")
-                os.makedirs(gp_dir, exist_ok=True)
-                gp_data_file = os.path.join(gp_dir, "data.npz")
-                gp_err_data_file = os.path.join(gp_dir, "data_err.npz")
-                ##### main loop   oracle in datamodule
-                print('######### latent_optimization #########')
-                x_new, y_new = latent_optimization(
-                    oracle = args.oracle, 
-                    model=model,
-                    datamodule=datamodule,
-                    n_inducing_points=args.n_inducing_points,
-                    n_best_points=args.n_best_points,
-                    n_rand_points=args.n_rand_points,
-                    num_queries_to_do=num_queries_to_do,
-                    gp_data_file=gp_data_file,
-                    gp_err_data_file=gp_err_data_file,
-                    gp_run_folder=gp_dir,
-                    gpu=args.gpu,
-                    invalid_score=args.invalid_score,
-                    pbar=pbar,
-                    postfix=postfix,
-                    error_aware_acquisition=args.error_aware_acquisition,
-                )
-                if args.oracle.finish:
-                    print('---- oracle used up ------')
-                    return                 
-            elif args.lso_strategy == "sample":
-                x_new, y_new = latent_sampling(
-                    args, model, datamodule, num_queries_to_do, pbar=pbar,
-                )
-                if args.oracle.finish:
-                    print('---- oracle used up ------')
-                    return                 
-            else:
-                raise NotImplementedError(args.lso_strategy)
+            # print('########## Do querying! #########')
+            # pbar.set_description("querying")
+            # num_queries_to_do = min(
+            #     args.retraining_frequency, args.query_budget - samples_so_far
+            # )
+            # num_queries_to_do = max(num_queries_to_do, 10)
+            # if args.lso_strategy == "opt":
+            #     gp_dir = os.path.join(result_dir, "gp", f"iter{samples_so_far}")
+            #     os.makedirs(gp_dir, exist_ok=True)
+            #     gp_data_file = os.path.join(gp_dir, "data.npz")
+            #     gp_err_data_file = os.path.join(gp_dir, "data_err.npz")
+            #     ##### main loop   oracle in datamodule
+            #     print('######### BO: latent_optimization #########')
+            #     ### one latent_optimization has multiple "part 1" & "part 2"
+            #     x_new, y_new = latent_optimization(
+            #         oracle = args.oracle, 
+            #         model=model,
+            #         datamodule=datamodule,
+            #         n_inducing_points=args.n_inducing_points,
+            #         n_best_points=args.n_best_points,
+            #         n_rand_points=args.n_rand_points,
+            #         num_queries_to_do=num_queries_to_do,
+            #         gp_data_file=gp_data_file,
+            #         gp_err_data_file=gp_err_data_file,
+            #         gp_run_folder=gp_dir,
+            #         gpu=args.gpu,
+            #         invalid_score=args.invalid_score,
+            #         pbar=pbar,
+            #         postfix=postfix,
+            #         error_aware_acquisition=args.error_aware_acquisition,
+            #     )
+            #     if args.oracle.finish:
+            #         print('---- oracle used up ------')
+            #         return                 
+            # elif args.lso_strategy == "sample":  #####  not used 
+            #     x_new, y_new = latent_sampling(
+            #         args, model, datamodule, num_queries_to_do, pbar=pbar,
+            #     )
+            #     if args.oracle.finish:
+            #         print('---- oracle used up ------')
+            #         return  
+            # else:
+            #     raise NotImplementedError(args.lso_strategy)
 
+
+
+
+
+
+
+
+            #### ##### new BO ######
+            x_new, y_new = [], [] 
+            gpu = True 
+            bo_batch = 10 
+            train_num = 200 
+            dset = datamodule.train_dataset ### need oracle 
+
+            chosen_indices = _choose_best_rand_points(n_rand_points=args.n_rand_points, n_best_points=args.n_best_points, dataset=dset)
+            mol_trees = [dset.data[i] for i in chosen_indices]
+            targets = dset.data_properties[chosen_indices]
+            chosen_smiles = [dset.canonic_smiles[i] for i in chosen_indices]
+
+            # print('# Next, encode these mol trees')
+            if gpu:
+                model = model.cuda()
+            latent_points = _encode_mol_trees(model, mol_trees)
+            model = model.cpu()  # Make sure to free up GPU memory
+            torch.cuda.empty_cache()  # Free the memory up for tensorflow
+
+            # print(type(latent_points), latent_points, type(targets), targets)
+            # train_X = torch.cat(train_X, dim=0)
+            train_X = torch.FloatTensor(latent_points) 
+            train_X = train_X.detach()
+            train_Y = torch.FloatTensor(targets).view(-1,1)
+            patience = 0
+                
+            for bo_iter in range(5):
+                print('\n\n\n##### new BO ######\n')
+                print('length of oracle', len(args.oracle), '\n\n\n\n') 
+                # if len(oracle) > 100:
+                #     self.sort_buffer()
+                #     old_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                # else:
+                #     old_scores = 0
+
+                # 1. Fit a Gaussian Process model to data
+                gp = SingleTaskGP(train_X, train_Y)
+                mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+                fit_gpytorch_model(mll)
+
+                # 2. Construct an acquisition function
+                UCB = UpperConfidenceBound(gp, beta=0.1) 
+
+                # 3. Optimize the acquisition function 
+                for _ in range(bo_batch):
+                    bounds = torch.stack([torch.min(train_X, 0)[0], torch.max(train_X, 0)[0]])
+                    z, _ = optimize_acqf(UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,)
+
+                    # new_smiles = vae_model.decoder_z(z)
+                    smiles_opt, prop_opt = _batch_decode_z_and_props(
+                            args.oracle, 
+                            model,
+                            torch.as_tensor(z, device=model.device),
+                            datamodule,
+                            invalid_score=args.invalid_score,
+                            pbar=pbar,
+                        ) 
+                    ### smiles_opt, prop_opt are lists 
+                    # mol = smiles_to_rdkit_mol(new_smiles)
+                    # if mol is None:
+                    #     new_score = 0
+                    # else:
+                    #     new_score = args.oracle(new_smiles)
+                    new_score = args.oracle(smiles_opt)[0]
+                    x_new.append(smiles_opt[0])
+                    y_new.append(new_score)
+                    # if new_score == 0:
+                    #     new_smiles = choice(smiles_lst)
+                    #     new_score = args.oracle(new_smiles)             
+
+                    new_score = torch.FloatTensor([new_score]).view(-1,1)
+
+                    train_X = torch.cat([train_X, z], dim = 0)
+                    train_Y = torch.cat([train_Y, new_score], dim = 0)
+                    if train_X.shape[0] > train_num:
+                        train_X = train_X[-train_num:]
+                        train_Y = train_Y[-train_num:]
+
+                    if args.oracle.finish:
+                        break 
+
+                if args.oracle.finish:
+                    break 
+
+                #### early stopping
+                # if len(self.oracle) > 100:
+                #     self.sort_buffer()
+                #     new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
+                #     if new_scores == old_scores:
+                #         patience += 1
+                #         if patience >= self.args.patience * 100:
+                #             self.log_intermediate(finish=True)
+                #             print('convergence criteria met, abort ...... ')
+                #             break
+                #     else:
+                #         patience = 0
+                    
+                # if self.finish:
+                #     print('max oracle hit, abort ...... ')
+                #     break 
+            ##### new BO ######
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            if args.oracle.finish:
+                break 
+
+            print('--- after latent optimization -----')
             # Update dataset
             datamodule.append_train_data(x_new, y_new)
 
+            print('x_new, y_new', )
+            print(len(x_new), len(y_new))
+            print(x_new, y_new)
             # Add new results
             results["opt_points"] += list(x_new)
             results["opt_point_properties"] += list(y_new)
             results["opt_model_version"] += [ret_idx] * len(x_new)
+
+            assert len(y_new) > 0 
 
             postfix["best"] = max(postfix["best"], float(max(y_new)))
             postfix["n_train"] = len(datamodule.train_dataset.data)
@@ -981,11 +1214,12 @@ def main_aux(args, result_dir: str):
             np.savez_compressed(os.path.join(result_dir, "results.npz"), **results)
 
             # Keep a record of the dataset here
-            new_data_file = os.path.join(
-                data_dir, f"train_data_iter{samples_so_far + num_queries_to_do}.txt"
-            )
-            with open(new_data_file, "w") as f:
-                f.write("\n".join(datamodule.train_dataset.canonic_smiles))
+            # new_data_file = os.path.join(
+            #     data_dir, f"train_data_iter{samples_so_far + num_queries_to_do}.txt"
+            # )
+            # with open(new_data_file, "w") as f:
+            #     f.write("\n".join(datamodule.train_dataset.canonic_smiles))
+            # print('--- save data -----')
 
     print_flush("=== DONE ({:.3f}s) ===".format(time.time() - start_time))
 

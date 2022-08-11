@@ -64,7 +64,7 @@ parser.add_argument(
 parser.add_argument(
     "--n_opt_iter",
     type=int,
-    default=100000,
+    default=10000,
     help="Number of GP optimization iters"
 )
 parser.add_argument(
@@ -76,13 +76,13 @@ parser.add_argument(
 parser.add_argument(
     "--convergence_tol",
     type=float,
-    default=5e-4,
+    default=5e-3,
     help="tolerence value to stop training GP"
 )
 parser.add_argument(
     "--kernel_convergence_tol",
     type=float,
-    default=2.5e-2,
+    default=5e-2,
     help="Tolerence value to stop training kernel only"
 )
 parser.add_argument(
