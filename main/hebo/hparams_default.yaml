@@ -3,8 +3,8 @@ n_inducing_points: 100
 weight_type: "rank"
 samples_per_model: 0
 latent_dim: 56
-n_best_points: 20
-n_rand_points: 15
+n_best_points: 3
+n_rand_points: 13
 rank_weight_k: 0.001
 train_path: "weighted_retraining/data/chem/zinc/orig_model/tensors_train"
 train_data_path: "weighted_retraining/data/chem/zinc/orig_model/tensors_train"
@@ -27,7 +27,7 @@ query_budget: 5
 beta_metric_loss: 1
 target_predictor_hdims: [128,128]
 beta_target_pred_loss: 10
-n_init_bo_points: 47 
+n_init_bo_points: 50 
 acq_func_id: 'ExpectedImprovement'
 acq-func-id: 'ExpectedImprovement'
 acq_func_kwargs: {}

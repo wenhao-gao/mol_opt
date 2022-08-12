@@ -101,7 +101,7 @@ def _batch_decode_z_and_props(
     # Progress bar description
     if pbar is not None:
         old_desc = pbar.desc
-        pbar.set_description("decoding")
+        # pbar.set_description("decoding")
 
     # Decode all points in a fixed decoding radius
     z_decode = []
@@ -116,7 +116,8 @@ def _batch_decode_z_and_props(
 
     # Now finding properties
     if pbar is not None:
-        pbar.set_description("calc prop")
+        pass
+        # pbar.set_description("calc prop")
 
     # Calculate objective function values and choose which points to keep
     # Invalid points get a value of None
@@ -131,7 +132,8 @@ def _batch_decode_z_and_props(
 
     # Now back to normal
     if pbar is not None:
-        pbar.set_description(old_desc)
+        pass
+        # pbar.set_description(old_desc)
 
     return z_decode, z_prop ### list, list 
 
@@ -196,7 +198,8 @@ def retrain_model(model, datamodule, save_dir, version_str, num_epochs, gpu, sto
         save_dir=save_dir, version=version_str, name=""
     )
 
-    checkpointer = pl.callbacks.ModelCheckpoint(save_last=True, monitor = 'loss/val')
+    # checkpointer = pl.callbacks.ModelCheckpoint(save_last=True, monitor = 'loss/val')
+    checkpointer = pl.callbacks.ModelCheckpoint(save_last=True, monitor = 'loss/val', verbose=False, mode="min",save_top_k=5,)
 
     # Handle fractional epochs
     if num_epochs < 1:
@@ -630,7 +633,7 @@ def latent_optimization(
             # Set pbar status for user
             if pbar is not None:
                 old_desc = pbar.desc
-                pbar.set_description(gp_fit_desc)
+                # pbar.set_description(gp_fit_desc)
 
             # Run command
             print_flush("Training objective GP...")
@@ -691,7 +694,7 @@ def latent_optimization(
             # Set pbar status for user
             if pbar is not None:
                 old_desc = pbar.desc
-                pbar.set_description(gp_fit_desc)
+                # pbar.set_description(gp_fit_desc)
 
             # Run command
             _run_command(gp_train_command, f"GP train {gp_iter}")
@@ -729,7 +732,8 @@ def latent_optimization(
                     ]
 
                 if pbar is not None:
-                    pbar.set_description("optimizing acq func")
+                    pass 
+                    # pbar.set_description("optimizing acq func")
                 print_flush("Start running gp_opt_command")
                 _run_command(gp_opt_command, f"GP opt {gp_iter}")
 
@@ -755,7 +759,8 @@ def latent_optimization(
 
         # Reset pbar description
         if pbar is not None:
-            pbar.set_description(old_desc)
+            pass 
+            # pbar.set_description(old_desc)
 
             # Update best point in progress bar
             if postfix is not None:
@@ -943,7 +948,7 @@ def main_aux(args, result_dir: str):
         print(f"Retrain from {result_dir} | Best: {max(results['opt_point_properties'])}")
     start_time = time.time()
 
-    num_retrain = max(num_retrain, 5)
+    num_retrain = max(num_retrain, 500)
     print(">>>>> num_retrain", num_retrain)
 
     # Main loop
@@ -967,8 +972,8 @@ def main_aux(args, result_dir: str):
 
             torch.cuda.empty_cache()  # Free the memory up for tensorflow
             pbar.set_postfix(postfix)
-            pbar.set_description("retraining")
-            print(result_dir)
+            # pbar.set_description("retraining")
+            # print(result_dir)
             # print('######### Decide whether to retrain #########')
             samples_so_far = args.retraining_frequency * ret_idx
 
@@ -999,7 +1004,7 @@ def main_aux(args, result_dir: str):
 
             print('########## Draw samples for logs! #########')
             if args.samples_per_model > 0:
-                pbar.set_description("sampling")
+                # pbar.set_description("sampling")
                 with trange(
                         args.samples_per_model, desc="sampling", leave=False
                 ) as sample_pbar:
@@ -1095,8 +1100,9 @@ def main_aux(args, result_dir: str):
             train_X = train_X.detach()
             train_Y = torch.FloatTensor(targets).view(-1,1)
             patience = 0
+            old_scores = [] 
                 
-            for bo_iter in range(5):
+            for bo_iter in range(10):
                 print('\n\n\n##### new BO ######\n')
                 print('length of oracle', len(args.oracle), '\n\n\n\n') 
                 # if len(oracle) > 100:
@@ -1499,5 +1505,4 @@ class HEBO_Optimizer(BaseOptimizer):
     # f.close()
     # if exc is not None:
     #     raise exc
-
 
