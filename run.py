@@ -105,6 +105,8 @@ def main():
         from main.reinvent.run import REINVENT_Optimizer as Optimizer
     elif args.method == 'reinvent_selfies':
         from main.reinvent_selfies.run import REINVENT_SELFIES_Optimizer as Optimizer
+    elif args.method == 'graphinvent':
+        from main.graphinvent.run import GraphInvent_Optimizer as Optimizer
     elif args.method == "rationale_rl":
         from main.rationale_rl.run import Rationale_RL_Optimizer as Optimizer
     else:

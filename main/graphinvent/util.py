@@ -838,13 +838,14 @@ def load_saved_model(model : torch.nn.Module, path : str) -> torch.nn.Module:
     -------
         model (torch.nn.Module) : Loaded model.
     """
+    import pickle5
     try:
         # first try to load model as if it was created using GraphINVENT
         # v1.0 (will raise an exception if it was actually created with
         # GraphINVENT v2.0)
-        model.state_dict = torch.load(path).state_dict()
+        model.state_dict = torch.load(path, pickle_module=pickle5).state_dict()
     except AttributeError:
         # try to load the model as if created using GraphINVENT v2.0 or
         # later
-        model.load_state_dict(torch.load(path))
+        model.load_state_dict(torch.load(path, pickle_module=pickle5))
     return model
