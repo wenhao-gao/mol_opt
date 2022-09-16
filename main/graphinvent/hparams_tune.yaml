@@ -1,0 +1,7 @@
+name: screening
+method: bayes
+metric:
+  goal: maximize
+  name: avg_top100
+parameters:
+
