@@ -57,6 +57,7 @@ Based the ML methodologies, all the methods are categorized into:
 * RL (reinforcement learning)
     * **reinvent** 
     * **reinvent\_selfies** 
+    * **graphinvent** 
     * **moldqn** 
 * HC (hill climbing)
     * **smiles\_lstm\_hc** is SMILES-level HC. 
