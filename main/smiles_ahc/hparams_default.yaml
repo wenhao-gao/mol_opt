@@ -1,0 +1,5 @@
+batch_size: 256
+sigma: 120
+topk: 0.25
+learning_rate: 0.0005
+patience: 5

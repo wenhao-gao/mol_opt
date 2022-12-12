@@ -1,0 +1,21 @@
+{
+  "train_smiles": "../../data/zinc.txt",
+  "output_directory": "/home/morgan/phd/mol_opt/main/smiles_lstm_ahc/pretrained_model",
+  "suffix": null,
+  "randomize": false,
+  "valid_smiles": null,
+  "test_smiles": null,
+  "validate_frequency": 500,
+  "n_epochs": 5,
+  "batch_size": 128,
+  "device": "gpu",
+  "layer_size": 512,
+  "num_layers": 3,
+  "cell_type": "gru",
+  "embedding_layer_size": 128,
+  "dropout": 0.0,
+  "learning_rate": 0.001,
+  "layer_normalization": false,
+  "total_time_mins": 8.409577763080597,
+  "epoch_time_mins": 1.6819155526161194
+}
