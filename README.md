@@ -61,6 +61,7 @@ Based the ML methodologies, all the methods are categorized into:
     * **moldqn** 
 * HC (hill climbing)
     * **smiles\_lstm\_hc** is SMILES-level HC. 
+    * **smiles\_ahc** is SMILES-level augmented HC. 
     * **selfies\_lstm\_hc** is SELFIES-level HC
     * **mimosa** is graph-level HC
     * **dog\_gen** is synthesis based HC 
@@ -85,6 +86,7 @@ We have processed the data, pretrained the model. Both are available in the repo
 | **[selfies\_ga](https://openreview.net/forum?id=H1lmyRNFvr)**    | SELFIES        | selfies   |  20 min      |    no     |
 | **[graph\_mcts](https://pubs.rsc.org/en/content/articlelanding/2019/sc/c8sc05372c)**    | atom        | -       |   2 min     |    no     |
 | **[smiles\_lstm\_hc](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**   | SMILES    | guacamol         |    4 min    |    no     |
+| **[smiles\_ahc](https://arxiv.org/pdf/2212.01385.pdf)**   | SMILES    |          |    4 min    |    no     |
 | **[selfies\_lstm\_hc](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**  | SELFIES    | guacamol, selfies         |    4 min    |    yes    |
 | **[smiles\_vae](https://arxiv.org/pdf/1610.02415.pdf)**    | SMILES        | botorch         |   20 min    |    yes     |
 | **[selfies\_vae](https://arxiv.org/pdf/1610.02415.pdf)**   | SELFIES        | botorch, selfies         |    20 min    |    yes     |
