@@ -61,6 +61,8 @@ def main():
         from main.hebo.run import HEBO_Optimizer as Optimizer 
     elif args.method == 'graph_mcts':
         from main.graph_mcts.run import Graph_MCTS_Optimizer as Optimizer
+    elif args.method == 'smiles_ahc':
+        from main.smiles_ahc.run import AHC_Optimizer as Optimizer
     elif args.method == "smiles_lstm_hc":
         from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer as Optimizer
     elif args.method == 'selfies_lstm_hc':
