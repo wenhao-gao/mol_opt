@@ -1,5 +1,11 @@
 # mol_opt: A Benchmark for Practical Molecular Optimization
 
+---
+
+[![GitHub Repo stars](https://img.shields.io/github/stars/wenhao-gao/mol_opt)](https://github.com/wenhao-gao/mol_opt/stargazers)
+[![GitHub Repo forks](https://img.shields.io/github/forks/wenhao-gao/mol_opt)](https://github.com/wenhao-gao/mol_opt/network/members)
+
+
 This repository hosts an open-source benchmark for Practical Molecular Optimization (**PMO**), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). The preprint version of the paper is available at https://arxiv.org/pdf/2206.12411.pdf
 
 
