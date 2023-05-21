@@ -1,0 +1,4 @@
+batch_size: 64
+sigma: 500
+learning_rate: 0.0005
+patience: 5

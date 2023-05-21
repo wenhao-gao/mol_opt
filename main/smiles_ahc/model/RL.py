@@ -7,6 +7,8 @@ import torch
 from model.model import Model
 from model import utils
 
+import pandas as pd
+
 
 class ReinforcementLearning:
     def __init__(self,
@@ -108,6 +110,9 @@ class AugmentedHillClimb(ReinforcementLearning):
                        'prior_nll': [],
                        'agent_nll': []}
 
+        self.replay_buffer = ExperienceReplay(memory_size=100,
+                                              replay_number=10)
+
     def _train_step(self, step):
         # Sample
         seqs, smiles, agent_likelihood, probs, log_probs, critic_values = self._sample_batch(self.batch_size)
@@ -125,6 +130,43 @@ class AugmentedHillClimb(ReinforcementLearning):
         self.record['agent_nll'] += list(-agent_likelihood.detach().cpu().numpy())
         loss = loss[sscore_idxs.data[:int(self.batch_size * self.topk)]]
         self._update(loss, verbose=False)
+
+class ExperienceReplay:
+    def __init__(self,
+                 memory_size: int = 100,
+                 replay_number: int = 10):
+        self.buffer = pd.DataFrame(columns=['smiles', 'likelihood', 'scores'])
+        self.memory_size = memory_size
+        self.replay_number = replay_number
+
+    def add_to_buffer(self, smiles, scores, neg_likelihood):
+        """this method adds new SMILES to the experience replay buffer if they are better scoring"""
+        df = pd.DataFrame({"smiles": smiles, "likelihood": neg_likelihood.cpu().detach().numpy(),
+                           "scores": scores.cpu().detach().numpy()})
+        self.buffer = pd.concat([self.buffer, df])
+        self.purge_buffer()
+
+    def purge_buffer(self):
+        """
+        this method slices the experience replay buffer to keep only
+        the top memory_size number of best scoring SMILES
+        """
+        unique_df = self.buffer.drop_duplicates(subset=["smiles"])
+        sorted_df = unique_df.sort_values('scores', ascending=False)
+        self.buffer = sorted_df.head(self.memory_size)
+        self.buffer = self.buffer.loc[self.buffer['scores'] != 0.0]
+
+    def sample_buffer(self):
+        """this method randomly samples replay_number of SMILES from the experience replay buffer"""
+        sample_size = min(len(self.buffer), self.replay_number)
+        if sample_size > 0:
+            sampled = self.buffer.sample(sample_size)
+            smiles = sampled["smiles"].values
+            scores = sampled["scores"].values
+            prior_likelihood = utils.to_tensor(sampled["likelihood"].values)
+            return smiles, scores, prior_likelihood
+        else:
+            return [], [], []
 
 
 
