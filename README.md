@@ -40,7 +40,7 @@ conda activate molopt
 
 
 
-## 25 Methods
+## 29 Methods
 
 
 Based the ML methodologies, all the methods are categorized into: 
