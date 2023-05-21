@@ -87,7 +87,7 @@ class REINVENT_Optimizer(BaseOptimizer):
                 new_scores = [item[1][0] for item in list(self.mol_buffer.items())[:100]]
                 if new_scores == old_scores:
                     patience += 1
-                    if patience >= self.args.patience*2:
+                    if patience >= self.args.patience:
                         self.log_intermediate(finish=True)
                         print('convergence criteria met, abort ...... ')
                         break

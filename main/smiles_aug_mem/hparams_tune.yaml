@@ -1,0 +1,10 @@
+name: smiles_aug_mem
+method: grid
+metric:
+  goal: maximize
+  name: avg_auc
+parameters:
+  batch_size:
+    values: [32, 64, 128]
+  sigma: 
+    values: [128, 250, 500, 750, 1000]

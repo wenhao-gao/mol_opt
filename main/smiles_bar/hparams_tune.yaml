@@ -1,0 +1,12 @@
+name: smiles_bar
+method: grid
+metric:
+  goal: maximize
+  name: avg_auc
+parameters:
+  batch_size:
+    values: [64]
+  sigma: 
+    values: [250, 500, 750, 1000]
+  alpha:
+    values: [0.25, 0.50]
