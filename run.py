@@ -63,6 +63,10 @@ def main():
         from main.graph_mcts.run import Graph_MCTS_Optimizer as Optimizer
     elif args.method == 'smiles_ahc':
         from main.smiles_ahc.run import AHC_Optimizer as Optimizer
+    elif args.method == 'smiles_aug_mem':
+        from main.smiles_aug_mem.run import AugmentedMemory_Optimizer as Optimizer 
+    elif args.method == 'smiles_bar':
+        from main.smiles_bar.run import BAR_Optimizer as Optimizer 
     elif args.method == "smiles_lstm_hc":
         from main.smiles_lstm_hc.run import SMILES_LSTM_HC_Optimizer as Optimizer
     elif args.method == 'selfies_lstm_hc':
