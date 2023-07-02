@@ -137,6 +137,13 @@ python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled 
 
 `MODEL_NAME` are listed in the table above. 
 
+## Multi-Objective Optimization
+
+Multi-objective optimization is implemented in `multiobjective` branch. We use "+" to connect multiple properties, please see the command line below. 
+
+```bash
+python run.py MODEL_NAME --oracles qed+jnk3  
+```
 
 ## Hyperparameters
 
