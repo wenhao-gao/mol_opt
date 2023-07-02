@@ -8,15 +8,23 @@ sys.path.append(os.path.realpath(__file__))
 from tdc import Oracle
 from time import time 
 import numpy as np 
+
+''' 
+name "qed:1+jnk:2"
+'''
 class MultiOracle(Oracle): 
 
     def __init__(self, name, target_smiles=None, num_max_call=None, **kwargs):
+        name_split = name.split('+')
+        self.name_list = [i.split(':')[0] for i in name_split]
+        self.weight_list = [float(i.split(':')[1]) for i in name_split] 
+        self.weight_list = [i/sum(self.weight_list) for i in self.weight_list] 
         self.oracle_list = [Oracle(i, target_smiles, num_max_call, **kwargs)\
-                             for i in name.split('+')]  
+                             for i in self.name_list]  
         self.name = name 
 
     def __call__(self, *args, **kwargs):
-        return np.mean([oracle(*args, **kwargs) for oracle in self.oracle_list])
+        return np.sum([oracle(*args, **kwargs)*weight for oracle,weight in zip(self.oracle_list, self.weight_list)])
 
 
 
