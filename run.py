@@ -7,6 +7,26 @@ import sys
 sys.path.append(os.path.realpath(__file__))
 from tdc import Oracle
 from time import time 
+import numpy as np 
+
+''' 
+name "qed:1+jnk:2"
+'''
+class MultiOracle(Oracle): 
+
+    def __init__(self, name, target_smiles=None, num_max_call=None, **kwargs):
+        name_split = name.split('+')
+        self.name_list = [i.split(':')[0] for i in name_split]
+        self.weight_list = [float(i.split(':')[1]) for i in name_split] 
+        self.weight_list = [i/sum(self.weight_list) for i in self.weight_list] 
+        self.oracle_list = [Oracle(i, target_smiles, num_max_call, **kwargs)\
+                             for i in self.name_list]  
+        self.name = name 
+
+    def __call__(self, *args, **kwargs):
+        return np.sum([oracle(*args, **kwargs)*weight for oracle,weight in zip(self.oracle_list, self.weight_list)])
+
+
 
 def main():
     start_time = time() 
@@ -139,7 +159,7 @@ def main():
             except:
                 config_default = yaml.safe_load(open(os.path.join(path_main, args.config_default)))
 
-            oracle = Oracle(name = oracle_name)
+            oracle = MultiOracle(name = oracle_name)
             optimizer = Optimizer(args=args)
 
             if args.task == "simple":
@@ -166,7 +186,7 @@ def main():
         except:
             config_tune = yaml.safe_load(open(os.path.join(path_main, args.config_tune)))
 
-        oracles = [Oracle(name = oracle_name) for oracle_name in args.oracles]
+        oracles = [MultiOracle(name = oracle_name) for oracle_name in args.oracles]
         optimizer = Optimizer(args=args)
         
         optimizer.hparam_tune(oracles=oracles, hparam_space=config_tune, hparam_default=config_default, count=args.n_runs)
