@@ -24,7 +24,6 @@ six==1.16.0
 PyTDC
 tensorboardX==2.5
 tensorflow==2.8.0
-theano==1.0.5
 tqdm==4.63.0
 wandb
 ray
