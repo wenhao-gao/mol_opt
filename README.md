@@ -10,7 +10,7 @@ This repository hosts an open-source benchmark for Practical Molecular Optimizat
 
 
 
-## install 
+## Installation 
 
 ```bash
 conda create -n molopt python=3.7
@@ -25,15 +25,13 @@ wandb login  ### user need to register wandb
 
 We recommend to use PyTorch 1.10.2 and PyTDC 0.3.6. 
 
-<!-- pip install nltk: only for smiles_ga  -->
 <!-- pip install guacamol  -->
 <!-- pip install networkx  -->
 <!-- pip install joblib  -->
 
 
 
-## activate conda 
-
+Then we can activate conda via following command. 
 ```bash
 conda activate molopt 
 ```
@@ -87,7 +85,7 @@ We have processed the data, pretrained the model. Both are available in the repo
 |                                                                                                           | `assembly` | `additional package`                          | `time`    | `requires_gpu` |
 |-----------------------------------------------------------------------------------------------------------|------------|-----------------------------------------------|-----------|---------|
 | **screening**                                                                                             | -          | -                                             | 2 min     |    no     |
-| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**                              | -          | ray, ConfigArgParse, pytorch-lightning        | 1 hour    |    no     |
+| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**                              | -          | ray, tensorflow, ConfigArgParse, pytorch-lightning        | 1 hour    |    no     |
 | **[graph\_ga](https://pubs.rsc.org/en/content/articlelanding/2019/sc/c8sc05372c)**                        | fragment   | joblib                                        | 3 min     |   no    |
 | **[smiles\_ga](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**                                       | SMILES     | joblib, nltk                                  | 2 min     |    no     |
 | **[stoned](https://chemrxiv.org/engage/chemrxiv/article-details/60c753f00f50db6830397c37)**               | SELFIES    | -                                             | 3 min     |    no    |
