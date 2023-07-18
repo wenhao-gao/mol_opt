@@ -87,7 +87,7 @@ We have processed the data, pretrained the model. Both are available in the repo
 |                                                                                                           | `assembly` | `additional package`                          | `time`    | `requires_gpu` |
 |-----------------------------------------------------------------------------------------------------------|------------|-----------------------------------------------|-----------|---------|
 | **screening**                                                                                             | -          | -                                             | 2 min     |    no     |
-| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**                              | -          | ray                                           | 1 hour    |    no     |
+| **[molpal](https://pubs.rsc.org/en/content/articlehtml/2021/sc/d0sc06805e)**                              | -          | ray, ConfigArgParse, pytorch-lightning        | 1 hour    |    no     |
 | **[graph\_ga](https://pubs.rsc.org/en/content/articlelanding/2019/sc/c8sc05372c)**                        | fragment   | joblib                                        | 3 min     |   no    |
 | **[smiles\_ga](https://pubs.acs.org/doi/10.1021/acs.jcim.8b00839)**                                       | SMILES     | joblib, nltk                                  | 2 min     |    no     |
 | **[stoned](https://chemrxiv.org/engage/chemrxiv/article-details/60c753f00f50db6830397c37)**               | SELFIES    | -                                             | 3 min     |    no    |
@@ -100,8 +100,8 @@ We have processed the data, pretrained the model. Both are available in the repo
 | **[selfies\_vae](https://arxiv.org/pdf/1610.02415.pdf)**                                                  | SELFIES    | botorch, selfies                              | 20 min    |    yes     |
 | **[jt\_vae](https://arxiv.org/pdf/1802.04364.pdf)**                                                       | fragment   | botorch                                       | 20 min    |    yes     |
 | **[gpbo](https://openreview.net/forum?id=gS3XMun4cl_)**                                                   | fragment   | botorch, networkx                             | 15 min    |    no     |
-| **[reinvent](https://arxiv.org/abs/1704.07555)**                                                          | SMILES     | -                                             | 2 min     |    yes    |
-| **[reinvent\_selfies](https://arxiv.org/abs/1704.07555)**                                                 | SELFIES    | selfies                                       | 3 min     |    yes     |
+| **[reinvent](https://arxiv.org/abs/1704.07555)**                                                          | SMILES     | pexpect, bokeh                                | 2 min     |    yes    |
+| **[reinvent\_selfies](https://arxiv.org/abs/1704.07555)**                                                 | SELFIES    | selfies, pexpect, bokeh                       | 3 min     |    yes     |
 | **[smiles\_aug\_mem](https://chemrxiv.org/engage/chemrxiv/article-details/6464dc3ea32ceeff2dcbd948)**     | SMILES     | reinvent-models==0.0.15rc1                    | 2 min     |    yes     |
 | **[smiles\_bar](https://pubs.acs.org/doi/full/10.1021/acs.jcim.2c00838)**                                 | SMILES     | reinvent-models==0.0.15rc1                    | 2 min     |    yes     |
 | **[reinvent\_selfies](https://arxiv.org/abs/1704.07555)**                                                 | SELFIES    | selfies                                       | 3 min     |    yes     |
