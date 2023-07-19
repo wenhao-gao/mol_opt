@@ -1,2 +1,0 @@
-from .GPy_split_string_kernel import SplitStringKernel
-from .GPy_string_kernel import StringKernel

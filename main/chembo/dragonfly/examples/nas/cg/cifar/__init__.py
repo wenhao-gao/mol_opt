@@ -1,3 +1,0 @@
-"""
-  Tensorflow Code.
-"""

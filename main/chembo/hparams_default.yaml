@@ -1,5 +1,0 @@
-dataset: 'chembl'
-steps: 10
-kernel: 'similarity_kernel'
-init_pool_size: 20 
-max_pool_size: 200
