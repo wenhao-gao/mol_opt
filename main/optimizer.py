@@ -115,21 +115,14 @@ class Oracle:
         # Uncomment this line if want to log top-10 moelucles figures, so as the best_mol key values.
         # temp_top10 = list(self.mol_buffer.items())[:10]
 
+        # Create status dict with metrics
         avg_top1 = np.max(scores)
         avg_top10 = np.mean(sorted(scores, reverse=True)[:10])
         avg_top100 = np.mean(scores)
         avg_sa = np.mean(self.sa_scorer(smis))
         diversity_top100 = self.diversity_evaluator(smis)
-        
-        print(f'{n_calls}/{self.max_oracle_calls} | '
-                f'avg_top1: {avg_top1:.3f} | '
-                f'avg_top10: {avg_top10:.3f} | '
-                f'avg_top100: {avg_top100:.3f} | '
-                f'avg_sa: {avg_sa:.3f} | '
-                f'div: {diversity_top100:.3f}')
-
-        # try:
-        wandb.log({
+        status_dict = {
+            "n_oracle": n_calls,
             "avg_top1": avg_top1, 
             "avg_top10": avg_top10, 
             "avg_top100": avg_top100, 
@@ -138,11 +131,16 @@ class Oracle:
             "auc_top100": top_auc(self.mol_buffer, 100, finish, self.freq_log, self.max_oracle_calls),
             "avg_sa": avg_sa,
             "diversity_top100": diversity_top100,
-            "n_oracle": n_calls,
             # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
             #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
-        })
+        }
+        
+        # Print status dict
+        print_formatted_dict = {k: f'{v:.3f}' if (isinstance(v, float) and not isinstance(v, int)) else v for k, v in status_dict.items()}
+        print(" | ".join([f'{k}: {v}' for k, v in print_formatted_dict.items()]))
 
+        # Log to wandb
+        wandb.log(status_dict)
 
     def __len__(self):
         return len(self.mol_buffer) 
