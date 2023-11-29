@@ -7,7 +7,6 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 import tdc
 from tdc.generation import MolGen
-import wandb
 from main.utils.chem import *
 
 
@@ -129,7 +128,7 @@ class Oracle:
                 f'div: {diversity_top100:.3f}')
 
         # try:
-        wandb.log({
+        print({
             "avg_top1": avg_top1, 
             "avg_top10": avg_top10, 
             "avg_top100": avg_top100, 
@@ -139,8 +138,6 @@ class Oracle:
             "avg_sa": avg_sa,
             "diversity_top100": diversity_top100,
             "n_oracle": n_calls,
-            # "best_mol": wandb.Image(Draw.MolsToGridImage([Chem.MolFromSmiles(item[0]) for item in temp_top10], 
-            #           molsPerRow=5, subImgSize=(200,200), legends=[f"f = {item[1][0]:.3f}, #oracle = {item[1][1]}" for item in temp_top10]))
         })
 
 
@@ -259,16 +256,10 @@ class BaseOptimizer:
         for n_o in log_num_oracles:
             results_all_level.append(sorted(results[:n_o], key=lambda kv: kv[1][0], reverse=True))
         
-        # Currently logging the top-100 moelcules, will update to PDD selection later
-        data = [[i+1, results_all_level[-1][i][1][0], results_all_level[-1][i][1][1], \
-                wandb.Image(Draw.MolToImage(Chem.MolFromSmiles(results_all_level[-1][i][0]))), results_all_level[-1][i][0]] for i in range(100)]
-        columns = ["Rank", "Score", "#Oracle", "Image", "SMILES"]
-        wandb.log({"Top 100 Molecules": wandb.Table(data=data, columns=columns)})
-        
+
         # Log batch metrics at various oracle calls
         data = [[log_num_oracles[i]] + self._analyze_results(r) for i, r in enumerate(results_all_level)]
         columns = ["#Oracle", "avg_top100", "avg_top10", "avg_top1", "Diversity", "avg_SA", "%Pass", "Top-1 Pass"]
-        wandb.log({"Batch metrics at various level": wandb.Table(data=data, columns=columns)})
         
     def save_result(self, suffix=None):
 
@@ -322,28 +313,22 @@ class BaseOptimizer:
         hparam_space["name"] = hparam_space["name"]
         
         def _func():
-            with wandb.init(config=hparam_default, allow_val_change=True) as run:
-                avg_auc = 0
-                for oracle in oracles:
-                    auc_top10s = []
-                    for seed in seeds:
-                        np.random.seed(seed)
-                        torch.manual_seed(seed)
-                        random.seed(seed)
-                        config = wandb.config
-                        self._optimize(oracle, config)
-                        auc_top10s.append(top_auc(self.oracle.mol_buffer, 10, True, self.oracle.freq_log, self.oracle.max_oracle_calls))
-                        self.reset()
-                    avg_auc += np.mean(auc_top10s)
-                wandb.log({"avg_auc": avg_auc})
+            avg_auc = 0
+            for oracle in oracles:
+                auc_top10s = []
+                for seed in seeds:
+                    np.random.seed(seed)
+                    torch.manual_seed(seed)
+                    random.seed(seed)
+                    self._optimize(oracle, config)
+                    auc_top10s.append(top_auc(self.oracle.mol_buffer, 10, True, self.oracle.freq_log, self.oracle.max_oracle_calls))
+                    self.reset()
+                avg_auc += np.mean(auc_top10s)
+            print({"avg_auc": avg_auc})
             
-        sweep_id = wandb.sweep(hparam_space)
-        # wandb.agent(sweep_id, function=_func, count=count, project=self.model_name + "_" + oracle.name)
-        wandb.agent(sweep_id, function=_func, count=count, entity="mol_opt")
-        
+
     def optimize(self, oracle, config, seed=0, project="test"):
-        run = wandb.init(project=project, config=config, reinit=True, entity="mol_opt")
-        wandb.run.name = self.model_name + "_" + oracle.name + "_" + wandb.run.id
+
         np.random.seed(seed)
         torch.manual_seed(seed)
         random.seed(seed)
@@ -353,8 +338,6 @@ class BaseOptimizer:
         if self.args.log_results:
             self.log_result()
         self.save_result(self.model_name + "_" + oracle.name + "_" + str(seed))
-        # self.reset()
-        run.finish()
         self.reset()
 
 
