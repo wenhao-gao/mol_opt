@@ -12,4 +12,3 @@ scipy==1.7.3
 selfies==2.0.0
 tensorboardX==2.5
 tqdm==4.63.0
-wandb
