@@ -19,8 +19,6 @@ pip install torch
 pip install PyTDC 
 pip install PyYAML
 conda install -c rdkit rdkit 
-pip install wandb   
-wandb login  ### user need to register wandb
 ```
 
 We recommend to use PyTorch 1.10.2 and PyTDC 0.3.6. 
@@ -123,14 +121,12 @@ There are three types of runs defined in our code base:
 * `tune`: A hyper-parameter tuning over the search space defined in `main/MODEL_NAME/hparam_tune.yaml` for each oracle.
 
 ```bash
-## run a single test run on qed with wandb logging online
-python run.py MODEL_NAME --wandb online
 ## specify multiple random seeds 
 python run.py MODEL_NAME --seed 0 1 2 
-## run 5 runs with different random seeds with specific oracle with wandb logging offline
+## run 5 runs with different random seeds with specific oracle 
 python run.py MODEL_NAME --task production --n_runs 5 --oracles qed 
-## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total without wandb logging
-python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --wandb disabled --other_args XX 
+## run a hyper-parameter tuning starting from smiles in a smi_file, 30 runs in total
+python run.py MODEL_NAME --task tune --n_runs 30 --smi_file XX --other_args XX 
 ```
 
 `MODEL_NAME` are listed in the table above. 
@@ -184,7 +180,6 @@ parameters:
     value: 1000
 ```
 
-We use the [sweep](https://docs.wandb.ai/guides/sweeps) function in [wandb](https://docs.wandb.ai) for a convenient visualization. The yaml file should follow the format as above. Further detail is in this [instruction](https://docs.wandb.ai/guides/sweeps/configuration).
 
 
 
