@@ -8,7 +8,9 @@
 
 This repository hosts an open-source benchmark for Practical Molecular Optimization (**PMO**), to facilitate the transparent and reproducible evaluation of algorithmic advances in molecular optimization. This repository supports 25 molecular design algorithms on 23 tasks with a particular focus on sample efficiency (oracle calls). The preprint version of the paper is available at https://arxiv.org/pdf/2206.12411.pdf
 
+## News
 
+We release a **lightweight mol_opt** in https://github.com/wenhao-gao/mol-opt It can be installed by **pip** and be used within **three lines of code**. 
 
 ## Installation 
 
