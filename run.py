@@ -8,10 +8,10 @@ sys.path.append(os.path.realpath(__file__))
 from tdc import Oracle
 from time import time 
 
-def main():
+def main(method,oracle_name):
     start_time = time() 
     parser = argparse.ArgumentParser()
-    parser.add_argument('method', default='graph_ga')
+    parser.add_argument('--method', default=method)#'reinvent')
     parser.add_argument('--smi_file', default=None)
     parser.add_argument('--config_default', default='hparams_default.yaml')
     parser.add_argument('--config_tune', default='hparams_tune.yaml')
@@ -25,13 +25,19 @@ def main():
     # parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--seed', type=int, nargs="+", default=[0])
     parser.add_argument('--task', type=str, default="simple", choices=["tune", "simple", "production"])
-    parser.add_argument('--oracles', nargs="+", default=["QED"]) ### 
+    oracle_list=["ASKCOS","IBM_RXN","GSK3B","JNK3","DRD2","SA","QED","LogP","Rediscovery","Celecoxib_Rediscovery","Rediscovery_Meta"]
+    parser.add_argument('--oracles', nargs="+", default=[oracle_name]) ### default=["QED"]#JNK3   memory large
     parser.add_argument('--log_results', action='store_true')
     parser.add_argument('--log_code', action='store_true')
+    parser.add_argument('--wandb', type=str, default="offline", choices=["online", "offline", "disabled"])
     args = parser.parse_args()
 
+    os.environ["WANDB_MODE"] = args.wandb
 
-    args.method = args.method.lower() 
+    if not args.log_code:
+        os.environ["WANDB_DISABLE_CODE"] = "false"
+
+    args.method = args.method.lower()
 
     path_main = os.path.dirname(os.path.realpath(__file__))
     path_main = os.path.join(path_main, "main", args.method)
@@ -104,6 +110,8 @@ def main():
         from main.moldqn.run import MolDQN_Optimizer as Optimizer
     elif args.method == 'reinvent':
         from main.reinvent.run import REINVENT_Optimizer as Optimizer
+    elif args.method == 'reinvent_transformer':
+        from main.reinvent_transformer.run_transformer import REINVENT_Optimizer as Optimizer
     elif args.method == 'reinvent_selfies':
         from main.reinvent_selfies.run import REINVENT_SELFIES_Optimizer as Optimizer
     elif args.method == 'graphinvent':
@@ -175,5 +183,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for oracle_name in ["Albuterol_Similarity", "Amlodipine_MPO", 
+                        "Celecoxib_Rediscovery", "Deco_Hop", "DRD2", 
+                        "Fexofenadine_MPO", "GSK3B", "Isomers_C7H8N2O2",
+                        "Isomers_C7H8N2O3", "Isomers_C9H10N2O2PF2Cl", "JNK3",
+                        "Median 1", "Median 2", "Mestranol_Similarity", 
+                        "Osimertinib_MPO", "Perindopril_MPO", "QED", "Ranolazine_MPO",
+                        "Scaffold_Hop", "Sitagliptin_MPO", "Thiothixene_Rediscovery", 
+                        "Troglitazone_Rediscovery", "Valsartan_Smarts", "Zaleplon_MPO"]: #["Zaleplon_MPO","Amlodipine_MPO","GSK3B"]:#["Thiothixene_Rediscovery","Troglitazone_Rediscovery","Valsartan_Smarts","Zaleplon_MPO","Amlodipine_MPO","GSK3B"]:
+        for method in ["reinvent_transformer","reinvent"]:
+            main(method,oracle_name)
 
