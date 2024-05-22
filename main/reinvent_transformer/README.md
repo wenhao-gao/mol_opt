@@ -60,10 +60,10 @@ Training can be visualized using the Vizard bokeh app. The vizard_logger.py is u
 python pretrain_trans.py 
 ```
 The output will look like `data/Prior_transformer-epoch{epoch}-valid-{100 * valid / len(seqs)}.ckpt`
-
-You can change the name into `data/Prior_Transformer.ckpt`
-
 Or you can also download our pretrained model checkpoint at [Prior_transformer-epoch41-valid-92.96875.ckpt](https://drive.google.com/file/d/1e2ds7I-SkeW0WGdk47dmivwLbSyfI_kU/view?usp=sharing) and save it to `./data` directory.
+
+You can change the file name into `data/Prior_Transformer.ckpt` in order to run the following program.
+
 
 ## run 
 
