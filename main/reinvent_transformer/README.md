@@ -1,10 +1,10 @@
 
-# REINVENT
-## Molecular De Novo design using Recurrent Neural Networks and Reinforcement Learning
+# REINVENT-Transformer
+## Molecular De Novo design using Transformer and Reinforcement Learning
 
 Searching chemical space as described in:
 
-[Molecular De Novo Design through Deep Reinforcement Learning](https://arxiv.org/abs/1704.07555)
+[Molecular De Novo Design through Transformer-based Reinforcement Learning]([https://arxiv.org/abs/1704.07555](https://arxiv.org/abs/2310.05365)
 
 ![Video demonstrating an Agent trained to generate analogues to Celecoxib](https://github.com/MarcusOlivecrona/REINVENT/blob/master/images/celecoxib_analogues.gif "Training an Agent to generate analogues of Celecoxib")
 
@@ -33,6 +33,8 @@ This package requires:
 
 
 ## Usage
+Please download the chembl.tab from this link: [Download File](https://drive.google.com/file/d/1UKNivLk5tgXzUwuKH2ZxYCCczcM-M7jl/view?usp=sharing).
+And this file should be put under `./data` directory.
 
 To train a Prior starting with a SMILES file called mols.smi:
 
