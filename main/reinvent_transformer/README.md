@@ -4,7 +4,7 @@
 
 Searching chemical space as described in:
 
-[Molecular De Novo Design through Transformer-based Reinforcement Learning]([https://arxiv.org/abs/1704.07555](https://arxiv.org/abs/2310.05365)
+[Molecular De Novo Design through Transformer-based Reinforcement Learning](https://arxiv.org/abs/2310.05365)
 
 ![Video demonstrating an Agent trained to generate analogues to Celecoxib](https://github.com/MarcusOlivecrona/REINVENT/blob/master/images/celecoxib_analogues.gif "Training an Agent to generate analogues of Celecoxib")
 
@@ -63,6 +63,7 @@ The output will look like `data/Prior_transformer-epoch{epoch}-valid-{100 * vali
 
 You can change the name into `data/Prior_Transformer.ckpt`
 
+Or you can also download our pretrained model checkpoint at [Prior_transformer-epoch41-valid-92.96875.ckpt](https://drive.google.com/file/d/1e2ds7I-SkeW0WGdk47dmivwLbSyfI_kU/view?usp=sharing) and save it to `./data` directory.
 
 ## run 
 
