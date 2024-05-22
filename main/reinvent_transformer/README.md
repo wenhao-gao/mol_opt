@@ -57,10 +57,12 @@ Training can be visualized using the Vizard bokeh app. The vizard_logger.py is u
 ## pretrain
 
 ```bash 
-python pretrain.py 
+python pretrain_trans.py 
 ```
+The output will look like `data/Prior_transformer-epoch{epoch}-valid-{100 * valid / len(seqs)}.ckpt`
 
-- output: `data/Prior.ckpt`
+You can change the name into `data/Prior_Transformer.ckpt`
+
 
 ## run 
 
