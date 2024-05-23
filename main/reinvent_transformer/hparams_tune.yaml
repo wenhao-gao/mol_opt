@@ -1,0 +1,14 @@
+name: reinvent
+method: grid
+metric:
+  goal: maximize
+  name: avg_auc
+parameters:
+  # learning_rate: 
+  #   values: [0.0005]
+  batch_size:
+    values: [32, 64]
+  sigma: 
+    values: [250, 500, 750, 1000]
+  experience_replay: 
+    values: [8, 16, 24, 32]
