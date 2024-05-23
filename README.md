@@ -60,7 +60,8 @@ Based the ML methodologies, all the methods are categorized into:
     * **gpbo** 
 * RL (reinforcement learning)
     * **reinvent** 
-    * **reinvent\_selfies** 
+    * **reinvent\_selfies**
+    * **reinvent\_transformer**
     * **graphinvent** 
     * **moldqn** 
     * **smiles_aug_mem**
@@ -99,6 +100,7 @@ We have processed the data, pretrained the model. Both are available in the repo
 | **[jt\_vae](https://arxiv.org/pdf/1802.04364.pdf)**                                                       | fragment   | botorch                                       | 20 min    |    yes     |
 | **[gpbo](https://openreview.net/forum?id=gS3XMun4cl_)**                                                   | fragment   | botorch, networkx                             | 15 min    |    no     |
 | **[reinvent](https://arxiv.org/abs/1704.07555)**                                                          | SMILES     | pexpect, bokeh                                | 2 min     |    yes    |
+| **[reinvent\_transformer](https://arxiv.org/pdf/2310.05365)**                                             | SMILES     | pexpect, bokeh                                | 2 min     |    yes    |
 | **[reinvent\_selfies](https://arxiv.org/abs/1704.07555)**                                                 | SELFIES    | selfies, pexpect, bokeh                       | 3 min     |    yes     |
 | **[smiles\_aug\_mem](https://chemrxiv.org/engage/chemrxiv/article-details/6464dc3ea32ceeff2dcbd948)**     | SMILES     | reinvent-models==0.0.15rc1                    | 2 min     |    yes     |
 | **[smiles\_bar](https://pubs.acs.org/doi/full/10.1021/acs.jcim.2c00838)**                                 | SMILES     | reinvent-models==0.0.15rc1                    | 2 min     |    yes     |
