@@ -1,0 +1,8 @@
+population_size: 100
+batch_size: 32
+candidate_multiplier: 4
+mutation_rate: 0.01
+surrogate_start: 128
+n_trees: 64
+uncertainty_weight: 0.35
+novelty_weight: 0.15
