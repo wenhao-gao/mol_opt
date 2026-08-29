@@ -1,0 +1,18 @@
+name: sp_ga
+method: random
+metric:
+  goal: maximize
+  name: avg_auc
+parameters:
+  population_size:
+    values: [50, 100, 150]
+  batch_size:
+    values: [16, 32, 64]
+  candidate_multiplier:
+    values: [2, 4, 8]
+  mutation_rate:
+    values: [0.005, 0.01, 0.02, 0.05]
+  uncertainty_weight:
+    values: [0.0, 0.2, 0.35, 0.5]
+  novelty_weight:
+    values: [0.0, 0.1, 0.15, 0.25]

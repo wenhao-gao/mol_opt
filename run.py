@@ -52,6 +52,8 @@ def main(method,oracle_name):
         from main.molpal.run import MolPAL_Optimizer as Optimizer
     elif args.method == 'graph_ga':
         from main.graph_ga.run import GB_GA_Optimizer as Optimizer
+    elif args.method == 'sp_ga':
+        from main.sp_ga.run import SP_GA_Optimizer as Optimizer
     elif args.method == 'smiles_ga':
         from main.smiles_ga.run import SMILES_GA_Optimizer as Optimizer
     elif args.method == "selfies_ga":
